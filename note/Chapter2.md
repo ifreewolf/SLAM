@@ -5,7 +5,6 @@
 > 3. 理解如何在Linux下编译并运行一个程序，如果程序出了问题，又该如何调试它。
 > 4. 掌握cmake的基本使用方法。
 
-
 # 一.引言
 
 惯性测量单元（Inertial Measurement Unit, IMU）
