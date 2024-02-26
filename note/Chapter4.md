@@ -184,4 +184,90 @@ $$
 \mathfrak{se}(3) = \left\{ \xi= \begin{bmatrix} \rho \\ \phi \end{bmatrix} \in \mathbb{R}^6, \rho\in\mathbb{R}^3, \phi\in\mathfrak{so}(3), \xi^{\wedge} = \begin{bmatrix} \phi^{\wedge} & \rho \\ 0^T & 0 \end{bmatrix} \in \mathbb{R}^{4 \times 4} \right\}. \tag{4.15}
 $$
 
+把每个$\mathfrak{se}(3)$元素记作$\xi$，它是一个六维向量。前三维为平移，记作$\rho$；后三维为旋转，记作$\phi$，实质上是$\mathfrak{so}(3)$元素。
+
+在$\mathfrak{se}(3)$中，同样使用$^\wedge$符号，将一个六维向量转换成四维矩阵，但这里不再表示反对称：
+
+$$
+\xi^{\wedge} = \begin{bmatrix} \phi^{\wedge} & \rho \\ 0^T & 0 \end{bmatrix} \in \mathbb{R}^{4 \times 4}. \tag{4.16}
+$$
+
+> 仍然使用$^\wedge$和$^\vee$符号指代“从向量到矩阵”和“从矩阵到向量”的关系，以保持和$\mathfrak{so}(3)$上的一致性，它们依旧是一一对应的。
+
+可以简单地把$\mathfrak{se}(3)$理解成“由一个平移加上一个$\mathfrak{so}(3)$”元素构成的向量。同样地，李代数$\mathfrak{se}(3)$也有类似于$\mathfrak{so}(3)$的李括号：
+
+$$
+[\xi_1,\xi_2]=(\xi_1^{\wedge}\xi_2^{\wedge}-\xi_2^{\wedge}\xi_1^{\wedge})^{\vee}. \tag{4.17}
+$$
+
+
+# 4.2 指数于对数映射
+
+## 4.2.1 SO(3)上的指数映射
+
+如何计算$\exp(\phi^{\wedge})$，它是一个矩阵的指数，在李群和李代数中，称为指数映射(Exponential Map)。
+
+任意矩阵的指数映射可以写成一个泰勒展开，但是只有在收敛的情况下才会有结果，其结果仍然是一个矩阵：
+
+$$
+\exp(A) = \sum_{n=0}^{\infty}\frac{1}{n!}A^n. \tag{4.18}
+$$
+
+同样地，对于$\mathfrak{so}(3)$中的任意元素$\phi$，可以按此方式定义它的指数映射：
+
+$$
+\exp(\phi^{\wedge}) = \sum_{n=0}^{\infty}\frac{1}{n!}(\phi^{\wedge})^n. \tag{4.19}
+$$
+
+这个定义无法直接计算，因为不想计算矩阵的无穷次幂。
+
+由于$\phi$是三维向量，可以定义它的模长和方向，分别记作$\theta$和$a$，于是有$\phi = \theta a$，这里$a$是一个长度为1的方向向量，即$\lVert a \rVert = 1$，对于$a^{\wedge}$，有以下两条性质：
+
+$$
+a ^{\wedge } a ^{\wedge } =\begin{bmatrix} -a_{2}^{2} -a_{3}^{2} & a_{1} a_{2} & a_{1} a_{3}\\ a_{1} a_{2} & -a_{1}^{2} -a_{3}^{2} & a_{2} a_{3}\\ a_{1} a_{3} & a_{2} a_{3} & -a_{1}^{2} -a_{2}^{2}\end{bmatrix} = aa^{T} - I, \tag{4.20}
+$$
+
+以及
+
+$$
+a^{\wedge} a^{\wedge} a^{\wedge} = a^{\wedge} (aa^T - I) = -a^{\wedge}. \tag{4.21}
+$$
+
+> 上面两个式子提供了处理$a^{\wedge}$高阶项的方法，可以把指数映射写成
+
+$$
+\begin{aligned}
+\exp(\phi^{\wedge}) &= \exp(\theta a^{\wedge})=\sum_{n=0}^{\infty}\frac{1}{n!}(\theta a^{\wedge})^n \\
+&=I + \theta a^{\wedge} + \frac{1}{2!}\theta^{2}a^{\wedge} a^{\wedge} + \frac{1}{3!} \theta^{3} a^{\wedge} a^{\wedge} a^{\wedge}  + \frac{1}{4!} \theta^{4}(a^{\wedge})^4 + \cdots \\
+&= aa^T - a^{\wedge} a^{\wedge} + \theta a^{\wedge} + \frac{1}{2!}\theta^{2}a^{\wedge} a^{\wedge} - \frac{1}{3!} \theta^{3} a^{\wedge} - \frac{1}{4!} \theta^{4}(a^{\wedge})^2 + \cdots \\
+&=aa^T + \underbrace{\left ( \theta - \frac{1}{3!} \theta^3 + \frac{1}{5!}\theta^5-\cdots \right )a^{\wedge}}_{sin\theta} - \underbrace{\left ( \theta - \frac{1}{2!} \theta^2 + \frac{1}{4!}\theta^4-\cdots \right )a^{\wedge} a^{\wedge}}_{cos\theta} \\
+&= a^{\wedge} a^{\wedge} + I + sin \theta a^{\wedge} - cos\theta a^{\wedge} a^{\wedge} 、、
+&= (1-cos\theta)a^{\wedge} a^{\wedge} + I + sin\theta a^{\wedge} \\
+&= cos\theta I + (1-cos\theta)aa^T + sin\theta a^{\wedge}.
+\end{aligned}
+$$
+
+> 最后，得到一个似曾相识的式子：
+
+$$
+\exp{\theta a^{\wedge}} = cos\theta I + (1-cos\theta)aa^T + sin\theta a^{\wedge}. \tag{4.22}
+$$
+
+> 上面公式和罗德里格斯公式(式3.15)如出一辙，表明，$\mathfrak{so}(3)$实际上就是由所谓的<B>旋转向量</B>组成的空间，而指数映射即罗德里格斯公式。
+> 
+> 通过它们，把$\mathfrak{so}(3)$中任意一个向量对应到了一个位于SO(3)中的旋转矩阵。反之，如果定义对数映射，也能把SO(3)中的元素对应到$\mathfrak{so}(3)$中：
+
+$$
+\phi = ln(R)^{\wedge} = \left( \sum_{n=1}^{\infty}\frac{(-1)^n}{n+1}(R-I)^{n+1} \right)^{\vee}. \tag{4.23}
+$$
+
+> 指数映射只是一个满射，并不是单射，意味着每个SO(3)中的元素，都可以找到一个$\mathfrak{so}(3)$元素与之对应；但是可能存在多个$\mathfrak{so}(3)$中的元素，对应到同一个SO(3)。至少对于旋转角$\theta$，我们知道多转360°和没有转是一样的--它具有周期性。
+>
+> 如果把旋转角度固定在$\pm\pi$之间，那么李群和李代数元素是一一对应大的。
+
+
+## 4.2.2 SE(3)上的指数映射
+
+
+
 
