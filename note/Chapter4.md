@@ -268,6 +268,216 @@ $$
 
 ## 4.2.2 SE(3)上的指数映射
 
+> $\mathfrak{se}(3)$上的指数映射形式如下：
+
+$$
+\begin{aligned}
+\exp(\xi^{\wedge}) &= \begin{bmatrix}
+\sum_{n=1}^{\infty}\frac{1}{n!}(\phi^{\wedge})^n & \sum_{n=0}^{\infty}\frac{1}{(n+1)!}(\phi^{\wedge})^n\rho \\
+0^T & 1
+\end{bmatrix} \\ 
+&\overset{\Delta}{=} \begin{bmatrix} R & J\rho \\ 
+0^T & 1 \end{bmatrix} = T. \tag{4.25}
+\end{aligned}
+$$
+
+把$\exp$进行泰勒展开推导此式，令$\phi=\theta a$，其中$a$为单位向量，则：
+
+$$
+\begin{aligned}
+\sum_{n=0}^{\infty}\frac{1}{(n+1)!}(\phi^{\wedge})^n &=
+I + \frac{1}{2!}\theta a^{\wedge} + \frac{1}{3!}\theta^{2}(a^{\wedge})^2 + \frac{1}{4!}\theta^{3}(a^{\wedge})^3 + \frac{1}{5!}\theta^{4}(a^{\wedge})^4 + \cdots \\
+&= \frac{1}{\theta}\left( \frac{1}{2!}\theta^2 - \frac{1}{4!}\theta^{4} +  \cdots \right)(a^{\wedge}) + \frac{1}{\theta}\left( \frac{1}{3!}\theta^3 - \frac{1}{5!}\theta^{5} + \cdots \right)(a^{\wedge})^2 + I \\
+&=\frac{1}{\theta}(1-cos\theta)(a^{\wedge}) + \frac{\theta - sin\theta}{\theta}\left(aa^T - I\right) + I \\
+&=\frac{sin\theta}{\theta}I + \left( 1 - \frac{sin\theta}{\theta} \right)aa^T + \frac{1- cos\theta}{\theta} a^{\wedge} \underset{def}{=}J.
+\end{aligned} \tag{4.26}
+$$
+
+从结果上看，$\xi$的指数映射左上角的$R$是我们熟知的SO(3)中的元素，与$\mathfrak{se}(3)$中的旋转部分$\phi$对应，而右上角的$J$由上面的推导给出：
+
+$$
+J = \frac{sin\theta}{\theta}I + \left( 1 - \frac{sin\theta}{\theta} \right)aa^T + \frac{1-cos\theta}{\theta}a^{\wedge}. \tag{4.27}
+$$
+
+> 该式与罗德里格斯公式有些相似，但不完全一样，平移部分经过指数映射之后，发生了一次以$J$
+为系数矩阵的线性变换。
+
+> 同样地，虽然可以类比推得对数映射，不过根据变换矩阵$T$求$\mathfrak{so}(3)$上的对应向量也有更省事的方式：从左上角的$R$计算旋转向量，而右上角的$t$满足：
+
+$$
+t = J\rho. \tag{4.28}
+$$
+
+由于$J$可以由$\phi$得到，所以这里的$\rho$也可由此线性方程解得。
 
 
+至此，李群与李代数的定义与相互的转换关系，总结下图所示：
+
+<div>
+    <img src="./image/李群与李代数.png" />
+</div>
+
+# 4.3 李代数求导与扰动模型
+
+## 4.3.1 BCH公式与近似形式
+
+使用李代数的一大动机是进行优化，而在优化过程中导数是非常必要的信息。
+
+> 思考：当在SO(3)中完成两个矩阵乘法时，李代数中$\mathfrak{so}(3)$上发生了什么改变呢？反过来说，当$\mathfrak{so}(3)$上做两个李代数的加法时，SO(3)上是否对应着两个矩阵的乘积？如果成立，相当于：
+
+$$
+\exp(\phi_1^{\wedge})\exp(\phi_2^{\wedge})=\exp((\phi_1 + \phi_2)^{\wedge})?
+$$
+
+如果$\phi_1,\phi_2$为标量，那么显然该式成立；但此处我们计算的是矩阵的指数函数，而非标量的指数，换言之，我们需要研究下式是否成立：
+
+$$
+\ln(\exp(A)\exp(B)) = A + B ?
+$$
+> 很遗憾，该式在矩阵时并不成立。
+
+> 两个李代数指数映射乘积的完整形式，由Backer-Campbell-Hausdorff公式(BCH公式)给出。由于其完整形式比较复杂，我们只给出其展开式的前几项：
+
+$$
+\ln(\exp(A)\exp(B)) = A + B + \frac{1}{2}[A,B] + \frac{1}{12}[A,[A,B]]-\frac{1}{12}[B,[A,B]] + \cdots \tag{4.29}
+$$
+
+> 其中[ ]为李括号，BCH公式告诉我们，当处理两个矩阵指数之积时，它们会产生一些由李括号组成的余项。BCH公式告诉我们，当处理两个矩阵指数之积时，它们会产生一些由李括号组成的余项，特别地，考虑SO(3)上的李代数$\ln(\exp(\phi_1^{\wedge})\exp(\phi_2^{\wedge}))^{\vee}$，当$\phi_1$或$\phi_2$为小量时，小量二次以上的项都可以被忽略，此时，BCH拥有线性近似表达：
+
+$$
+\ln(\exp(\phi_1^{\wedge})\exp(\phi_2^{\wedge}))^{\vee} \approx \left \{ \begin{matrix} &J_l(\phi_2)^{-1}\phi_1 + \phi_2 \quad 当\phi_1为小量时, \\
+&J_r(\phi_1)^{-1}\phi_2 + \phi_1 \quad 当\phi_2为小量时. \end{matrix}
+\right. 
+$$
+
+以第一个近似为例，该式告诉我们，当对一个旋转矩阵$R_2$(李代数为$\phi_2$)左乘一个微小旋转矩阵$\R_1$(李代数为$\phi_1$)时，可以近似地看作，在原有的李代数$\phi_2$上加上一项$J_l(\phi_2)^{-1}\phi_1$。同理，第二个近似描述了右乘一个微笑位移的情况。
+
+> 李代数在BCH近似下，分成了左乘近似和右乘近似两种，在使用时我们必须注意使用的时左乘模型还是右乘模型。
+
+本书以左乘为例，左乘BCH近似雅可比$J_l$事实上就是式(4.27)的内容：
+
+$$
+J_l=J=\frac{sin\theta}{\theta}I + \left( 1-\frac{sin\theta}{\theta} \right)aa^T + \frac{q-cos\theta}{\theta}a^{\wedge}. \tag{4.31}
+$$
+
+它的逆为：
+
+$$
+J_l^{-1}=\frac{\theta}{2}\cot\frac{\theta}{2}I + \left( 1-\frac{\theta}{2}cot\frac{\theta}{2} \right)aa^T - \frac{\theta}{2}a^{\wedge}. \tag{4.32}
+$$
+
+而右乘雅可比仅需要对自变量取负号即可：
+
+$$
+J_r(\phi) = J_l(-\phi). \tag{4.33}
+$$
+
+> 有了上述关系，我们就可以讨论李群乘法与李代数加法的关系。
+> 重新叙述BCH近似的意义，假定对某个旋转$R$，对应的李代数为$\phi$，给它左乘一个微小旋转，记作$\Delta\phi$，那么，在李群上，得到的结果就是$\Delta R\cdot R$，而在李代数上，根据BCH近似，为$J_l^{-1}(\phi)\Delta\phi + \phi$。合并起来，可以简单地写成：
+
+$$
+\exp(\Delta\phi^{\wedge})\exp(\phi^{\wedge})=\exp\left( (\phi + J_l^{-1}(\phi)\Delta\phi)^{\wedge} \right). \tag{4.34}
+$$
+
+> 反之，如果我们在李代数上进行加法，让一个$\phi$加上$\Delta\phi$，那么可以近似为李群上带左右雅可比的次乘法：
+
+$$
+\exp\left((\phi + \Delta\phi)^{\wedge}\right)=\exp\left((J_l\Delta\phi)^{\wedge}\right)\exp(\phi^{\wedge}) = \exp(\phi^{\wedge})\exp\left((J_r\Delta\phi)^{\wedge}\right). \tag{4.35}
+$$
+
+> 这就为之后李代数上做微积分提供了理论基础，同样地，对于SE(3)，也有类似的BCH近似：
+
+$$
+\exp(\Delta\xi^{\wedge})\exp(\xi^{\wedge}) \approx \exp\left((\mathcal{J}_l^{-1}\Delta\xi + \xi)^{\wedge}\right), \tag{4.36}
+$$
+
+$$
+\exp(\xi^{\wedge})\exp(\Delta\xi^{\wedge}) \approx \exp\left((\mathcal{J}_r^{-1}\Delta\xi + \xi)^{\wedge}\right). \tag{4.37}
+$$
+
+> 这里$\mathcal{J}_l$形式比较复杂，它是一个$6 \times 6$的矩阵。
+
+
+## 4.3.2 SO(3)上的李代数求导
+
+在SLAM中，我们要估计一个相机的位置和姿态，该位姿是由SO(3)上的旋转矩阵或SE(3)上的变换矩阵描述的。不妨设某个时刻小萝卜的位姿为$T$，它观察到了一个世界坐标位于$p$的点，产生了一个观测数据$z$，那么，由坐标变换关系知：
+
+$$
+z = Tp + w. \tag{4.38}
+$$
+
+其中$w$为随机噪声，由于它的存在，$z$往往不可能精确地满足$z=Tp$的关系，所以，我们通常会计算理想的观测与实际数据的误差：
+
+$$
+e = z - Tp. \tag{4.39}
+$$
+
+假设一共有$N$个这样的路标点和观测，于是就有$N$个上式，那么对小萝卜进行位姿估计，相当于寻找一个最优的$T$，使得整体误差最小化：
+
+$$
+\underset{T}{min}J(T)=\sum_{i=1}^{N}\lVert z_i - Tp_i \rVert_{2}^{2}. \tag{4.40}
+$$
+
+> 求解此问题，需要计算目标函数$J$关于变换矩阵$T$的导数。<B>我们经常会构建与位姿有关的函数，然后讨论该函数关于位姿的导数，以调整当前的估计值</B>。然而，SO(3)，SE(3)上并没有良好定义的加法，它们只是群。如果我们把$T$当成一个普通矩阵来处理优化，就必须对它加以约束。而从李代数角度来说，由于李代数由向量组成，具有良好的加法运算，因此，使用李代数解决求导问题的思路分为两种：
+
+1. 用李代数表示姿态，然后根据李代数加法对<B>李代数求导</B>。
+2. 对李群左乘或右乘微小扰动，然后对该扰动求导，称为左扰动和右扰动模型。
+
+> 第一种方式对应到李代数的求导模型，而第二种方式则对应到扰动模型。
+
+
+## 4.3.3 李代数求导
+
+假设我们对一个空间点$p$进行了旋转，得到了$Rp$，现在，要计算旋转之后点的坐标相对于旋转的导数，我们非正式地几位：
+
+$$
+\frac{\partial(Rp)}{\partial R}.
+$$
+
+由于SO(3)没有加法，所以该导数无法按照导数的定义进行计算，设$R$对应的李代数为$\phi$，我们转而计算：
+
+$$
+\frac{\partial(\exp(\phi^{\wedge})p)}{\partial\phi}.
+$$
+
+按照导数的定义，有：
+
+$$
+\begin{aligned}
+\frac{\partial(\exp(\phi^{\wedge})p)}{\partial\phi} &= \lim_{\delta\phi \to 0}\frac{\exp\left((\phi + \delta\phi)^{\wedge}\right)p - \exp(\phi^{\wedge})p}{\delta \phi} \\
+&= \lim_{\delta\phi \to 0} \frac{\exp\left((J_l\delta\phi)^{\wedge}\right)\exp(\phi^{\wedge})p - \exp(\phi^{\wedge})p}{\delta \phi} \\
+&= \lim_{\delta\phi \to 0} \frac{\left(I + (J_l\delta\phi)^{\wedge}\right)\exp(\phi^{\wedge})p - \exp(\phi^{\wedge})p}{\delta \phi} \\
+&= \lim_{\delta\phi \to 0} \frac{(J_l\delta\phi)^{\wedge}\exp(\phi^{\wedge})p}{\delta \phi} \\
+&= \lim_{\delta\phi \to 0} \frac{-\left(\exp(\phi^{\wedge})p\right)^{\wedge}J_l\delta\phi}{\delta \phi} = -(Rp)^{\wedge}J_l. \\
+\end{aligned}
+$$
+
+> 第2行的近似为BCH线性近似，第3行为泰勒展开舍去高阶项后的近似，第4行至第5行将反对称符号看作叉积，变换之后变号。于是，我们推导出了旋转后的点相对于李代数的导数：
+
+$$
+\frac{\partial(Rp)}{\partial \phi} = (-Rp)^{\wedge}J_l. \tag{4.41}
+$$
+
+
+## 4.3.4 扰动模型(左乘)
+
+另一种求导方式是对$R$进行一次扰动$\Delta R$，看结果相对于扰动的变化率。这个扰动可以乘在左边也可以乘在右边，最后结果会有一点儿微小的差异，我们以左扰动为例。设左扰动$\Delta R$对应的李代数为$\varphi$，然后，对$\varphi$求导，即：
+
+$$
+\frac{\partial(Rp)}{\partial \varphi} = \lim_{\varphi \to 0}\frac{\exp(\varphi^{\wedge})\exp(\phi^{\wedge})p-\exp(\phi^{\wedge})p}{\varphi}. \tag{4.42}
+$$
+
+> 该式的求导比上面更简单：
+
+$$
+\begin{aligned}
+\frac{\partial(Rp)}{\partial\varphi} &= \lim_{\varphi \to 0}\frac{\exp(\varphi^{\wedge})\exp(\phi^{\wedge})p-\exp(\phi^{\wedge})p}{\varphi} \\
+&= \lim_{\varphi \to 0}\frac{(I+\varphi^{\wedge})\exp(\phi^{\wedge})p-\exp(\phi^{\wedge})p}{\varphi} \\
+&= \lim_{\varphi \to 0}\frac{\varphi^{\wedge}Rp}{\varphi} = \lim_{\varphi \to 0}\frac{-(Rp)^{\wedge}\varphi}{\varphi} = -(Rp)^{\wedge}.
+\end{aligned}
+$$
+
+> 相比于直接对李代数求导，省去了一个雅可比$J_l$的计算，这使得扰动模型更为实用。
+
+## 4.3.5 SE(3)上的李代数求导
 
