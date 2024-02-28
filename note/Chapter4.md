@@ -481,3 +481,21 @@ $$
 
 ## 4.3.5 SE(3)上的李代数求导
 
+SE(3)上的扰动模型，假设某空间点$p$经过一次变换$T$(对应李代数为$\xi$)，得到$Tp$。现在给$T$左乘一个扰动$\Delta T=\exp(\delta \xi^{\wedge})$，设扰动项的李代数为$\delta\xi=[\delta\rho, \delta \phi]^T$，那么：
+
+$$
+\begin{aligned}
+\frac{\partial(Tp)}{\partial\delta\xi} &= \lim_{\delta\xi \to 0}\frac{\exp(\delta\xi^{\wedge})\exp(\xi^{\wedge})p-\exp(\xi^{\wedge})p}{\delta\xi} \\
+&= \lim_{\delta\xi \to 0}\frac{(I+\delta\xi^{\wedge})\exp(\xi^{\wedge})p-\exp(\xi^{\wedge})p}{\delta\xi} \\
+&= \lim_{\delta\xi \to 0}\frac{\delta\xi^{\wedge}\exp(\xi^{\wedge})p}{\delta\xi} \\
+&= \lim_{\delta\xi \to 0}\frac{\begin{bmatrix} \delta\phi^{\wedge}(Rp+t)+\delta\rho \\ 0^T \end{bmatrix}}{[\delta\rho, \delta\phi]^T} = \begin{bmatrix} I & -(Rp+t)^{\wedge} \\ 0^T & 0^T \end{bmatrix} \overset{def}{=} (Tp)^{\odot}.
+\end{aligned}
+$$
+
+> 把最后的结果定义成一个算符$^{\odot}$，它把一个齐次坐标的空间点变换成一个$4 \times 6$的矩阵。
+
+> 矩阵求导方面的顺序，假设$a,b,x,y$都是列向量，那么在我们的符号写法下，有如下的规则：
+
+$$
+\frac{d\begin{bmatrix} a \\ b \end{bmatrix}}{d\begin{bmatrix} x \\ y \end{bmatrix}} = \left( \frac{d[a,b]^T}{d\begin{bmatrix} x \\ y \end{bmatrix}} \right)^T = \begin{bmatrix} \frac{da}{dx} & \frac{db}{dx} \\ \frac{da}{dy} & \frac{db}{dy}\end{bmatrix}^T = \begin{bmatrix} \frac{da}{dx} & \frac{da}{dy} \\ \frac{db}{dx} & \frac{db}{dy}\end{bmatrix}
+$$
