@@ -53,8 +53,53 @@ $$
 
 <B>灰度不变假设</B>：同一个空间点的像素灰度值，在各个图像中是固定不变的。
 
-对于$t$时刻位于$(x,y)$处的像素，我们设$t+dt$时刻它运动拿到$(x+dx,y+dy)$处。由于灰度不变，我们有
+对于$t$时刻位于$(x,y)$处的像素，我们设$t+dt$时刻它运动拿到$(x+dx,y+dy)$处。<B>由于灰度不变</B>，我们有
 
 $$
 I(x + dx, y + dy, t + dt) = I(x, y, t). \tag{8.1}
 $$
+
+上面写灰度不变是一个很强的假设，实际中很可能不成立。事实上，由于物体的材质不同，像素会出现高光和阴影部分；有时，相机会自动调整曝光参数，使得图像整体变亮或变暗。这时灰度不变假设都是不成立的，因此光流的结果也不一定可靠。然而，从另一方面说，所有算法都是在一定假设下工作的。如果我们什么假设都不做，就没法设计实用的算法。所以，让我们暂时认为该假设成立，看看如何计算像素的运动。
+
+对左边进行泰勒展开，保留一阶项，得
+
+$$
+I(x + dx, y + dy, t + dt) \approx I(x, y, t) + \frac{\partial I}{\partial x} dx + \frac{\partial I}{\partial y}dy + \frac{\partial I}{\partial t}dt. \tag{8.2}
+$$
+
+因为假设了灰度不变，于是下一时刻的灰度等于之前的灰度，从而：
+
+$$
+\frac{\partial I}{\partial x}dx + \frac{\partial I}{\partial y}dy + \frac{\partial I}{\partial t}dt = 0. \tag{8.3}
+$$
+
+两边除以$dt$，得
+
+$$
+\frac{\partial I}{\partial x}\frac{dx}{dt} + \frac{\partial I}{\partial y}\frac{dy}{dt} = -\frac{\partial I}{\partial t}. \tag{8.4}
+$$
+
+其中$dx/dt$为像素在$x$轴上的运动速度，而$dy/dt$为$y$轴上的速度，把它们记为$u,v$。同时，$\partial I / \partial x$为图像在该点处$x$方向的梯度，另一项则是在$y$方向的梯度，记为$I_x,I_y$。把图像灰度对时间的变化量记为$I_t$，写成矩阵形式，有
+
+$$
+\begin{bmatrix}
+    I_x & I_y
+\end{bmatrix} \begin{bmatrix}
+    u \\ v
+\end{bmatrix} = -I_t. \tag{8.5}
+$$
+
+我们想计算的是像素的运动$u,v$，但是该式是带有两个变量的一次，仅凭它无法计算出$u,v$。因此，必须引入额外的约束来计算$u,v$。在LK光流中，假设<B>某一个窗口内的像素具有相同的运动</B>。
+
+考虑一个大小为$w\times w$的窗口，它含有$w^2$数量的像素。该窗口内像素具有同样的运动，因为我们共有$w^2$个方程：
+
+$$
+\begin{bmatrix}
+    I_x & I_y
+\end{bmatrix}_k \begin{bmatrix}
+    u \\ v
+\end{bmatrix} = -I_{tk}, \quad k=1,...,w^2. \tag{8.6}
+$$
+
+记：
+
