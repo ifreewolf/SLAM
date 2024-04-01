@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.5)
 project(useEigen)
 
 set(CMAKE_BUILD_TYPE "Release")
