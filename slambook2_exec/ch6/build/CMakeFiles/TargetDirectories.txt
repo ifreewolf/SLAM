@@ -1,5 +1,0 @@
-/home/fgs/Workstations/slambook2_exec/ch6/build/CMakeFiles/rebuild_cache.dir
-/home/fgs/Workstations/slambook2_exec/ch6/build/CMakeFiles/edit_cache.dir
-/home/fgs/Workstations/slambook2_exec/ch6/build/CMakeFiles/g2oCurveFitting.dir
-/home/fgs/Workstations/slambook2_exec/ch6/build/CMakeFiles/ceresCurveFitting.dir
-/home/fgs/Workstations/slambook2_exec/ch6/build/CMakeFiles/gaussNewton.dir
