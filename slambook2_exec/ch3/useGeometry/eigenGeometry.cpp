@@ -51,5 +51,23 @@ int main(int argc, char **argv)
     Vector3d v_transformed = T * v;         // 相当于 R*v + t
     std::cout << "v transformed = " << v_transformed.transpose() << std::endl;
 
+    // 对于仿射和射影变换，使用Eigen::Affine3d 和 Eigen::Projective3d 即可，
+
+    // 四元数
+    // 可以直接把AngleAxis赋值给四元数，反之亦然
+    Quaterniond q = Quaterniond(rotation_vector);
+    std::cout << "quaternion from rotation vector = " << q.coeffs().transpose() << std::endl;   // coeffs的顺序是（x,y,z,w)，w为实部，前三者为虚部
+    
+    // 也可以把旋转矩阵赋给它
+    q = Quaterniond(rotation_matrix);
+    std::cout << "quaternion from rotation matrix = " << q.coeffs().transpose() << std::endl;
+
+    // 使用四元数旋转一个向量，使用重载的乘法即可
+    v_rotated = q * v;  // 注意数学上是qvq^{-1}
+    std::cout << "(1, 0, 0) after rotation matrix = " << v_rotated.transpose() << std::endl;
+
+    // 用常规向量乘法表示，则应该计算如下
+    std::cout << "should be equal to " << (q * Quaterniond(0, 1, 0, 0) * q.inverse()).coeffs().transpose() << std::endl;
+
     return 0;
 }
