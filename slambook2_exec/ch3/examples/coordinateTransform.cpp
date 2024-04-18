@@ -9,8 +9,12 @@ using namespace Eigen;
 
 int main(int argc, char **argv)
 {
+    /**
+     * T1w^{-1}p1 = T2w^{-1}p1'
+     * p1' = T2w T1w^{-1}p1
+    */
     Quaterniond q1(0.35, 0.2, 0.3, 0.1), q2(-0.5, 0.4, -0.1, 0.2);
-    q1.normalize();
+    q1.normalize(); // 规范化，将四元数的长度缩放到单位长度，四元数模=1.
     q2.normalize();
 
     Vector3d t1(0.3, 0.1, 0.1), t2(-0.1, 0.5, 0.3);
