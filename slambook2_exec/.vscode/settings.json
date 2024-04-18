@@ -7,5 +7,6 @@
         "*.ipp": "cpp",
         "array": "cpp",
         "string_view": "cpp"
-    }
+    },
+    "ros.distro": "noetic"
 }
