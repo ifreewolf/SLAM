@@ -27,11 +27,10 @@
 
 #pragma once
 
-#include <pangolin/video/video_interface.h>
-#include <pangolin/video/stream_encoder_factory.h>
 #include <pangolin/log/packetstream_reader.h>
 #include <pangolin/log/playback_session.h>
-#include <pangolin/utils/signal_slot.h>
+#include <pangolin/video/stream_encoder_factory.h>
+#include <pangolin/video/video.h>
 
 namespace pangolin
 {
@@ -99,7 +98,7 @@ protected:
     picojson::value _frame_properties;
     std::string _source_uri;
 
-    sigslot::scoped_connection session_seek;
+    Registration<size_t> session_seek;
 };
 
 }

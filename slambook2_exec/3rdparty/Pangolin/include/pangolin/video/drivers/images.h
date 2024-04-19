@@ -27,8 +27,9 @@
 
 #pragma once
 
-#include <pangolin/video/video_interface.h>
 #include <pangolin/image/image_io.h>
+#include <pangolin/pangolin.h>
+#include <pangolin/video/video.h>
 
 #include <deque>
 #include <vector>
@@ -41,12 +42,7 @@ class PANGOLIN_EXPORT ImagesVideo : public VideoInterface, public VideoPlaybackI
 {
 public:
     ImagesVideo(const std::string& wildcard_path);
-
-    ImagesVideo(
-        const std::string& wildcard_path, const PixelFormat& raw_fmt,
-        size_t raw_width, size_t raw_height, size_t raw_pitch,
-        size_t raw_offset, size_t raw_planes
-    );
+    ImagesVideo(const std::string& wildcard_path, const PixelFormat& raw_fmt, size_t raw_width, size_t raw_height);
 
     // Explicitly delete copy ctor and assignment operator.
     // See http://stackoverflow.com/questions/29565299/how-to-use-a-vector-of-unique-pointers-in-a-dll-exported-class-with-visual-studi
@@ -115,9 +111,6 @@ protected:
     PixelFormat raw_fmt;
     size_t raw_width;
     size_t raw_height;
-    size_t raw_planes;
-    size_t raw_pitch;
-    size_t raw_offset;
 
     // Load any json properties if they are defined
     picojson::value device_properties;

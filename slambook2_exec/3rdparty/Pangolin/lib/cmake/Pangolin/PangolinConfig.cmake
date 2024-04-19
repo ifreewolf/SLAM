@@ -1,18 +1,14 @@
 # Compute paths
 get_filename_component( PROJECT_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH )
+SET( Pangolin_INCLUDE_DIRS "${PROJECT_CMAKE_DIR}/../../../include;/usr/include;/usr/include;/usr/include;/usr/include/eigen3" )
+SET( Pangolin_INCLUDE_DIR  "${PROJECT_CMAKE_DIR}/../../../include;/usr/include;/usr/include;/usr/include;/usr/include/eigen3" )
 
 # Library dependencies (contains definitions for IMPORTED targets)
-if( NOT Pangolin_BINARY_DIR )
+if( NOT TARGET pangolin AND NOT Pangolin_BINARY_DIR )
   include( "${PROJECT_CMAKE_DIR}/PangolinTargets.cmake" )
+  
 endif()
 
-SET( Pangolin_CMAKEMODULES /homerep/fgs/Workstation/SLAM/slambook2/3rdparty/Pangolin/cmake )
-SET( Pangolin_LIBRARIES    pango_core;pango_display;pango_geometry;pango_glgeometry;pango_image;pango_opengl;pango_packetstream;pango_plot;pango_python;pango_scene;pango_tools;pango_vars;pango_video;pango_windowing;tinyobj )
-SET( Pangolin_LIBRARY      "${Pangolin_LIBRARIES}" )
-
-include(CMakeFindDependencyMacro)
-find_dependency(Eigen3)
-
-if (UNIX)
-  find_dependency(Threads)
-endif()
+SET( Pangolin_LIBRARIES    pangolin )
+SET( Pangolin_LIBRARY      pangolin )
+SET( Pangolin_CMAKEMODULES /homerep/fgs/Software/Pangolin/src/../CMakeModules )

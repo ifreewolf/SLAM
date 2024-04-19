@@ -29,7 +29,6 @@
 
 #include <pangolin/platform.h>
 #include <string>
-#include <vector>
 
 namespace pangolin
 {
@@ -39,7 +38,7 @@ struct PANGOLIN_EXPORT PixelFormat
     // Previously, VideoInterface::PixFormat returned a string.
     // For compatibility, make this string convertable
     inline operator std::string() const { return format; }
-
+    
     std::string  format;
     unsigned int channels;
     unsigned int channel_bits[4]; //Of the data type
@@ -54,14 +53,12 @@ struct PANGOLIN_EXPORT PixelFormat
 PANGOLIN_EXPORT
 PixelFormat PixelFormatFromString(const std::string& format);
 
-std::vector<PixelFormat> GetSupportedPixelFormats();
-
 ////////////////////////////////////////////////////////////////////
 /// Deprecated aliases for above
 
-PANGOLIN_DEPRECATED("Use PixelFormat instead")
+PANGOLIN_DEPRECATED
 typedef PixelFormat VideoPixelFormat;
-PANGOLIN_DEPRECATED("Use PixelFormatFromString instead")
+PANGOLIN_DEPRECATED
 inline PixelFormat VideoFormatFromString(const std::string& format) {
     return PixelFormatFromString(format);
 }

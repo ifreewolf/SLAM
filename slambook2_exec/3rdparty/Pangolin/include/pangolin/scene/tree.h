@@ -1,7 +1,7 @@
 #pragma once
 
 #include <map>
-#include <pangolin/gl/opengl_render_state.h>
+#include <pangolin/display/opengl_render_state.h>
 
 namespace pangolin {
 

@@ -27,42 +27,55 @@
 
 #pragma once
 
-#include <pangolin/video/video_interface.h>
-#include <pangolin/video/iostream_operators.h>
-#include <pangolin/video/drivers/ffmpeg_common.h>
+#include <pangolin/pangolin.h>
+#include <pangolin/video/video.h>
+
+extern "C"
+{
+
+// HACK for some versions of FFMPEG
+#ifndef INT64_C
+#define INT64_C(c) (c ## LL)
+#define UINT64_C(c) (c ## ULL)
+#endif
+
+#include <libavformat/avformat.h>
+#include <libswscale/swscale.h>
+#include <libavutil/pixdesc.h>
+#include <libavcodec/avcodec.h>
+}
+
+#ifndef HAVE_FFMPEG_AVPIXELFORMAT
+#  define AVPixelFormat PixelFormat
+#endif
 
 namespace pangolin
 {
 
-class PANGOLIN_EXPORT FfmpegVideo : public VideoInterface, public VideoPlaybackInterface
+class PANGOLIN_EXPORT FfmpegVideo : public VideoInterface
 {
 public:
     FfmpegVideo(const std::string filename, const std::string fmtout = "RGB24", const std::string codec_hint = "", bool dump_info = false, int user_video_stream = -1, ImageDim size = ImageDim(0,0));
     ~FfmpegVideo();
     
     //! Implement VideoInput::Start()
-    void Start() override;
+    void Start();
     
     //! Implement VideoInput::Stop()
-    void Stop() override;
+    void Stop();
 
     //! Implement VideoInput::SizeBytes()
-    size_t SizeBytes() const override;
+    size_t SizeBytes() const;
 
     //! Implement VideoInput::Streams()
-    const std::vector<StreamInfo>& Streams() const override;
+    const std::vector<StreamInfo>& Streams() const;
     
     //! Implement VideoInput::GrabNext()
-    bool GrabNext( unsigned char* image, bool wait = true ) override;
+    bool GrabNext( unsigned char* image, bool wait = true );
     
     //! Implement VideoInput::GrabNewest()
-    bool GrabNewest( unsigned char* image, bool wait = true ) override;
+    bool GrabNewest( unsigned char* image, bool wait = true );
     
-    //! VideoPlaybackInterface methods
-    size_t GetCurrentFrameId() const override;
-    size_t GetTotalFrames() const override;
-    size_t Seek(size_t frameid) override;
-
 protected:
     void InitUrl(const std::string filename, const std::string fmtout = "RGB24", const std::string codec_hint = "", bool dump_info = false , int user_video_stream = -1, ImageDim size= ImageDim(0,0));
     
@@ -71,17 +84,124 @@ protected:
     SwsContext      *img_convert_ctx;
     AVFormatContext *pFormatCtx;
     int             videoStream;
-    int64_t         numFrames;
-    int64_t         ptsPerFrame;
-    const AVCodec         *pVidCodec;
-    const AVCodec         *pAudCodec;
-    AVCodecContext *pCodecContext;
+    int             audioStream;
+    AVCodecContext  *pVidCodecCtx;
+    AVCodecContext  *pAudCodecCtx;
+    AVCodec         *pVidCodec;
+    AVCodec         *pAudCodec;
     AVFrame         *pFrame;
     AVFrame         *pFrameOut;
-    AVPacket        *packet;
+    AVPacket        packet;
     int             numBytesOut;
+    uint8_t         *buffer;
     AVPixelFormat     fmtout;
-    int64_t next_frame;
+};
+
+enum FfmpegMethod
+{
+    FFMPEG_FAST_BILINEAR =    1,
+    FFMPEG_BILINEAR      =    2,
+    FFMPEG_BICUBIC       =    4,
+    FFMPEG_X             =    8,
+    FFMPEG_POINT         = 0x10,
+    FFMPEG_AREA          = 0x20,
+    FFMPEG_BICUBLIN      = 0x40,
+    FFMPEG_GAUSS         = 0x80,
+    FFMPEG_SINC          =0x100,
+    FFMPEG_LANCZOS       =0x200,
+    FFMPEG_SPLINE        =0x400
+};
+
+class PANGOLIN_EXPORT FfmpegConverter : public VideoInterface
+{
+public:
+    FfmpegConverter(std::unique_ptr<VideoInterface>& videoin, const std::string pixelfmtout = "RGB24", FfmpegMethod method = FFMPEG_POINT);
+    ~FfmpegConverter();
+    
+    //! Implement VideoInput::Start()
+    void Start();
+    
+    //! Implement VideoInput::Stop()
+    void Stop();
+
+    //! Implement VideoInput::SizeBytes()
+    size_t SizeBytes() const;
+
+    //! Implement VideoInput::Streams()
+    const std::vector<StreamInfo>& Streams() const;
+    
+    //! Implement VideoInput::GrabNext()
+    bool GrabNext( unsigned char* image, bool wait = true );
+    
+    //! Implement VideoInput::GrabNewest()
+    bool GrabNewest( unsigned char* image, bool wait = true );
+    
+protected:
+    std::vector<StreamInfo> streams;
+    
+    struct ConvertContext
+    {
+        SwsContext*     img_convert_ctx;
+        AVPixelFormat   fmtsrc;
+        AVPixelFormat   fmtdst;
+        AVFrame*        avsrc;
+        AVFrame*        avdst; 
+        size_t          w,h;
+        size_t          src_buffer_offset;
+        size_t          dst_buffer_offset;
+        
+        void convert(const unsigned char * src, unsigned char* dst);
+        
+    };
+    
+    std::unique_ptr<VideoInterface> videoin;
+    std::unique_ptr<unsigned char[]> input_buffer;
+
+    std::vector<ConvertContext> converters;
+    //size_t src_buffer_size;
+    size_t dst_buffer_size;
+};
+
+#if (LIBAVFORMAT_VERSION_MAJOR > 55) || ((LIBAVFORMAT_VERSION_MAJOR == 55) && (LIBAVFORMAT_VERSION_MINOR >= 7))
+typedef AVCodecID CodecID;
+#endif
+
+// Forward declaration
+class FfmpegVideoOutputStream;
+
+class PANGOLIN_EXPORT FfmpegVideoOutput
+    : public VideoOutputInterface
+{
+    friend class FfmpegVideoOutputStream;
+public:
+    FfmpegVideoOutput( const std::string& filename, int base_frame_rate, int bit_rate, bool flip = false );
+    ~FfmpegVideoOutput();
+
+    const std::vector<StreamInfo>& Streams() const override;
+
+    void SetStreams(const std::vector<StreamInfo>& streams, const std::string& uri, const picojson::value& properties) override;
+
+    int WriteStreams(const unsigned char* data, const picojson::value& frame_properties) override;
+
+    bool IsPipe() const override;
+    
+protected:
+    void Initialise(std::string filename);
+    void StartStream();
+    void Close();
+    
+    std::string filename;
+    bool started;
+    AVFormatContext *oc;
+    std::vector<FfmpegVideoOutputStream*> streams;
+    std::vector<StreamInfo> strs;
+
+    int frame_count;
+    
+    int base_frame_rate;
+    int bit_rate;
+    bool is_pipe;
+    bool flip;
 };
 
 }

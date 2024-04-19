@@ -10,7 +10,7 @@ using namespace Eigen;
 // path to trajectory file
 std::string trajectory_file = "./examples/trajectory.txt";
 
-void DrawTrajectory(vector<Isometry3d, Eigen::aligned_allocator<Isometry3d>>);
+void DrawTrajectory(vector<Eigen::Isometry3d, Eigen::aligned_allocator<Eigen::Isometry3d>>);
 
 int main(int argc, char **argv)
 {

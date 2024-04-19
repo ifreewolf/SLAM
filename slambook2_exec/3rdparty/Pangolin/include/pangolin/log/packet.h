@@ -33,7 +33,7 @@
 namespace pangolin {
 
 // Encapsulate serialized reading of Packet from stream.
-struct PANGOLIN_EXPORT Packet
+struct Packet
 {
     Packet(PacketStream& s, std::unique_lock<std::recursive_mutex>&& mutex, std::vector<PacketStreamSource>& srcs);
     Packet(const Packet&) = delete;

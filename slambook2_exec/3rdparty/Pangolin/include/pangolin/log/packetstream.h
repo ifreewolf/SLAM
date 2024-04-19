@@ -35,7 +35,7 @@
 namespace pangolin
 {
 
-class PANGOLIN_EXPORT PacketStream: public std::ifstream
+class PacketStream: public std::ifstream
 {
 public:
     PacketStream()
@@ -85,19 +85,19 @@ public:
 
     int64_t readTimestamp();
 
-    PangoTagType peekTag();
+    pangoTagType peekTag();
 
-    PangoTagType readTag();
+    pangoTagType readTag();
 
-    PangoTagType readTag(PangoTagType);
+    pangoTagType readTag(pangoTagType);
 
-    PangoTagType syncToTag();
+    pangoTagType syncToTag();
 
 private:
     using Base = std::ifstream;
 
     bool _is_pipe;
-    PangoTagType _tag;
+    pangoTagType _tag;
 
     // Amount of frame data left to read. Tracks our position within a data block.
 

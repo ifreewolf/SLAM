@@ -29,7 +29,6 @@
 #pragma once
 
 #include <pangolin/video/iostream_operators.h>
-#include <pangolin/utils/type_convert.h>
 
 namespace pangolin
 {

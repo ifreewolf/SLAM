@@ -35,10 +35,6 @@
 #include <limits>
 #include <cstring>
 
-#ifdef HAVE_EIGEN
-#include <Eigen/Geometry>
-#endif
-
 #ifdef PANGO_ENABLE_BOUNDS_CHECKS
 #   define PANGO_BOUNDS_ASSERT(...) PANGO_ENSURE(##__VA_ARGS__)
 #else
@@ -143,24 +139,6 @@ struct Image
             const T* el_end = el+w;
             for( ; el != el_end; ++el) {
                 *el = unary_op(*el);
-            }
-        }
-    }
-
-    // Provide an operation which is a function of the image co-ordinate (x,y)
-    template<typename UnaryOperation>
-    PANGO_HOST_DEVICE inline
-    void Generate(UnaryOperation unary_op)
-    {
-        PANGO_ASSERT(IsValid());
-
-        for(size_t y=0; y < h; ++y) {
-            T* el = RowPtr(y);
-            const T* el_end = el+w;
-            size_t x=0;
-            for( ; el != el_end; ++el) {
-                *el = unary_op(x,y);
-                ++x;
             }
         }
     }
@@ -360,22 +338,6 @@ struct Image
         PANGO_ASSERT( (x+width) <= w && (y+height) <= h);
         return Image<T>( RowPtr(y)+x, width, height, pitch);
     }
-
-#ifdef HAVE_EIGEN
-    PANGO_HOST_DEVICE inline
-    const Image<const T> SubImage(const Eigen::AlignedBox2i& region) const
-    {
-        const auto dim = region.sizes();
-        return SubImage(region.min().x(), region.min().y(), dim.x(), dim.y());
-    }
-
-    PANGO_HOST_DEVICE inline
-    Image<T> SubImage(const Eigen::AlignedBox2i& region)
-    {
-        const auto dim = region.sizes();
-        return SubImage(region.min().x(), region.min().y(), dim.x(), dim.y());
-    }
-#endif
 
     PANGO_HOST_DEVICE inline
     const Image<T> Row(int y) const

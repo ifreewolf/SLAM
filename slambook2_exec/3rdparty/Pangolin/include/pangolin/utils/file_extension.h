@@ -42,16 +42,13 @@ enum ImageFileType
     ImageFileTypeTiff,
     ImageFileTypeGif,
     ImageFileTypeExr,
-    ImageFileTypeBmp,
     ImageFileTypePango,
     ImageFileTypePvn,
-    ImageFileTypeVrs,
     ImageFileTypeZstd,
     ImageFileTypeLz4,
     ImageFileTypeP12b,
     ImageFileTypePly,
     ImageFileTypeObj,
-    ImageFileTypeArw,
     ImageFileTypeUnknown
 };
 

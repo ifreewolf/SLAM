@@ -27,7 +27,7 @@
 
 #pragma once
 
-#include <pangolin/video/video_interface.h>
+#include <pangolin/video/video.h>
 
 namespace pangolin
 {
@@ -36,10 +36,10 @@ class PANGOLIN_EXPORT JoinVideo
     : public VideoInterface, public VideoFilterInterface
 {
 public:
-    JoinVideo(std::vector<std::unique_ptr<VideoInterface>> &src, const bool verbose);
+    JoinVideo(std::vector<std::unique_ptr<VideoInterface>> &src);
 
     ~JoinVideo();
-
+    
     // Explicitly delete copy ctor and assignment operator.
     // See http://stackoverflow.com/questions/29565299/how-to-use-a-vector-of-unique-pointers-in-a-dll-exported-class-with-visual-studi
     // >> It appears adding __declspec(dllexport) forces the compiler to define the implicitly-declared copy constructor and copy assignment operator
@@ -67,13 +67,11 @@ protected:
 
     std::vector<std::unique_ptr<VideoInterface>> storage;
     std::vector<VideoInterface*> src;
-    std::vector<bool> frame_seen;
     std::vector<StreamInfo> streams;
     size_t size_bytes;
 
     int64_t sync_tolerance_us;
     int64_t transfer_bandwidth_bytes_per_us;
-    bool verbose;
 };
 
 

@@ -27,8 +27,10 @@
 
 #pragma once
 
+#include <pangolin/pangolin.h>
+#include <pangolin/video/video.h>
+
 #include <memory>
-#include <pangolin/video/video_interface.h>
 #include <pangolin/utils/fix_size_buffer_queue.h>
 
 namespace pangolin
@@ -40,7 +42,7 @@ class PANGOLIN_EXPORT ThreadVideo :  public VideoInterface, public VideoProperti
         public BufferAwareVideoInterface, public VideoFilterInterface
 {
 public:
-    ThreadVideo(std::unique_ptr<VideoInterface>& videoin, size_t num_buffers, const std::string& name);
+    ThreadVideo(std::unique_ptr<VideoInterface>& videoin, size_t num_buffers);
     ~ThreadVideo();
 
     //! Implement VideoInput::Start()
@@ -102,7 +104,6 @@ protected:
     std::condition_variable cv;
     std::mutex cvMtx;
     std::thread grab_thread;
-    std::string thread_name;
 
     mutable picojson::value device_properties;
     picojson::value frame_properties;

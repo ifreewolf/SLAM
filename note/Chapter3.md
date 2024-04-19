@@ -9,15 +9,8 @@
     - [3.3.1 旋转向量](#331-旋转向量)
     - [3.3.2 欧拉角](#332-欧拉角)
   - [3.4 四元数](#34-四元数)
-    - [3.4.1 四元数的定义](#341-四元数的定义)
-    - [3.4.2 四元数的运算](#342-四元数的运算)
-    - [3.4.3 用四元数表示旋转](#343-用四元数表示旋转)
-    - [3.4.4 四元数到其他旋转表示的转换](#344-四元数到其他旋转表示的转换)
+  - [3.5 \*相似、仿射、射影变换](#35-相似仿射射影变换)
   - [3.6 实践：Eigen几何模块](#36-实践eigen几何模块)
-    - [3.6.1 Eigen 几何模块的数据演示](#361-eigen-几何模块的数据演示)
-    - [3.6.2 实际的坐标变换例子](#362-实际的坐标变换例子)
-  - [3.7 可视化演示](#37-可视化演示)
-    - [3.7.1 显示运动轨迹](#371-显示运动轨迹)
 
 
 <B>主要目标</B>
@@ -277,393 +270,61 @@ $ZYX$转角相当于把任意旋转分解成以下3个轴上的转角：
 
 在某些主体主要为2D运动的场合(例如扫地机、自动驾驶车辆)，可以把旋转分解成三个欧拉角，然后把其中一个(例如偏航角)拿出来作为定位信息输出。
 
+
 ## 3.4 四元数
 
-### 3.4.1 四元数的定义
-
-旋转矩阵用9个量描述3自由度的旋转，具有冗余性；欧拉角和旋转向量是紧凑的，但具有奇异性。事实上，<B>找不到不带奇异性的三维向量描述方式</B>。
-
-回忆数学上的复数，用复数集$\mathbb{C}$表示复平面上的向量，而复数的乘法则表示复平面上的旋转：例如，乘上复数$i$相当于逆时针把一个复向量旋转$90\degree$。类似地，在表达三维空间旋转时，也有一种类似于复数的代数：<B>四元数(Quaternion)</B>。四元数是Hamilton找到的一种扩展的复数。它<B>既是紧凑的，也没有奇异性</B>。
-
-缺点是，四元数不够直观，其运算稍复杂些。
-
-当我们想将复平面的向量旋转$\theta$角时，可以给这个复向量乘以$e^{i\theta}$。这是极坐标表示的复数，它也可以写成普通的形式，只要用欧拉公式即可：
-
-$$
-e^{i\theta}=cos\theta + i sin\theta \tag{3.19}
-$$
-
-这正是一个单位长度的复数，所以在二维情况下，旋转可以由<B>单位复数</B>来描述，类似地，三维旋转可以由<B>单位四元数</B>来描述。
-
-一个四元数$q$拥有一个实部和三个虚部。
-
-$$
-q=q_0 + q_1i + q_2 j + q_3 k, \tag{3.20}
-$$
-
-> 其中，$i,j,k$为四元数的三个虚部。这三个虚部满足以下关系式：
-
-$$
-\left\{\begin{matrix} 
-  i^2=j^2=k^2=-1 \\
-  ij=k,ji=-k \\
-  jk=i,kj=-i \\
-\end{matrix}\right.  \tag{3.21}
-$$
-
-> 如果把$i,j,k$看成三个坐标轴，那么它们于自己的乘法和复数一样，相互之间的乘法和外积一样。有时，人们也用一个标量和一个向量来表达四元数：
-
-$$
-\mathcal{q}=[s,v]^T, \quad s=q_0 \in \mathbb{R}, \quad v=[q_1, q_2, q_3]^T \in \mathbb{R}^3.
-$$
-
-> 这里，$s$称为四元数的实部，而$v$称为它的虚部。如果一个四元数的虚部为$0$，则称为<B>实四元数</B>；反之，若它的实部为0，则称为<B>虚四元数</B>。
-
-可以用<B>单位四元数</B>表示三维空间中任意一个旋转，不过这种表达方式和复数有着微妙的不同。在复数中，乘以i意味着旋转90°，这是否意味着四元数中，乘i就是绕$i$轴旋转90°？那么ij=k是否意味着，先绕$i$轴旋转90°，再绕$j$轴转90°，就等于绕$k$轴转90°？正确的情形应该是，乘以i对应着旋转180°，这样才能保证$ij=k$的性质。而$i^2=-1$，意味着绕$i$轴旋转360°后得到一个相反的东西。这个东西要旋转两周才会和它原先的样子相等。
-
-### 3.4.2 四元数的运算
-
-现有两个四元数$q_a,q_b$，它们的向量表示为$[s_a,v_a]^T,[s_b,v_b]^T$，或者原始四元数表示为
-
-$$
-q_a=s_a + x_a i + y_a j + z_a k, \quad q_b = s_b + x_b i + y_b j + z_b k.
-$$
-
-1. 加法和减法
-
-$$
-q_a \pm q_b = [s_a \pm s_b, v_a \pm v_b]^T. \tag{3.22}
-$$
-
-2. 乘法
-
-$$
-\begin{aligned}
-q_a q_b =&s_a s_b - x_a x_b - y_a y_b - z_a z_b \\
-&+ (s_a x_b + x_a s_b + y_a z_b - z_a y_b)i \\
-&+ (s_a y_b - x_a z_b + y_a s_b + z_a x_b)j \\
-&+ (s_a z_b + x_a y_b - y_a x_b + z_a s_b)k. \tag{3.23}
-\end{aligned}
-$$
-
-利用内外积运算，该表达式更加简洁：
-
-$$
-q_a q_b = [s_a s_b - v_a^Tv_b, s_a v_b + s_b v_a + v_a \times v_b]^T. \tag{3.24}
-$$
-
-> 因为外积的存在，四元数乘法通常是不可交换的，除非$v_a$和$v_b$在$\mathbb{R}^3$中共线，此时外积项为零。
-
-3. 模长
-
-$$
-\lVert q_a \rVert=\sqrt{s_a^2 + x_a^2 + y_a^2 + z_a^2}. \tag{3.25}
-$$
-
-同时，两个四元数乘积的模即模的乘积，这使得单位四元数相乘仍是单位四元数。
-
-$$
-\lVert q_a q_b \rVert = \lVert q_a \rVert \lVert q_b \rVert. \tag{3.26}
-$$
-
-4. 共轭
-
-$$
-q_a^*=s_a - x_a i - y_a j - z_a k = [s_a, -v_a]^T. \tag{3.27}
-$$
-> 四元数的共轭是把虚部取成相反数。
-
-四元数共轭与其本身相乘，会得到一个实四元数，其实部为模长的平方：
-
-$$
-q^* q = q q^* = [s_a^2 + v^Tv, 0]^T. \tag{3.28}
-$$
-
-5. 逆
-
-$$
-q^{-1} = q^* /\lVert q \rVert ^2. \tag{3.29}
-$$
-
-> 四元数和自己的逆的乘积为实四元数$\mathcal{1}$：
-
-$$
-qq^{-1}=q^{-1}q=1. \tag{3.30}
-$$
-
-> 如果$q$为单位四元数，其逆和共轭就是同一个量。同时，乘积的逆具有和矩阵相似的性质：
-$$
-(q_a q_b)^{-1} = q_b^{-1} q_a^{-1}. \tag{3.31}
-$$
-
-6. 数乘
-
-$$
-k\mathcal{q}=[ks, kv]^T. \tag{3.32}
-$$
-
-### 3.4.3 用四元数表示旋转
-
-假设有一个空间三维点$p=[x,y,z]\in \mathbb{R}^3$，以及一个由单位四元数$q$指定的旋转。三维点$p$经过旋转之后变为$p'$。如果使用矩阵描述，那么有$p'=Rp$，如果使用四元数描述：
-
-把三维空间点用一个虚四元数来描述：
-
-$$
-p=[0,x,y,z]^T=[0,v]^T.
-$$
-
-那么，旋转后的点$p'$可表示为这样的乘积：
-
-$$
-p'=qpq^{-1}. \tag{3.33}
-$$
-
-最后把$p'$的虚部取出，即得旋转之后点的坐标。
-
-### 3.4.4 四元数到其他旋转表示的转换
-
-任意单位四元数描述了一个旋转，该旋转也可以用旋转矩阵或旋转向量描述。
-
-四元数乘法也可以写成一种矩阵的乘法，设$q=[s,v]^T$，那么，定义如下的符号$^+$和$^\oplus$为：
-
-$$
-q^+ = \begin{bmatrix} s & -v^T \\ v & sI + v^{\wedge} \end{bmatrix}, \quad 
-q^{\oplus}=\begin{bmatrix} s & -v^T \\ v & sI - v^{\wedge} \end{bmatrix}. \tag{3.34}
-$$
-
-这两个符号将四元数映射成为一个4x4的矩阵。于是，四元数乘法可以写成矩阵的形式：
-
-$$
-q_1^+q_2=\begin{bmatrix} s_1 & -v_1^T \\ v_1 & s_1 I + v_1^{\wedge} \end{bmatrix} \begin{bmatrix} s_2 \\ v_2 \end{bmatrix} = 
-\begin{bmatrix}
--v_1^T v_2 + s_1 s_2 \\
-s_1 v_2 + s_2 v_1 + v_1^{\wedge} v_2
-\end{bmatrix} = q_1 q_2. \tag{3.35}
-$$
-
-同理有：
-
-$$
-q_1 q_2 = q_1^+ q_2 = q_2^{\oplus} q_1. \tag{3.36}
-$$
-
-考虑使用四元数对空间点进行旋转的问题，根据前面的说法(式3.33)，有：
-
-$$
-\begin{aligned}
-p' &= qpq^{-1}=q^+p^+q^{-1} \\
-&= q^+q^{-1\oplus}p.
-\end{aligned} \tag{3.37}
-$$
-
-代入两个符号对应的矩阵，得：
-
-$$
-q^+(q^{-1})^{\oplus}=\begin{bmatrix} s & -v^T \\ v & sI + v^{\wedge} \end{bmatrix}
-\begin{bmatrix} s & v^T \\ -v & sI + v^{\wedge} \end{bmatrix}=
-\begin{bmatrix} 1 & 0 \\ 0^T & vv^T + s^2I + 2sv^{\wedge} + (v^{\wedge})^2 \end{bmatrix}. \tag{3.38}
-$$
-
-因为$p'$和$p$都是虚四元数，所以上面矩阵得右下角即给出了<B>从四元数到旋转矩阵/B>的变换关系</B>：
-
-$$
-R=vv^T + s^2 I + 2sv^{\wedge} + (v^{\wedge})^2. \tag{3.39}
-$$
-
-为了得到四元数到旋转向量的转换公式，对上式两侧求迹，得：
-
-$$
-\begin{aligned}
-tr(R) &= tr(vv^T + s^2 I + 2sv^{\wedge} + (v^{\wedge})^2) \\
-&= v_1^2 + v_2^2 + v_3^2 + 3s^2 - 2(v_1^2 + v_2^2 + v_3^2) \\
-&= (1-s^2) + 3s^2 - 2(1-s^2) \\
-&= 4s^2 - 1.
-\end{aligned} \tag{3.40}
-$$
-
-又由式(3.17)得
-$$
-\begin{aligned}
-\theta &= arccos\frac{tr(R-1)}{2} \\
-&= arccos(2s^2 - 1).
-\end{aligned} \tag{3.41}
-$$
-
-即
-
-$$
-cos\theta = 2s^2 -1 = scos^2\frac{\theta}{2}-1. \tag{3.42}
-$$
-
-所以：
-$$
-\theta = 2arccos\ s \tag{3.43}
-$$
-
-至于旋转轴，如果在式(3.38)中用$q$的虚部代替$p$，易知$q$的虚部组成的向量在旋转时是不动的，即构成旋转轴。于是只要将它除掉它的模长，即得。总而言之，四元数到旋转向量的转换公式如下：
-
-$$
-\left\{
-  \begin{aligned}
-  & \theta = 2arccos\ q_0 \\
-  & [n_x, n_y, n_z]^T = [q_1, q_2, q_3]^T / sin\frac{\theta}{2}
-  \end{aligned}
-\right. \tag{3.44}
-$$
-
-至于如何从其他方式转换到四元数，只需把上述步骤倒过来处理即可。在实际编程中，程序库通常会为我们准备好各种形式之间的转换。无论四元数、旋转矩阵还是轴角，它们都可以用来描述同一个旋转。
-
-## 3.6 实践：Eigen几何模块
-
-### 3.6.1 Eigen 几何模块的数据演示
-
-演示程序演示前面介绍的各种旋转表达方式，在Eigen中使用四元数、欧拉角和旋转矩阵，演示它们之间的变换方式。
-
-- slambook2/ch3/useGeometry/useGeometry.cpp
-
-```cpp
-#include <iostream>
-#include <cmath>
-
-using namespace std;
-
-#include <Eigen/Core>
-#include <Eigen/Geometry>
-
-using namespace Eigen;
-
-/**
- * 演示 Eigen 几何模块的使用方法
-*/
-
-int main(int argc, char **argv)
-{
-    // Eigen/Geometry 模块提供了各种旋转和平移的表示
-    // 3D 旋转直接使用 Matrix3d 或 Matrix3f
-    Matrix3d rotation_matrix = Matrix3d::Identity();    // 单位矩阵
-    
-    // 旋转向量
-    // 旋转向量使用 AngleAxis，它底层不直接是Matrix，但运算可以当作矩阵（因为重载了运算符）
-    // std::cout << "rotation_matrix: \n" << rotation_matrix << std::endl;
-    AngleAxisd rotation_vector(M_PI / 4, Vector3d(0, 0 , 1));   // 沿 z 轴旋转 45 度
-    cout.precision(3);
-    cout << "rotation matrix (rotation_vector to matrix) = \n" << rotation_vector.matrix() << endl; // 用matrix()转换成矩阵
-
-    // 也可以直接赋值
-    rotation_matrix = rotation_vector.toRotationMatrix();
-    cout << "rotation matrix (rotation_vector toRotationMatrix) = \n" << rotation_matrix << endl; // 用matrix()转换成矩阵
-    // 用 AngleAxis 可以进行坐标变换
-    Vector3d v(1, 0, 0);
-    Vector3d v_rotated = rotation_vector * v;
-    std::cout << "(1, 0, 0) after rotation (by angle anxis) = " << v_rotated.transpose() << std::endl;
-
-    // 或者用旋转矩阵
-    v_rotated = rotation_matrix * v;
-    std::cout << "(1, 0, 0) after rotation (by matrix) = " << v_rotated.transpose() << std::endl;
-
-    // 欧拉角：可以将旋转矩阵直接转换成欧拉角
-    Vector3d euler_angles = rotation_matrix.eulerAngles(2, 1, 0);   // ZYX顺序，即yaw-pitch-roll顺序
-    std::cout << "yaw pitch roll = " << euler_angles.transpose() << std::endl;
-
-    // 欧氏变换矩阵使用 Eigen::Isometry
-    Isometry3d T = Isometry3d::Identity();  // 虽然称为3d，实质上是 4*4 的矩阵
-    T.rotate(rotation_vector);              // 按照rotation_vector进行旋转
-    T.pretranslate(Vector3d(1, 3, 4));      // 把平移向量设成(1, 3, 4)
-    std::cout << "Transform matrix = \n" << T.matrix() << std::endl;
-
-    // 用变换矩阵进行坐标变换
-    Vector3d v_transformed = T * v;         // 相当于 R*v + t
-    std::cout << "v transformed = " << v_transformed.transpose() << std::endl;
-
-    // 对于仿射和射影变换，使用Eigen::Affine3d 和 Eigen::Projective3d 即可，
-
-    // 四元数
-    // 可以直接把AngleAxis赋值给四元数，反之亦然
-    Quaterniond q = Quaterniond(rotation_vector);
-    std::cout << "quaternion from rotation vector = " << q.coeffs().transpose() << std::endl;   // coeffs的顺序是（x,y,z,w)，w为实部，前三者为虚部
-    
-    // 也可以把旋转矩阵赋给它
-    q = Quaterniond(rotation_matrix);
-    std::cout << "quaternion from rotation matrix = " << q.coeffs().transpose() << std::endl;
-
-    // 使用四元数旋转一个向量，使用重载的乘法即可
-    v_rotated = q * v;  // 注意数学上是qvq^{-1}
-    std::cout << "(1, 0, 0) after rotation matrix = " << v_rotated.transpose() << std::endl;
-
-    // 用常规向量乘法表示，则应该计算如下
-    std::cout << "should be equal to " << (q * Quaterniond(0, 1, 0, 0) * q.inverse()).coeffs().transpose() << std::endl;
-
-    return 0;
-}
-```
-
-Eigen中对各种形式的表达方式总结如下。每种类型都有单精度和双精度两种数据类型，而且和之前一样，不能由编译器自动转换。下面以双精度为例，可以把最后的d改成f，即得到单精度的数据结构。
-
-- 旋转矩阵（3x3）: Eigen::Matrix3d。
-- 旋转向量（3x1）: Eigen::AngleAxisd。
-- 欧拉角（3x1）: Eigen::Vector3d。
-- 四元数（4x1）: Eigen::Quaterniond。
-- 欧式变换矩阵（4x4）: Eigen::Isometry3d。
-- 仿射变换（4x4）: Eigen::Affine3d。
-- 射影变换（4x4）: Eigen::Projective3d。
-
-> <B>程序代码通常和数学表示有一些细微的差别</B>。例如，通过运算符重载，四元数和三维向量可以直接计算乘法，但在数学上则需要先把向量转成虚四元数，再利用四元数乘法进行计算，同样的情况也适用于变换矩阵乘三维向量的情况。总而言之，程序中的用法会比数学公式更灵活。
-
-
-### 3.6.2 实际的坐标变换例子
-
-下面举一个小例子来演示坐标变换
-
-<B>例子 </B> 设有小萝卜一号和小萝卜二号位于世界坐标系中。记世界坐标系为$W$，小萝卜们的坐标系为$R_1$和$R_2$。小萝卜一号的位姿为$q_1=[0.35,0.2,0.3,0.1]^T,t_1=[0.3,0.1,0.1]^T$。小萝卜二号的位姿为$q_2=[-0.5,0.4,-0.1,0.2]^T,t_2=[-0.1,0.5,0.3]^T$。这里的$q$和$t$表达的是$T_{R_k ,W},k=1,2$，也就是世界坐标系到相机坐标系的变换关系。现在，小萝卜一号看到某个点在自身的坐标系下坐标为$p_{R_1}=[0.5,0,0.2]^T$，求该向量在小萝卜二号坐标系下的坐标。
-
-- slambook2/ch3/examples/coordinateTransform.cpp
-```cpp
-#include <iostream>
-#include <vector>
-#include <algorithm>
-#include <Eigen/Core>
-#include <Eigen/Geometry>
-
-using namespace std;
-using namespace Eigen;
-
-int main(int argc, char **argv)
-{
-    /**
-     * T1w^{-1}p1 = T2w^{-1}p1'
-     * p1' = T2w T1w^{-1}p1
-    */
-    Quaterniond q1(0.35, 0.2, 0.3, 0.1), q2(-0.5, 0.4, -0.1, 0.2);
-    q1.normalize(); // 规范化，将四元数的长度缩放到单位长度，四元数模=1.
-    q2.normalize();
-
-    Vector3d t1(0.3, 0.1, 0.1), t2(-0.1, 0.5, 0.3);
-    Vector3d p1(0.5, 0, 0.2);
-
-    Isometry3d T1w(q1), T2w(q2);
-    T1w.pretranslate(t1);
-    T2w.pretranslate(t2);
-
-    Vector3d p2 = T2w * T1w.inverse() * p1;
-    std::cout << std::endl << p2.transpose() << std::endl;
-    return 0;
-}
-```
-
-程序输出的答案是$[-0.0309731,0.73499,0.296108]^T$，计算过程也十分简单，只需计算
-
-$$
-p_{R_2} = T_{R_2,W}T_{W,R_1}p_{R_1}
-$$
-
-即可。注意四元数使用之前需要归一化。
+-[Chapter3.4](./subChapter/Chapter3.4四元数.md)
 
 ---
 
-## 3.7 可视化演示
+## 3.5 *相似、仿射、射影变换
 
-### 3.7.1 显示运动轨迹
+除了欧氏变换，3D空间还存在其他几种变换方式，只不过欧氏变换是最简单的，它们一部分和测量几何有关。欧氏变换保持了向量的长度和夹角，相当于我们把一个刚体原封不动地进行了移动或旋转，不改变它自身的样子。其他几种变换则会改变它的外形。它们拥有类似的矩阵表示。
+
+1. 相似变换
+   相似变换比欧氏变换多了一个自由度，它允许物体进行均匀缩放，其矩阵表示为
+   $$
+   T_s = \begin{bmatrix} sR & t \\ 0^T & 1 \end{bmatrix}. \tag{3.45}
+   $$
+
+   注意，旋转部分多了一个缩放因子$s$，表示我们在对向量旋转之后，可以在$x,y,z$三个坐标上进行均匀缩放。由于含有缩放，相似变换不再保持图形的面积不变。三维相似变换的几何也叫作<B>相似变换群</B>，记作$\mathbf{Sim}(3)$。
+
+2. 仿射变换
+   仿射变换的矩阵形式如下：
+   $$
+   T_A = \begin{bmatrix} A & t\\ 0^T & 1 \end{bmatrix}. \tag{3.46}
+   $$
+   与欧氏变换不同的是，仿射变换只要求$\mathbf{A}$是一个可逆矩阵，而不必是正交矩阵。仿射变换也叫正交投影。经过仿射变换之后，立方体久不再是方的了，但是各平面是平行四边形。
+
+3. 射影变换
+   射影变换是最一般的变换，它的矩阵形式为
+   $$
+   T_P=\begin{bmatrix} A & t \\ a^T & v \end{bmatrix}. \tag{3.47}
+   $$
+   它的左上角为可逆矩阵$\mathbin{A}$，右上角为平移$\mathbin{t}$,左下角为缩放$\mathbin{a^T}$。由于采用了齐次坐标，当$v\ne0$时，我们可以对整个矩阵除以$v$得到一个右下角为1的矩阵；否则得到右下角为0的矩阵。因此，2D的射影变换一共有8个自由度，3D则共有15个自由度。射影变换是现提到过的变换中形式最为一般的。从真实世界世界到相机照片的变换可以看成一个射影变换。
+
+表3-1总结了目前讲到的几种变换的性质。注意在“不变性质中”，从上到下是有包含关系的。例如，欧氏变换除了保体积，也具有保平行、相交等性质。
+
+<div style="text-align:center;" align=center>
+    <p>表 3-1 常见变换的性质比较</p>
 
 
+| 变换名称 | 矩阵形式 | 自由度 | 不变性质 |
+| :--: | :--: | :--: | :--: |
+| 欧氏变换 | $ T_s = \begin{bmatrix} R & t \\ 0^T & 1 \end{bmatrix} $ | 6 | 长度、夹角、体积 |
+| 相似变换 | $ T_s = \begin{bmatrix} sR & t \\ 0^T & 1 \end{bmatrix} $ | 7 | 体积比 |
+| 仿射变换 | $ T_s = \begin{bmatrix} A & t \\ 0^T & 1 \end{bmatrix} $ | 12 | 平行性、体积比 |
+| 射影变换 | $ T_s = \begin{bmatrix} A & t \\ a^T & v \end{bmatrix} $ | 15 | 接触平面的相交和相切 |
+
+</div>
+
+从真实世界到相机照片的变换是一个射影变换。如果相机的焦距为无穷远，那么这个变换为仿射变换。
+
+
+---
+
+## 3.6 实践：Eigen几何模块
+
+- [Chapter3.6](./subChapter/Chapter3.6.实践Eigen模块.md)
 
 https://www.latexlive.com/##

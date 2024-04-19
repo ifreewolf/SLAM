@@ -27,7 +27,7 @@
 
 #pragma once
 
-#include <pangolin/gl/viewport.h>
+#include <pangolin/display/viewport.h>
 #include <pangolin/gl/glinclude.h>
 #include <pangolin/image/image_io.h>
 
@@ -92,9 +92,6 @@ public:
 
     void Load(const TypedImage& image, bool sampling_linear = true);
 
-    template<typename T>
-    void Load(const Image<T>& image, bool sampling_linear = true);
-
     void LoadFromFile(const std::string& filename, bool sampling_linear = true);
 
     void Download(void* image, GLenum data_layout = GL_LUMINANCE, GLenum data_type = GL_FLOAT) const;
@@ -150,7 +147,6 @@ struct PANGOLIN_EXPORT GlFramebuffer
     GlFramebuffer();
     ~GlFramebuffer();
     
-    GlFramebuffer(GlTexture& colour);
     GlFramebuffer(GlTexture& colour, GlRenderBuffer& depth);
     GlFramebuffer(GlTexture& colour0, GlTexture& colour1, GlRenderBuffer& depth);
     GlFramebuffer(GlTexture& colour0, GlTexture& colour1, GlTexture& colour2, GlRenderBuffer& depth);
@@ -189,14 +185,8 @@ struct PANGOLIN_EXPORT GlBufferData
 {
     //! Default constructor represents 'no buffer'
     GlBufferData();
-
-    GlBufferData(GlBufferType buffer_type, GLsizeiptr size_bytes, GLenum gluse = GL_DYNAMIC_DRAW, const void *data = 0 );
-
-    template<typename T>
-    GlBufferData(GlBufferType buffer_type, const std::vector<T>& data, GLenum gluse = GL_STATIC_DRAW);
-
+    GlBufferData(GlBufferType buffer_type, GLuint size_bytes, GLenum gluse = GL_DYNAMIC_DRAW, const unsigned char* data = 0 );
     virtual ~GlBufferData();
-
     void Free();
 
     //! Move Constructor
@@ -205,28 +195,19 @@ struct PANGOLIN_EXPORT GlBufferData
 
     bool IsValid() const;
 
-    GLsizeiptr SizeBytes() const;
+    size_t SizeBytes() const;
     
-    void Reinitialise(GlBufferType buffer_type, GLsizeiptr size_bytes, GLenum gluse = GL_DYNAMIC_DRAW, const void *data = 0 );
+    void Reinitialise(GlBufferType buffer_type, GLuint size_bytes, GLenum gluse = GL_DYNAMIC_DRAW, const unsigned char* data = 0 );
     
     void Bind() const;
     void Unbind() const;
     void Upload(const GLvoid* data, GLsizeiptr size_bytes, GLintptr offset = 0);
     void Download(GLvoid* ptr, GLsizeiptr size_bytes, GLintptr offset = 0) const;
     
-
-    template<typename T>
-    void Upload(const std::vector<T>& data, GLintptr offset = 0);
-
-#ifdef USE_EIGEN
-    template<typename Derived>
-    void Upload(const Eigen::DenseBase<Derived>& data, GLintptr offset = 0);
-#endif
-
     GLuint bo;
     GlBufferType buffer_type;
     GLenum gluse;
-    GLsizeiptr size_bytes;
+    GLuint size_bytes;
 
 private:
     GlBufferData(const GlBufferData&) {}
@@ -245,17 +226,9 @@ struct PANGOLIN_EXPORT GlBuffer : public GlBufferData
     GlBuffer(GlBuffer&& tex);
     GlBuffer& operator=(GlBuffer&& tex);
     
-    void Reinitialise(GlBufferType buffer_type, GLuint num_elements, GLenum datatype, GLuint count_per_element, GLenum gluse, const void* data = nullptr );
+    void Reinitialise(GlBufferType buffer_type, GLuint num_elements, GLenum datatype, GLuint count_per_element, GLenum gluse, const unsigned char* data = nullptr );
     void Reinitialise(GlBuffer const& other );
     void Resize(GLuint num_elements);
-
-    template<typename Scalar>
-    GlBuffer(GlBufferType buffer_type, const std::vector<Scalar>& data, GLenum gluse = GL_STATIC_DRAW);
-
-#ifdef USE_EIGEN
-    template<typename Scalar, int R, int C>
-    GlBuffer(GlBufferType buffer_type, const std::vector<Eigen::Matrix<Scalar, R,C>>& data, GLenum gluse = GL_STATIC_DRAW);
-#endif
             
     GLenum datatype;
     GLuint num_elements;
@@ -290,33 +263,9 @@ protected:
     size_t  m_num_verts;    
 };
 
-class PANGOLIN_EXPORT GlVertexArrayObject
-{
-public:
-    GlVertexArrayObject();
-    ~GlVertexArrayObject();
-
-    void Bind() const;
-
-    void Unbind() const;
-
-    void AddVertexAttrib(
-        GLuint attrib_location,
-        const GlBuffer& bo,
-        size_t offset_bytes = 0,
-        size_t stride_bytes = 0,
-        GLboolean normalized = GL_FALSE
-    );
-
-protected:
-    GLuint vao;
-};
-
 size_t GlFormatChannels(GLenum data_layout);
 
 size_t GlDataTypeBytes(GLenum type);
-
-TypedImage ReadFramebuffer(const Viewport& v, const std::string& pixel_format = "RGBA32");
 
 }
 

@@ -44,19 +44,10 @@ namespace pangolin {
 template <typename... Args> PANGO_HOST_DEVICE
 void abort(const char* function, const char* file, int line, Args&&... args)
 {
-  std::fprintf(stderr, "pangolin::abort() in function '%s', file '%s', line %d.\n", function, file, line);
+  std::printf("pangolin::abort() in function '%s', file '%s', line %d.\n", function, file, line);
 #ifndef __CUDACC__
-  std::cerr << FormatString(std::forward<Args>(args)...) << std::endl;
+  std::cout << FormatString(std::forward<Args>(args)...) << std::endl;
   std::abort();
-#endif
-}
-
-template <typename... Args> PANGO_HOST_DEVICE
-void warning(const char* expr, const char* function, const char* file, int line, Args&&... args)
-{
-  std::fprintf(stderr, "pangolin::warning() in function '%s', file '%s', line %d:\n\t%s\n", function, file, line, expr);
-#ifndef __CUDACC__
-  std::cerr << FormatString(std::forward<Args>(args)...) << std::endl;
 #endif
 }
 
@@ -67,6 +58,3 @@ void warning(const char* expr, const char* function, const char* file, int line,
 
 // May be disabled for optimisation
 #define PANGO_ASSERT(expr, ...) ((expr) ? ((void)0) : pangolin::abort(PANGO_FUNCTION, __FILE__, __LINE__, ##__VA_ARGS__))
-
-#define PANGO_WARNING(expr, ...) ((expr) ? ((void)0) : pangolin::warning(#expr, PANGO_FUNCTION, __FILE__, __LINE__, ##__VA_ARGS__))
-

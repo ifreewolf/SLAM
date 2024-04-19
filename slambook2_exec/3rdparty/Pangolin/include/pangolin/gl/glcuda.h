@@ -29,10 +29,9 @@
 
 #include <algorithm>
 #include <cuda_runtime.h>
+#include <cuda_gl_interop.h>
 
 #include "gl.h"
-// Must include glew.h before gl.h
-#include <cuda_gl_interop.h>
 
 namespace pangolin
 {
@@ -49,7 +48,7 @@ struct GlBufferCudaPtr : public GlBuffer
     GlBufferCudaPtr(GlBufferType buffer_type, GLuint size_bytes, unsigned int cudause /*= cudaGraphicsMapFlagsNone*/, GLenum gluse /*= GL_DYNAMIC_DRAW*/ );
     GlBufferCudaPtr(GlBufferType buffer_type, GLuint num_elements, GLenum datatype, GLuint count_per_element, unsigned int cudause /*= cudaGraphicsMapFlagsNone*/, GLenum gluse /*= GL_DYNAMIC_DRAW*/ );
     
-    PANGOLIN_DEPRECATED("Please use GlBufferCudaPtr(buffer_type, width*height, datatype,...) instead")
+    PANGOLIN_DEPRECATED
     GlBufferCudaPtr(GlBufferType buffer_type, GLuint width, GLuint height, GLenum datatype, GLuint count_per_element, unsigned int cudause /*= cudaGraphicsMapFlagsNone*/, GLenum gluse /*= GL_DYNAMIC_DRAW*/ );
     
     ~GlBufferCudaPtr();

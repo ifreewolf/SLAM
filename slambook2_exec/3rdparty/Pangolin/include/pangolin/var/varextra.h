@@ -43,11 +43,20 @@ void LoadJsonFile(const std::string& filename, const std::string& prefix="");
 PANGOLIN_EXPORT
 void SaveJsonFile(const std::string& filename, const std::string& prefix="");
 
+PANGOLIN_EXPORT
+void ProcessHistoricCallbacks(NewVarCallbackFn callback, void* data, const std::string& filter = "");
+
+PANGOLIN_EXPORT
+void RegisterNewVarCallback(NewVarCallbackFn callback, void* data, const std::string& filter = "");
+
+PANGOLIN_EXPORT
+void RegisterGuiVarChangedCallback(GuiVarChangedCallbackFn callback, void* data, const std::string& filter = "");
+
 template<typename T>
 struct SetVarFunctor
 {
     SetVarFunctor(const std::string& name, T val) : varName(name), setVal(val) {}
-    void operator()() { Var<T>(varName).Ref()->Set(setVal); }
+    void operator()() { Var<T>(varName).Ref().Set(setVal); }
     std::string varName;
     T setVal;
 };
@@ -59,34 +68,25 @@ struct ToggleVarFunctor
     std::string varName;
 };
 
-inline bool Pushed(bool& button)
-{
-    return button && !(button = false);
-}
-
 inline bool Pushed(Var<bool>& button)
 {
-    return (bool)button && !(button = false);
+    bool val = button;
+    button = false;
+    return val;
 }
 
-// Just forward to the static method
-// The benefit here is that we can get type inference
-template<typename T, typename... Ts>
-T& AttachVar(const std::string& name, T& var, Ts... ts)
+inline bool Pushed(bool& button)
 {
-    return Var<T>::Attach(name, var, ts...);
-}
-
-inline void DetachVarByName(const std::string& name)
-{
-    VarState::I().Remove(name);
+    bool val = button;
+    button = false;
+    return val;
 }
 
 template<typename T>
-void DetachVar(const T& value)
+inline std::ostream& operator<<(std::ostream& s, Var<T>& rhs)
 {
-    auto var = VarState::I().GetByReference<T>(value);
-    if(var) DetachVarByName(var->Meta().full_name);
+    s << rhs.operator const T &();
+    return s;
 }
 
 }

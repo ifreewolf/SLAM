@@ -1,4 +1,4 @@
-set(PACKAGE_VERSION "0.9.1")
+set(PACKAGE_VERSION "0.6")
 
 # Check build type is valid
 if( "System:${CMAKE_SYSTEM_NAME},Win64:${CMAKE_CL_64},Android:${ANDROID},iOS:${IOS}" STREQUAL

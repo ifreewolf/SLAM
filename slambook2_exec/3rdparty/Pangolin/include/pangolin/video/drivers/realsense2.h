@@ -1,6 +1,9 @@
 #pragma once
 
-#include <pangolin/video/video_interface.h>
+#include <pangolin/pangolin.h>
+
+#include <pangolin/video/video.h>
+
 #include <pangolin/video/iostream_operators.h>
 
 namespace rs2 {
@@ -18,6 +21,10 @@ public:
 
     // Open all RGB and Depth streams from all devices
     RealSense2Video(ImageDim dim=ImageDim(640,480), int fps=30);
+
+    // Open streams specified
+    // TODO
+    //RealSense2Video(std::vector<OpenNiStreamMode>& stream_modes);
 
     ~RealSense2Video();
 

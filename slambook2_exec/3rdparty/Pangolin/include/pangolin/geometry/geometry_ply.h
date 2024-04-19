@@ -25,9 +25,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <variant>
 #include <pangolin/platform.h>
-#include <pangolin/geometry/geometry.h>
+#include <pangolin/compat/variant.h>
 #include <pangolin/geometry/geometry.h>
 
 #include <fstream>
@@ -40,8 +39,7 @@ namespace pangolin
 #define PLY_GROUP_LIST(m)  m(PlyHeader) m(PlyFormat) m(PlyType)
 #define PLY_HEADER_LIST(m) m(ply) m(format) m(comment) m(property) m(element) m(end_header)
 #define PLY_FORMAT_LIST(m) m(ascii) m(binary_big_endian) m(binary_little_endian)
-#define PLY_TYPE_LIST(m)   m(char) m(uchar) m(short) m(ushort) m(int) m(uint) m(float) m(double) m(list) m(none)
-#define PLY_CTYPE_LIST(m)  m(int8_t) m(uint8_t) m(int16_t) m(uint16_t) m(int32_t) m(uint32_t) m(float) m(double) m(void*) m(void*)
+#define PLY_TYPE_LIST(m)   m(char) m(int8) m(uchar) m(uint8) m(short) m(int16) m(ushort) m(uint16) m(int) m(int32) m(uint) m(uint32) m(float) m(float32) m(double) m(float64) m(list)
 
 // Define Enums / strings
 enum PlyHeader {
@@ -64,21 +62,38 @@ enum PlyType {
     PlyTypeSize
 #undef FORMAT_ENUM
 };
-const size_t PlyTypeSizeBytes[] = {
-#define FORMAT_ENUM(x) sizeof(x),
-    PLY_CTYPE_LIST(FORMAT_ENUM)
-#undef FORMAT_ENUM
+const size_t PlyTypeGl[] = {
+//  char, int8 -> GL_BYTE
+    0x1400, 0x1400,
+//  uchar, uint8 -> GL_UNSIGNED_BYTE
+    0x1401, 0x1401,
+//  short, int16 -> GL_SHORT
+    0x1402, 0x1402,
+//  ushort, uint16 -> GL_UNSIGNED_SHORT
+    0x1403, 0x1403,
+//  int, int32 -> GL_INT
+    0x1404, 0x1404,
+//  uint, uint32 -> GL_UNSIGNED_INT
+    0x1405, 0x1405,
+//  float, float32 -> GL_FLOAT
+    0x1406, 0x1406,
+//  double, float64 -> GL_DOUBLE
+    0x140A, 0x140A,
+//  list -> GL_NONE
+    0
 };
+
+#undef FORMAT_ENUM
 
 struct PlyPropertyDetails
 {
     std::string name;
 
-    // Type of property
-    PlyType type;
+    // Type of property (GLenum)
+    size_t type;
 
-    // Type of list index if a list, or 0 otherwise.
-    PlyType list_index_type;
+    // Type of list index if a list, or 0 otherwise. (GLenum)
+    size_t list_index_type;
 
     // Offset from element start
     size_t offset_bytes;

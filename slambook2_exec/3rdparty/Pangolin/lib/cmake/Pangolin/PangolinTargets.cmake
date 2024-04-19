@@ -16,7 +16,7 @@ set(CMAKE_IMPORT_FILE_VERSION 1)
 set(_targetsDefined)
 set(_targetsNotDefined)
 set(_expectedTargets)
-foreach(_expectedTarget pango_core pango_display pango_geometry pango_glgeometry pango_image pango_opengl pango_packetstream pango_plot pango_python pango_scene pango_tools pango_vars pango_video pango_windowing tinyobj)
+foreach(_expectedTarget pangolin)
   list(APPEND _expectedTargets ${_expectedTarget})
   if(NOT TARGET ${_expectedTarget})
     list(APPEND _targetsNotDefined ${_expectedTarget})
@@ -50,128 +50,13 @@ if(_IMPORT_PREFIX STREQUAL "/")
   set(_IMPORT_PREFIX "")
 endif()
 
-# Create imported target pango_core
-add_library(pango_core SHARED IMPORTED)
+# Create imported target pangolin
+add_library(pangolin SHARED IMPORTED)
 
-set_target_properties(pango_core PROPERTIES
-  INTERFACE_COMPILE_DEFINITIONS "_LINUX_"
-  INTERFACE_COMPILE_FEATURES "cxx_decltype_auto"
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include;${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "rt;Threads::Threads"
-)
-
-# Create imported target pango_display
-add_library(pango_display SHARED IMPORTED)
-
-set_target_properties(pango_display PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include;${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "pango_core;pango_opengl;pango_windowing;pango_vars"
-)
-
-# Create imported target pango_geometry
-add_library(pango_geometry SHARED IMPORTED)
-
-set_target_properties(pango_geometry PROPERTIES
-  INTERFACE_COMPILE_DEFINITIONS "HAVE_EIGEN"
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include;${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "pango_core;pango_image;tinyobj;Eigen3::Eigen"
-)
-
-# Create imported target pango_glgeometry
-add_library(pango_glgeometry SHARED IMPORTED)
-
-set_target_properties(pango_glgeometry PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include;${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "pango_geometry;pango_opengl"
-)
-
-# Create imported target pango_image
-add_library(pango_image SHARED IMPORTED)
-
-set_target_properties(pango_image PROPERTIES
-  INTERFACE_COMPILE_DEFINITIONS "HAVE_EIGEN"
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include;${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "pango_core;Eigen3::Eigen"
-)
-
-# Create imported target pango_opengl
-add_library(pango_opengl SHARED IMPORTED)
-
-set_target_properties(pango_opengl PROPERTIES
-  INTERFACE_COMPILE_DEFINITIONS "HAVE_EIGEN;HAVE_GLEW"
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include;${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "pango_core;pango_image;Eigen3::Eigen;/usr/lib/x86_64-linux-gnu/libGLEW.so;/usr/lib/x86_64-linux-gnu/libOpenGL.so;/usr/lib/x86_64-linux-gnu/libGLX.so;/usr/lib/x86_64-linux-gnu/libGLU.so"
-)
-
-# Create imported target pango_packetstream
-add_library(pango_packetstream SHARED IMPORTED)
-
-set_target_properties(pango_packetstream PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include;${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "pango_core"
-)
-
-# Create imported target pango_plot
-add_library(pango_plot SHARED IMPORTED)
-
-set_target_properties(pango_plot PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include;${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "pango_display"
-)
-
-# Create imported target pango_python
-add_library(pango_python SHARED IMPORTED)
-
-set_target_properties(pango_python PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include"
-)
-
-# Create imported target pango_scene
-add_library(pango_scene SHARED IMPORTED)
-
-set_target_properties(pango_scene PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include;${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "pango_opengl"
-)
-
-# Create imported target pango_tools
-add_library(pango_tools SHARED IMPORTED)
-
-set_target_properties(pango_tools PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include;${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "pango_display;pango_video"
-)
-
-# Create imported target pango_vars
-add_library(pango_vars SHARED IMPORTED)
-
-set_target_properties(pango_vars PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include;${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "pango_core"
-)
-
-# Create imported target pango_video
-add_library(pango_video SHARED IMPORTED)
-
-set_target_properties(pango_video PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include;${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "pango_core;pango_image;pango_packetstream"
-)
-
-# Create imported target pango_windowing
-add_library(pango_windowing SHARED IMPORTED)
-
-set_target_properties(pango_windowing PROPERTIES
-  INTERFACE_COMPILE_DEFINITIONS "PANGO_DEFAULT_WIN_URI=\"x11\""
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include;${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "pango_core;pango_opengl"
-)
-
-# Create imported target tinyobj
-add_library(tinyobj SHARED IMPORTED)
-
-set_target_properties(tinyobj PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include;${_IMPORT_PREFIX}/include"
+set_target_properties(pangolin PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES "/usr/include;/usr/include;/usr/include;/usr/include/eigen3;${_IMPORT_PREFIX}/include"
+  INTERFACE_LINK_LIBRARIES "rt;pthread;/usr/lib/x86_64-linux-gnu/libOpenGL.so;/usr/lib/x86_64-linux-gnu/libGLX.so;/usr/lib/x86_64-linux-gnu/libGLU.so;/usr/lib/x86_64-linux-gnu/libGLEW.so;/usr/lib/x86_64-linux-gnu/libEGL.so;/usr/lib/x86_64-linux-gnu/libSM.so;/usr/lib/x86_64-linux-gnu/libICE.so;/usr/lib/x86_64-linux-gnu/libX11.so;/usr/lib/x86_64-linux-gnu/libXext.so;rt;pthread;/usr/lib/x86_64-linux-gnu/libdc1394.so;/usr/lib/x86_64-linux-gnu/libpng.so;/usr/local/lib/libz.so;/usr/lib/x86_64-linux-gnu/libjpeg.so;/usr/local/lib/libtiff.so;/usr/lib/x86_64-linux-gnu/libIlmImf.so"
+  INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "/usr/include;/usr/include;/usr/include;/usr/include/eigen3"
 )
 
 if(CMAKE_VERSION VERSION_LESS 2.8.12)

@@ -31,13 +31,15 @@
 
 #include <cstdio>
 #include <cstdarg>
-#include <unordered_map>
 
 namespace pangolin {
 
 class PANGOLIN_EXPORT GlFont
 {
 public:
+    // Singleton instance if requested.
+    static GlFont& I();
+
     // Load GL Font data. Delay uploading as texture until first use.
     GlFont(const unsigned char* ttf_buffer, float pixel_height, int tex_w=512, int tex_h=512);
     GlFont(const std::string& filename, float pixel_height, int tex_w=512, int tex_h=512);
@@ -47,33 +49,30 @@ public:
     // Generate renderable GlText object from this font.
     GlText Text( const char* fmt, ... );
 
-    // Utf8 encoded string
-    GlText Text( const std::string& utf8 );
+    GlText Text( const std::string& str );
 
     inline float Height() const {
         return font_height_px;
     }
-    inline float MaxWidth() const {
-        return font_max_width_px;
-    }
-
+    
 protected:
     void InitialiseFont(const unsigned char* ttf_buffer, float pixel_height, int tex_w, int tex_h);
 
     // This can only be called once GL context is initialised
     void InitialiseGlTexture();
 
-    float font_height_px;
-    float font_max_width_px;
+    const static int FIRST_CHAR = 32;
+    const static int NUM_CHARS = 96;
 
-    ManagedImage<unsigned char> font_bitmap;
+    float font_height_px;
+
+    int tex_w;
+    int tex_h;
+    unsigned char* font_bitmap;
     GlTexture mTex;
 
-    using codepoint_t = uint32_t;
-    using codepointpair_t = std::pair<codepoint_t, codepoint_t>;
-
-    std::map<codepoint_t, GlChar> chardata;
-    std::map<codepointpair_t, GLfloat> kern_table;
+    GlChar chardata[NUM_CHARS];
+    GLfloat kern_table[NUM_CHARS*NUM_CHARS];
 };
 
 }
