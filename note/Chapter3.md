@@ -305,9 +305,19 @@ $ZYX$转角相当于把任意旋转分解成以下3个轴上的转角：
 
 表3-1总结了目前讲到的几种变换的性质。注意在“不变性质中”，从上到下是有包含关系的。例如，欧氏变换除了保体积，也具有保平行、相交等性质。
 
-<div style="text-align:center;" align=center>
-    <p>表 3-1 常见变换的性质比较</p>
+<style>
+.center 
+{
+  width: auto;
+  display: table;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
 
+<p align="center"><font face="黑体" size=4.>表 3-1 常见变换的性质比较</font></p>
+
+<div class="center">
 
 | 变换名称 | 矩阵形式 | 自由度 | 不变性质 |
 | :--: | :--: | :--: | :--: |
