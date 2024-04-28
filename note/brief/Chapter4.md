@@ -208,6 +208,53 @@ $$
 
 ### 3.2 SE(3)上的指数映射
 
+李群$\mathrm{SE}(3)$对应的李代数为$\xi$，反对称矩阵为：
+
+$$
+\xi^{\wedge} = \begin{bmatrix}
+    \phi^{\wedge} & \rho \\
+    0^T & 0
+\end{bmatrix}
+$$
+
+李代数$\mathcal{se}(3)$上的指数映射为：
+
+$$
+\begin{aligned}
+    \exp(\xi^{\wedge}) &= \begin{bmatrix}
+        \sum_{n=1}^{\infty}\frac{1}{n!}(\phi^{\wedge})^n & \sum_{n=1}^{\infty}\frac{1}{(n+1)!}(\phi^{\wedge})^n \rho \\
+        0^T & 1
+    \end{bmatrix} \\
+    &\overset{\Delta}{=} \begin{bmatrix}
+        R & J\rho \\
+        0^T & 1
+    \end{bmatrix} = T. 
+\end{aligned}\tag{4.19}
+$$
+
+$$
+\begin{aligned}
+    \sum_{n=1}^{\infty} \frac{1}{(n+1)!}(\phi^{\wedge})^n &= I + \frac{1}{2!}\theta a^{\wedge} + \frac{1}{3!}\theta^3 (a^{\wedge})^3 + \frac{1}{4!}\theta^4 (a^{\wedge})^4 + \frac{1}{5!}\theta^5 (a^{\wedge})^5 + ... \\
+    &= \frac{1}{\theta}\left( \frac{1}{2!}\theta^2 - \frac{1}{4!}\theta^4 + ... \right)(a^{\wedge}) + \frac{1}{\theta}\left( \frac{1}{3!}\theta^3 - \frac{1}{5!}\theta^5 + ... \right)(a^{\wedge})^2 + I \\
+    &= \frac{1}{\theta}(1 - \cos\theta)(a^{\wedge}) + \frac{\theta - \sin\theta}{\theta}(aa^T - I) + I \\
+    &= \frac{\sin\theta}{\theta}I + \left( 1 - \frac{\sin\theta}{\theta} \right)aa^T + \frac{1 - \cos\theta}{\theta}a^{\wedge} \overset{def}{=}J.
+\end{aligned} \tag{4.20}
+$$
+
+$\xi$的指数映射左上角的$R$是$\mathrm{SO}(3)$中的元素，与$\mathcal{se}(3)$中的旋转部分$\phi$对应，而右上角的$\mathbin{J}$由上面的推导给出：
+
+$$
+J = \frac{\sin\theta}{\theta}I + \left( 1 - \frac{\sin\theta}{\theta} \right)aa^T + \frac{1 - \cos\theta}{\theta}a^{\wedge}. \tag{4.21}
+$$
+
+变换矩阵$T$左上角对应旋转矩阵$R$，右上角是平移$t$满足：
+
+$$
+t = J\rho \tag{4.22}
+$$
+
+
+
 ## 4. 李代数求导与扰动模型
 ### 4.1 BCH公式与近似形式
 ### 4.2 SO(3)上的李代数求导
