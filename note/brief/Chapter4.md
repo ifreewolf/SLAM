@@ -253,10 +253,34 @@ $$
 t = J\rho \tag{4.22}
 $$
 
+李群、李代数转换关系总结如下：
+
+<div align=center>
+    <img src="../image/李群与李代数.png" />
+</div>
 
 
 ## 4. 李代数求导与扰动模型
 ### 4.1 BCH公式与近似形式
+
+两个李代数指数映射乘积的完整形式，由Baker-Campbell-Hausdorff公式(BCH公式)给出，给出其展开式的前几项：
+
+$$
+\ln(\exp(A)\exp(B)) = A + B + \frac{1}{2}[A,B] + \frac{1}{12}[A,[A,B]] - \frac{1}{12}[B,[A,B]] + ... \tag{4.23}
+$$
+> 其中[]为李括号。当处理两个矩阵指数之积时，会产生一些由李括号组成的余项。
+
+SO(3)上的李代数$\ln(\exp(\phi^{\wedge})\exp(\phi^{\wedge}))^{\vee}$，当$\phi_1$或$\phi_2$为小量时，小量二次以上的项都可以被忽略，此时，BCH拥有线性近似表达：
+
+$$
+\ln(\exp(\phi_1^{\wedge})\exp(\phi_2^{\wedge}))^{\vee} \approx \left\{
+    \begin{array}{l}
+        J_l(\phi_2)^{-1}\phi_1 + \phi_2 \qquad 当\phi_1为小量, \\
+        J_r(\phi_1)^{-1}\phi_2 + \phi_1 \qquad 当\phi_2为小量.
+    \end{array}
+\right. \tag{4.24}
+$$
+
 ### 4.2 SO(3)上的李代数求导
 ### 4.3 李代数求导
 ### 4.4 扰动模型(左乘)
