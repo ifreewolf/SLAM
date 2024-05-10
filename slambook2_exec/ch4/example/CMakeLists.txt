@@ -1,4 +1,4 @@
-option(USE_UBUNTU_20 "Set to ON if you are using Ubuntu 20.04")
+option(USE_UBUNTU_20 "Set to ON if you are using Ubuntu20" OFF)
 find_package(Pangolin REQUIRED)
 if(USE_UBUNTU_20)
     message("You are using Ubuntu 20.04, fmt::fmt will be linked")
@@ -6,6 +6,5 @@ if(USE_UBUNTU_20)
     set(FMT_LIBRARIES fmt::fmt)
 endif()
 include_directories(${Pangolin_INCLUDE_DIRS})
-
 add_executable(trajectoryError trajectoryError.cpp)
-target_link_libraries(trajectoryError ${Pangolin_LIBRARIES} ${FMT_LIBRARIES} fmt)
+target_link_libraries(trajectoryError ${Pangolin_LIBRARIES} ${FMT_LIBRARIES} Sophus::Sophus)

@@ -280,7 +280,85 @@ $$
 \right. \tag{4.24}
 $$
 
+> 当对一个旋转矩阵$R_2$（李代数为$\phi_2$）左乘一个微小旋转矩阵$R_1$(李代数为$\phi_1$)时，可以近似地看作，在原有的李代数$\phi_2$上加上了一项$$
+> 同理，第二个近似描述了右乘一个微小位移的情况。
+> 李代数在BCH近似下，分成了左乘近似和右乘近似两种。
+
+左乘BCH近似雅可比$J_l$就是式(4.27)的内容：
+
+$$
+J_l = J = \frac{\sin\theta}{\theta} I + \left( 1 - \frac{\sin\theta}{\theta} \right)aa^T + \frac{1 - \cos\theta}{\theta}a^{\wedge}. \tag{4.25}
+$$
+
+它的逆为
+
+$$
+J_l^{-1} = \frac{\sin\theta}{\theta} I + \left( 1 - \frac{\sin\theta}{\theta} \right)aa^T + \frac{1 - \cos\theta}{\theta}a^{\wedge}. \tag{4.26}
+$$
+
+右乘雅可比仅需要对自变量取负号即可：
+
+$$
+J_r(\phi) = J_l(-\phi). \tag{4.27}
+$$
+
+对旋转矩阵$R$左乘一个微小旋转，记作$\Delta R$，对应的李代数($\mathcal{so}(3)$)为$\Delta \phi$，
+
+$$
+\Delta R\cdot R = \exp(\Delta \phi^{\wedge}) \exp(\phi^{\wedge}) = \exp\left( (\phi + J_l^{-1}(\phi)\Delta \phi)^{\wedge} \right). \tag{4.28}
+$$
+
+在李代数($\mathcal{so}(3)$)上进行加法：
+
+$$
+\exp((\phi + \Delta\phi)^{\wedge}) = \exp\left( (J_r \Delta \phi) \right) \exp(\phi^{\wedge}) = \exp(\phi^{\wedge})\exp\left( (J_r\Delta\phi)^{\wedge} \right). \tag{4.29}
+$$
+
+李代数$\mathcal{se}(3)$左乘和右乘微小李代数
+
+$$
+\Delta T\cdot T = \exp(\Delta\xi^{\wedge})\exp(\xi^{\wedge}) \approx \exp\left( (\mathcal{J}_l^{-1}\Delta\xi + \xi)^{\wedge} \right), \tag{4.30}
+$$
+
+$$
+T\cdot \Delta T = \exp(\xi^{\wedge}) \exp(\Delta\xi^{\wedge}) \approx \exp\left( (\mathcal{J}_r^{-1}\Delta\xi + \xi)^{\wedge} \right), \tag{4.31}
+$$
+
 ### 4.2 SO(3)上的李代数求导
+
+1. 用李代数表示姿态，然后根据李代数加法对<b>李代数求导</b>。
+2. 对李群左乘或右乘微小扰动，然后对该扰动求导，称为左扰动和右扰动模型。
+
+---
+
 ### 4.3 李代数求导
+
+假设对一个空间点$p$进行了旋转，得到了$Rp$，现在要计算旋转之后的坐标相对于旋转的导数，记为：$\frac{\partial(Rp)}{\partial R}$.
+
+因为SO(3)没有加法，所以该导数无法按照导数的定义进行计算，转而计算：
+$$
+\frac{\partial(\exp(\phi^{\wedge})p)}{\partial \phi} = -(Rp)^{\wedge}J_l. \tag{4.32}
+$$
+
+
 ### 4.4 扰动模型(左乘)
+
+另一种求导方式是对R进行一次扰动$\Delta R$，看结果相对于扰动的变化率，这个扰动可以左乘，也可以右乘。
+以左扰动为例，左扰动$\Delta R$对应的李代数为$\varphi$，然后，对$\varPhi$求导，即
+
+$$
+\frac{\partial(Rp)}{\partial \varphi} = \lim_{\varphi \to 0}\frac{\exp(\phi^{\wedge})\exp(\phi^{\wedge})p - \exp(\phi^{\wedge})p}{\varphi} = -(Rp)^{\wedge}. \tag{4.33}
+$$
+
+相比于直接对李代数求导，省去了一个雅可比$J_l$的计算，这使得扰动模型更为实用。
+
 ### 4.5 SE(3)上的李代数求导
+
+空间点$p$经过一次变换$T$(对应李代数为$\xi$)，得到$Tp$，现在，给$T$左乘一个扰动$\Delta T = \exp(\delta \xi^{\wedge})$，设扰动项的李代数为$\delta \xi = [\delta \rho, \delta \phi]^T$，那么：
+
+$$
+\frac{\partial (Tp)}{\partial \delta \xi} = \lim_{\delta \xi \to 0} = \frac{\exp(\delta \xi^{\wedge})\exp(\xi^{\wedge})p - \exp(\xi^{wedge})p}{\delta \xi} = \begin{bmatrix}
+I & -(Rp + t)^{\wedge} \\
+0^T & 0^T
+\end{bmatrix} \overset{def}{=} = (Tp)^{\odot}.
+$$
