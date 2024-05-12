@@ -7,7 +7,7 @@
 using namespace Sophus;
 using namespace std;
 
-string groundtruth_file = "./example/groundtruch.txt";
+string groundtruth_file = "./example/groundtruth.txt";
 string estimated_file = "./example/estimated.txt";
 
 typedef vector<Sophus::SE3d, Eigen::aligned_allocator<Sophus::SE3d>> TrajectoryType;
@@ -21,7 +21,7 @@ int main(int argc, char **argv)
     TrajectoryType groundtruth = ReadTrajectory(groundtruth_file);
     TrajectoryType estimated = ReadTrajectory(estimated_file);
     assert(!groundtruth.empty() && !estimated.empty());
-    assert(groundtruch.size() == estimated.size());
+    assert(groundtruth.size() == estimated.size());
 
     // compute rmse
     double rmse = 0;
@@ -34,7 +34,7 @@ int main(int argc, char **argv)
     rmse = sqrt(rmse);
     cout << "RMSE = " << rmse << endl;
 
-    DrawTrajectory(groundtruch, estimated);
+    DrawTrajectory(groundtruth, estimated);
     return 0;
 }
 
