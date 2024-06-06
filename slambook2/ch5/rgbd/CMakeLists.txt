@@ -1,3 +1,5 @@
+set(fmt_DIR /home/fgs/Workstations/SLAM/slambook2_exec/3rdparty/fmt/include/fmt)
+find_package(fmt REQUIRED)
 find_package(Sophus REQUIRED)
 include_directories(${Sophus_INCLUDE_DIRS})
 
