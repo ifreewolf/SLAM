@@ -6,7 +6,8 @@
 #include "myslam/camera.h"
 #include "myslam/common_include.h"
 
-namespace myslam {
+namespace myslam
+{
 
 // forward declare
 struct MapPoint;
@@ -14,49 +15,50 @@ struct Feature;
 
 /**
  * 帧
- * 每一帧分配独立ID， 关键帧分配关键ID
+ * 每一帧分配独立id，关键帧分配关键ID
 */
-struct Frame {
-    public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-        typedef std::shared_ptr<Frame> Ptr;
+struct Frame
+{
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    typedef std::shared_ptr<Frame> Ptr;
 
-        unsigned long id_ = 0;          // id of this frame
-        unsigned long keyframe_id = 0;  // id of key frame
-        bool is_keyframe_ = false;      // 是否为关键帧
-        double time_stamp_;             // 时间戳，暂不使用
-        SE3 pose_;                      // Tcw 形式Pose
-        std::mutex pose_mutex_;         // Pose数据锁
-        cv::Mat left_img_, right_img_;  // stereo images
+    unsigned long id_ = 0;          // id of this frame
+    unsigned long keyframe_id_ = 0; // id of key frame
+    bool is_keyframe_ = false;      // 是否为关键帧
+    double time_stamp_;             // 时间戳，暂不使用
+    SE3 pose_;                      // Tcw 形式Pose
+    std::mutex pose_mutex_;         // Pose 数据锁
+    cv::Mat left_img_, right_img_;  // stereo images
 
-        // extracted freatures in left image
-        std::vector<std::shared_ptr<Feature>> features_left_;
-        // corresponding features in right image, set to nullptr if no corresponding
-        std::vector<std::shared_ptr<Feature>> features_right_;
-    
-    public:
-        Frame() {}
+    // extracted features in left images
+    std::vector<std::shared_ptr<Feature>> features_left_;
+    // corresponding features in right image, set to nullptr if no corresponding
+    std::vector<std::shared_ptr<Feature>> features_right_;
 
-        Frame(long id, double time_stamp, const SE3 &pose, const Mat &left, const Mat &right);
+public: // data members
+    Frame() {}
 
-        // set and get pose, thread safe
-        SE3 Pose() {
-            std::unqiue_lock<std::mutex> lck(pose_mutex_);
-            return pose_;
-        }
+    Frame(long id, double time_stamp, const SE3 &pose, const Mat &left, const Mat &right);
 
-        void SetPose(const SE3 &pose) {
-            std::unique_lock<std::mutex> lck(pose_mutex_);
-            pose_ = pose;
-        }
+    // set and get post, thread safe
+    SE3 Pose() {
+        std::unique_ptr<std::mutex> lck(pose_mutex_);
+        return pose_;
+    }
 
-        // 设置关键帧并分配关键帧id
-        void SetKeyFrame();
+    void SetPose(const SE3 &pose) {
+        std::unique_ptr<std::mutex> lck(pose_mutex_);
+        pose_ = pose;
+    }
 
-        // 工厂构建模式，分配id
-        static std::shared_ptr<Frame> CreateFrame();
+    // 设置关键帧并分配关键帧id
+    void SetKeyFrame();
+
+    // 工厂构建模式，分配id
+    static std::shared_ptr<Frame> CreateFrame();
 };
 
-}
+}   // namespace myslam
 
-#endif
+#endif  // MYSLAM_FRAME_H
