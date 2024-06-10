@@ -324,7 +324,7 @@ void test01()
 {
     int arr[5] = { 10, 20, 30, 40, 50 };
     // 需求：给arr起个别名
-    int(&my_arr)[5] = arr;  // my_arr就是数组arr的别名
+    int (&my_arr)[5] = arr;  // my_arr就是数组arr的别名
     int i = 0;
     for (int i = 0; i < 5; i++) {
         cout << my_arr[i] << " ";
@@ -417,3 +417,370 @@ void test06()
     my_data();  // num = 2000
 }
 ```
+
+### 引用的本质
+
+引用的本质在C++内部实现是一个<b>指针常量</b>`Type& ref = val; // Type* const ref = &val;`
+
+C++编译器在编译过程中使用常指针作为引用的内部实现，因此引用所占用的空间大小与指针相同，只是这个过程是编译器内部实现，用户不可见。
+
+> 指针常量：int *const p;
+> 常量指针：const int* p;
+
+### 指针引用
+
+```cpp
+void fun(int **);
+给指针变量取一个别名
+Type* pointer = NULL;
+Type* &newPointer = pointer;
+
+#include <stdlib.h>
+#include <string.h>
+void my_str1(char **p_str)  // p_str = &str;
+{
+    // *p_str == *&str ==  str
+    *p_str = (char *)calloc(1, 32);
+    strcpy(*p_str, "hello world");
+}
+
+void my_str2(char* &my_str)
+{
+    my_str = (char *)calloc(1, 32); // 1块 32字节
+    strcpy(my_str, "hello world");
+}
+
+void test07()
+{
+    char *str = NULL;
+    // 需求：封装一个函数从堆区给str申请一个空间，并赋值为"hello world"
+    my_str1(&str);
+    cout << "str = " << str << endl;    // str = hello world
+    my_str2(str);
+    cout << "str = " << str << endl;    // str = hello world
+}
+```
+
+### 常量引用
+
+
+```cpp
+typedef struct
+{
+    int num;
+    char name[32];
+}STU;
+
+void myPrintSTU1(STU tmp)   // 普通结构体变量作为形参 开销太大 36个字节
+{
+    cout << sizeof(tmp) << endl;    // 36
+    cout << "学号： " << tmp.num << ", 姓名：" << tmp.name << std::endl;    // 学号：100, 姓名：lucy
+}
+
+void myPrintSTU2(STU &tmp)   // tmp是lucy的别名 tmp没有开辟独立空间
+{
+    cout << sizeof(tmp) << endl;    // 36，这里tmp是引用，本质是指针常量，C++编译器内部在使用tmp是，默认会对其进行解地址(解lucy)，所以结果仍然是36，但实际上tmp没有开辟新的内存。
+    tmp.num = 2000; // 引用可以进行修改，引用可能导致实参随形参改变而改变
+    cout << "学号： " << tmp.num << ", 姓名：" << tmp.name << std::endl;    // 学号：2000, 姓名：lucy
+}
+
+void myPrintSTU3(const STU &tmp)    // 常量引用，防止对引用的内容进行修改
+{
+    cout << sizeof(tmp) << endl;
+    // tmp.num = 200;  // err, 因为tmp为常量引用
+    cout << "学号： " << tmp.num << ", 姓名：" << tmp.name << std::endl;    // 学号：2000, 姓名：lucy
+}
+
+void test08()
+{
+    STU lucy = {100, "lucy"};
+
+    // 需求：定义一个函数，打印lucy成员
+    myPrintSTU1(lucy);
+    myPrintSTU2(lucy);
+    myPrintSTU3(lucy);
+}
+```
+
+### 常量的引用
+
+```cpp
+void test09()
+{
+    // 给常量10取个别名 叫num
+    // int &针对的是int，10是const int类型
+    int &num = 10;  // err, 无法使用右值给int&赋值
+    // const int针对的是const int，10就是const int
+    const int &num = 10;    // 这是可以的
+}
+```
+
+# 宏函数与内联函数的比较
+
+内联函数（inline）
+
+在c中，一些短并且执行频繁的计算写成宏，而不是函数。这样可以获得更高的执行效率，宏可以避免函数调用的开销，这些都是在预处理中完成的。
+
+C++中，使用宏函数出现的问题：1）宏看起来像是一个函数调用，但是会隐藏一些难以发现的错误。2）预处理不允许访问类的成员，也就是说预处理宏不能作为类的成员函数。
+
+为了保持预处理宏的效率又增加安全性，而且还能像一般成员函数那样可以在类里访问自如，C++引入了内联函数(inline function)。
+
+内联函数为了集成宏函数的效率，<b>没有函数调用时开销</b>，又可以像普通函数那样，可以进行参数、返回值类型的安全检查，又可以作为成员函数。
+
+内联函数本质是一个真正的函数，拥有普通函数的行为，不同之处在于内联函数会在适当的地方像预定义宏一样展开，所以不需要函数调用开销。
+
+内联函数必须函数体和声明结合在一起。
+
+内联函数的确占用空间，但是内联函数相对于普通函数的优势只是省去了函数调用时候的压栈，跳转，返回的开销。内联函数用空间换时间。
+
+## 类内部的内联函数
+
+任何在类内部定义的函数自动成为内联函数。
+
+```cpp
+class Person
+{
+public:
+    Person() { std::cout << "构造函数！" << std::endl; }
+    void PrintPerson() { std::cout << "输出Person!" << std::endl; }
+}
+
+// 以上两个都将自动成为内联函数，目的是提高效率。
+```
+
+## 内联函数和编译器
+
+内联函数不是何时何地都有效
+
+<b>函数的替换发生在编译阶段，而不是预处理阶段。</b>
+
+当调用一个内联函数的时候，编译器首先确保传入参数类型是正确匹配的，或者如果类型不完全匹配，但是可以将其转换为正确类型，并且返回值在目标表达式里匹配正确类型，或者可以转换为正确类型，内联函数就会直接替换函数调用，这就消除了函数调用的开销。
+
+加入内联函数是成员函数，对象this指针也会被放入合适位置，类型检查和类型转换、包括在合适位置放入对象this指针这些都是预处理器不能完成的。
+
+C++内联函数编译的一些限制，以下情况编译器不会将函数进行内联编译：
+
+1. 不能存在任何形式的循环语句；
+2. 不能存在过多的条件判断语句；
+3. 函数体不能过于庞大，不能对函数进行取址操作。
+
+内联函数仅仅只是给编译器一个建议，编译器不一定会接受这种建议，如果你没有将函数声明为内联函数，那么编译器也可能将此函数做内联编译。一个好的编译器将会内联小的、简单的函数。
+
+# 函数的默认参数
+
+C++在<b>声明函数原型时</b>可为一个或者多个参数<b>指定默认(缺省)的参数值</b>，当函数调用的时候如果没有指定这个值，编译器会自动用默认值代替。
+
+```cpp
+int my_add(int x = 10, int y = 20)
+{
+    return x + y;
+}
+
+void test02()
+{
+    std::cout << "my_add = " << my_add(100, 200) << std::endl;  // 300
+    std::cout << "my_add = " << my_add(100) << std::endl;  // 120
+    std::cout << "my_add = " << my_add() << std::endl;  // 30
+}
+```
+
+注意点：
+
+1. 函数的默认参数从左到右，如果一个参数设置了默认参数，那么这个参数之后的参数都必须设置默认参数。
+2. 如果函数声明和函数定义分开写，函数声明和函数定义不能同时设置默认参数，默认参数只在函数声明处起作用。
+
+
+## 函数的占位参数
+
+C++在声明函数时，可以设置占位参数。占位参数只有参数类型声明，没有参数名。一般情况下，在函数体内部无法使用占位参数。
+
+由于有类型名，所以函数调用的时候，必须给占位参数传参； \
+由于没有形参名，所以函数内部是无法使用占位参数的。
+
+```cpp
+void func3(int x, int y, int)
+{
+    std::cout << "x = " << x << ", y = " << y << std::endl;
+    return;
+}
+
+void test05()
+{
+    func3(10, 30, 40);
+}
+```
+
+> 操作符重载的后置++要用到这个。
+
+
+# 函数重载(overload)
+
+C++多态的特性
+
+<b>函数重载意义</b>：方便的使用函数名
+
+函数重载条件：同一个作用域，参数个数不同/参数类型不同/参数顺序不同 均可重载
+
+<b>注意</b>
+
+1. 函数的返回值类型不能作为重载的依据；
+   在编写程序过程中可以忽略他的返回值。
+2. 函数重载和默认参数一起使用，需要额外注意二义性问题的产生。
+   ```cpp
+    void myFunc02(int a)
+    {
+        cout << "int 的 myFunc" << std::endl;
+    }
+    void myFunc02(int a, int b = 10)    // 默认参数
+    {
+        cout << "int, int 的 myFunc" << std::endl;
+    }
+    void test07()
+    {
+        // myFunc02(int a) 和 myFunc02(int a, int b = 10)都能识别
+        myFunc02(10);   // call of overloaded'myFunc02(int)' is ambiguous
+    }
+   ```
+
+## 函数重载实现原理
+
+编译器使用不同的参数类型来修饰不同的函数名，比如void func()：编译器可能会将函数名修饰成func，对于void func(int x)，编译器可能将函数名修饰为funcint；对于void func(int x, char c)，编译器会将函数名修改为funcintchar。
+
+
+# C和C++混合编程
+
+```cpp
+extern "c" {    // 这部分代码将会由C语言编译器去编译链接。
+
+}
+```
+
+```cpp
+// MyModule.h
+#ifndef MYMODULE_H
+#define MYMODULE_H
+
+#include <stdio.h>
+
+#if __cplusplus
+extern "C" {
+#endif
+
+    extern void func1();
+    extern int func2(int a, int b);
+
+#if _cplusplus
+}
+#endif
+
+#endif
+
+// MyModule.c
+#include "MyModule.h"
+
+void func1()
+{
+    printf("hello world!\n");
+}
+
+int func2(int a, int b)
+{
+    printf("a + b = %d\n", a + b);
+}
+
+// TestExternC.cpp
+#define _CRT_SECURE_NO_WARNINGS
+#include <iostream>
+#include "MyModule.h"
+using namespace std;
+
+int main()
+{
+    func1();
+    func2(10, 20);
+    return 0;
+}
+```
+
+> ubuntu:
+> main.cpp fun.c fun.h
+> 混合编译步骤：
+>   gcc -c fun.c -o fun.o
+>   g++ main.cpp fun.o -o main
+
+
+# 四、类和对象
+
+C语言中struct只有变量，C++语言struct既有变量，也有函数。
+
+C语言中，将数据和方法独立，容易造成方法调用错误数据。
+
+```cpp
+typedef {
+    char name[32];
+    int age;
+}Person;
+
+typedef {
+    int age;
+    char name[32];
+}Dog;
+
+void PersonEat(void *p) {
+    Person *person = (Person *)p;
+    printf("%s正在吃饭！\n", person->name);
+}
+
+void AnimalEat(void *a) {
+    Dog *dog = (Dog *)a;
+    printf("%s正在吃狗粮！\n", dog->name);
+}
+
+void test()
+{
+    Person person = {18, "老王"};
+    Dog dog = {2. "旺财"};
+
+    PersonEat((void *)&person); // 老王正在吃饭！
+    AnimalEat((void *)&dog);    // 旺财正在吃狗粮！
+    AnimalEat((void *)&person); // 老王正在吃狗粮！ 用错的情况
+}
+```
+
+在C语言中，行为和属性是分开的，也就是吃饭这个属性不属于某类对象，而属于所有的共同的数据，所以不单单是PeopleEat可以调用Person数据，AnimalEat也可以调用Person数据，如果调用错误，将会导致问题发生。
+
+因此，属性和行为应该放在一起，一起表示一个具有属性和行为的对象。加入某对象的某项属性不想被外界获知，封装应该再提供一种机制能够给属性和行为的访问权限控制住。
+
+<b>封装特性包含两个方面：一个是属性和变量合成一个整体，一个是给属性和函数增加访问权限。</b>
+
+1. 把变量(属性)和函数(操作)合成一个整体，封装在一个类中
+2. 对变量和函数进行访问控制
+3. 在类的内部(作用域范围内)，没有访问权限之分，所有成员可以相互访问。
+4. 在类的外部(作用域范围外)，访问权限才有意义：public、private、protected.
+5. 在类的外部，只有public修饰的成员才能被访问，在没有涉及继承与派生类时，private和protected是同等级的，外部不允许访问。
+
+## 类的初始
+
+```cpp
+class 类名 {    // 抽象的概念，系统不会为其分配空间， 但是有大小。
+    private:    // 私有 类的外部不可直接访问
+    protected:  // 保护；
+    数据
+
+    public:     // 公有 类的外部可以直接访问
+    方法
+
+    // 在类的内部，没有权限之分，都可以相互访问。
+};
+```
+
+<b>C++中，struct和class的区别？</b>
+
+> class默认访问权限为private，struct默认访问权限为public。
+
+## 将成员变量设置为private
+
+1. 可赋予客户端访问数据的一致性。如果成员变量不是public，客户端唯一能够访问对象的方法就是通过成员函数。
+2. 可细微划分访问控制。使用成员函数可使得我们对变量的控制处理更加精细。如果成员变量访问权限为public，每个人都可以读写它。如果设置为private，可以实现 不准访问、只读访问、读写访问、设置只写访问。
+
+ 
