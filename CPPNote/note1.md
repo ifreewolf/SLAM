@@ -783,4 +783,515 @@ class 类名 {    // 抽象的概念，系统不会为其分配空间， 但是�
 1. 可赋予客户端访问数据的一致性。如果成员变量不是public，客户端唯一能够访问对象的方法就是通过成员函数。
 2. 可细微划分访问控制。使用成员函数可使得我们对变量的控制处理更加精细。如果成员变量访问权限为public，每个人都可以读写它。如果设置为private，可以实现 不准访问、只读访问、读写访问、设置只写访问。
 
- 
+ ## 类的大小
+
+```cpp
+class Data
+{
+private:
+    // 成员数据 占类的空间大小
+    int num;
+public:
+    // 成员函数不占用类空间大小，成员函数放在代码区，根据函数名和形参列表去代码区调用函数。
+    void setNum(int data)
+    {
+        num = data;
+    }
+    int getNum(void)
+    {
+        return num;
+    }
+};
+
+void test01()
+{
+    printf("%d\n", sizeof(Data));   // 4， 4个字节是int num的空间大小
+}
+```
+
+## 在类里声明，类外定义 成员函数。
+
+> Data.h
+
+```cpp
+class Data
+{
+private:
+    int num;
+public:
+    void setNum(int data);
+    int getNum(void);
+};
+```
+
+> Data.cpp
+
+```cpp
+void Data::setNum(int data)
+{
+    num = data;
+}
+
+int Data::getNum(void)
+{
+    return num;
+}
+```
+
+
+## 对象的构造和析构
+
+### 初始化和清理
+
+构造函数和析构函数会被编译器自动调用，完成对象初始化和对象清理工作。
+
+构造函数主要作用于创建对象时为对象的成员属性赋值，构造函数由编译器自动调用，无须手动调用；
+析构函数主要用于对象销毁前系统自动调用，执行一些清理工作。
+
+### 构造和析构的定义
+
+<b>构造函数语法</b>：构造函数函数名和类名相同，没有返回值（不能有void），但可以有参数。`class ClassName(){}`
+
+<b>析构函数语法</b>：析构函数函数名在类名前面加“~”，没有返回值（不能有void），不能有参数，不能重载。
+
+
+### 构造函数的分类
+
+#### 构造函数分类
+
+按照参数类型：无参构造和有参构造 \
+按照类型分类：普通构造和拷贝构造函数(复制构造函数)
+
+#### 构造函数调用
+
+无参构造的调用形式：
+
+1. 实例化
+
+```cpp
+Data obj1;   // 调用无参或默认构造(隐式调用构造函数)
+
+Data obj2 = Data(); // 显式调用无参构造函数
+
+
+Data obj3(10);  // 调用有参构造(隐式调用)
+Data obj4 = Data(100);  // 显式调用有参构造函数
+
+// 隐式转换的方式，调用有参构造(针对于只有一个数据成员的情况)
+Data obj5 = 30;     // 转化成Data obj5(30);
+
+// 匿名对象(当前语句结束，匿名对象立即释放)
+Data(40);
+```
+
+<b>注意</b>：在同一作用域构造和析构的顺序相反。
+
+#### 拷贝构造函数
+
+```cpp
+class Data
+{
+private:
+    int num;
+public:
+    // 无参构造函数
+    Data()
+    {
+        num = 0;
+        cout << "无参构造函数 num = " << num << std::endl;
+    }
+
+    // 构造函数（有参的构造）
+    Data(int n) 
+    {
+        num = n;
+        cout << "有参构造函数 num = " << num << std::endl;
+    }
+
+    // 拷贝构造函数
+    Data(const Data &obj)
+    {
+        num = obj.num;
+        cout << "拷贝构造函数 num = " << num << std::endl;
+    }
+
+    // 析构函数
+    ~Data()
+    {
+        cout << "析构函数 num = " << num << std::endl;
+    }
+};
+
+void test03()
+{
+    Data obj1(10);
+    Data obj2 = obj1;   // 调用拷贝构造函数 隐式转换调用
+    Data obj3(obj1);    // 调用拷贝构造函数 隐式调用
+    Data obj4 = Data(obj1); // 调用拷贝构造函数 显式调用
+    // obj4并不会有两次拷贝构造，因为Data(obj1)是拷贝构造，但 obj4 = Data(obj1);是属于对象赋值操作。
+}
+```
+
+> 调用拷贝构造函数（如果用户不实现拷贝构造，系统将调用默认的拷贝构造） \
+> 默认的拷贝构造：单纯的整体赋值（浅拷贝） \
+> 如果用户实现了拷贝构造，系统将调用用户实现的拷贝构造
+
+<b>注意</b>：旧对象 初始化新对象，才会调用拷贝构造函数。
+
+```cpp
+Data ob1(10);
+Data ob2;
+ob2 = ob1;  // 不会调用拷贝构造，单纯的对象赋值操作
+```
+
+```cpp
+Data ob1(); // 不会认为是实例化对象ob1, 而是看成函数ob1声明
+```
+
+#### 构造函数的调用规则
+
+C++编译器至少为我们写的类增加3个函数，\
+1：默认构造函数(无参，函数体为空)；\
+2：默认析构函数(无参，函数体为空)；\
+3：默认拷贝构造函数，对类中<b>非静态成员属性简单值拷贝</b>。
+
+如果用户定义了普通构造（非拷贝），C++不再提供默认无参构造，但是会提供默认拷贝构造。
+
+<b>1、如果用户提供了有参构造，将屏蔽系统的默认构造函数。</b> \
+```cpp
+Data ob1;   // err
+```
+<b>2、如果用户提供了有参构造，不会屏蔽系统的默认拷贝构造函数。</b> \
+```cpp
+Data ob1(10);
+Data ob2 = ob1; // ob2.num == 10;
+```
+<b>3、如果用户提供了拷贝构造函数，将屏蔽系统的默认构造函数、默认拷贝构造函数。</b>
+```cpp
+Data ob1;   // err
+```
+
+<b>总结:</b>
+
+对于构造函数，用户一般要实现：无参构造、有参构造、拷贝构造、析构
+
+#### 深拷贝和浅拷贝
+
+同一类型的对象之间可以赋值，使得两个对象的成员变量的值相同，两个对象仍然是独立的两个对象，这种情况被称为浅拷贝。一般情况下，浅拷贝没有任何副作用，但是当类中有指针，并且指针指向动态分配的内存空间，析构函数做了动态内存释放的处理，会导致内存问题。
+
+```cpp
+#include <iostream>
+#include <cstdlib>
+class Person
+{
+private:
+    char m_name[32];
+    int m_num;
+public:
+    Person()
+    {
+        m_name = NULL;
+        m_num = 0;
+        cout << "无参构造函数" << std::endl;
+    }
+
+    Person(char *name, int num)
+    {
+        // 为m_name申请空间
+        m_name = (char *)calloc(1, strlen(name) + 1);
+        if (m_name == NULL) {
+            cout << "构造失败" << std::endl;
+        }
+        strcpy(m_name, name);
+        m_num = num;
+        cout << "有参构造函数" << std::endl;
+    }
+
+    Person(const Person &bob)
+    {
+        cout << "拷贝构造函数" << std::endl;
+        m_name = (char *)calloc(1, strlen(ob.m_name) + 1);
+        strcpy(m_name, bob.m_name);
+        m_name = bob.m_num;
+    }
+
+    ~Person()
+    {
+        if (m_name != NULL)
+        {
+            free(m_name);
+            m_name = NULL;
+        }
+        cout << "析构函数" << std::endl;
+    }
+
+    void showPerson(void)
+    {
+        cout << "m_name = " << m_name << ", m_num = " << m_num << std::endl;
+    }
+};
+
+void test01()
+{
+    Person lucy("lucy", 18);
+    lucy.showPerson();
+
+    // 浅拷贝的问题（多次释放同一块堆区空间）
+    // 通过自定义拷贝构造函数，完成深拷贝动作。
+    Person bob = lucy;  // 调用系统的默认拷贝构造（单纯的值拷贝）
+}
+```
+
+#### 初始化列表
+
+初始化列表只能在构造函数中使用。
+
+<b>类的对象作为另一个类的成员</b>
+
+```cpp
+class A
+{
+private:
+    int data;
+public:
+    A()
+    {
+        cout << "A无参构造" << endl;
+    }
+    A(int d)
+    {
+        cout << "A有参构造" << endl;
+    }
+    ~A()
+    {
+        cout << "A析构函数" << endl;
+    }
+};
+
+class B
+{
+private:
+    int data;
+public:
+    B()
+    {
+        cout << "A无参构造" << endl;
+    }
+    B(int d)
+    {
+        cout << "A有参构造" << endl;
+    }
+    ~B()
+    {
+        cout << "A析构函数" << endl;
+    }
+};
+
+class Data
+{
+private:
+    A oba;  // 对象成员
+    B obb;  // 对象成员
+    int data;   // 基本类型成员
+public:
+    Data()
+    {
+        cout << "Data无参构造" << endl;
+    }
+
+    Data(int a, int b, int c)
+    {
+        cout << "Data有参构造" << endl;
+    }
+
+    ~Data()
+    {
+        cout << "Data析构函数" << endl;
+    }
+};
+
+void test()
+{
+    Data data;  // Data的成员对象，A和B都只会调用各自的无参构造函数。由于A和B的成员变量data都是private，所以无法给A和B的对象成员变量data赋值。
+}
+
+// 使用初始化列表
+Data(int a, int b, int c) : oba(a), obb(b), data(c)
+{
+    cout << "Data有参构造" << endl;
+}
+// 使用初始化列表之后，成员变量A oba;和B obb;会被当成声明，然后在初始化列表中调用各自的有参构造函数。
+```
+
+先调用对象成员的构造-->自己的构造函数-->析构自己-->析构对象成员
+
+必须在Data的构造函数中，使用初始化列表，使其对象成员显式调用对象成员调用有参构造函数。
+
+<b>注意：</b>
+
+1. 按各对象成员在类定义中的顺序（和参数列表的顺序无关）依次调用它们的构造函数；
+2. 先调用对象成员函数的构造函数，再调用本身的构造函数。析构函数和构造函数调用顺序相反，先构造，后析构。
+
+### explict关键字
+
+C++提供了关键字explict，禁止通过构造函数进行的隐式转换。声明为explict的构造函数不能在隐式转换中使用。
+
+<b>注意</b>：explict用于修饰构造函数，防止隐式转换。是针对单参数的构造函数(或者除了第一个参数外其余参数都有默认值的多参构造)而言。其实是前面所描述的隐式转换构造。
+
+### 动态对象创建
+
+创建数组时，总是需要提前预订数组的长度，然后编译器分配预定长度的数组空间；在使用数组时，会存在也许数组空间太大，浪费空间；也许数组空间不足。如果能根据需要来分配空间大小再好不过了。
+
+C早就提供了动态内存分配(dynamic memory allocation)，函数malloc和free可以在运行时从堆中分配存储单元。然而这些函数在C++中不能很好的运行，因为它不能帮我们完成对象的初始化工作。
+
+#### 对象创建
+
+当创建一个C++对象时会发生两件事：
+1. 为对象分配内存空间；
+2. 调用构造函数来初始化那块内存。
+
+如果使用malloc、calloc、realloc，第一步我们能保证实现；但第二步需要程序员理解和小心使用才能确保第二步一定能发生。
+
+```cpp
+Data *p = (Data *)malloc(sizeof(Data));
+if (p == NULL)
+{
+    std::cout << "申请失败" << std::endl;
+}
+
+p->Init(100);
+p->showNum();
+
+free(p);
+```
+
+<b>问题：</b>
+
+1. 程序员必须确定对象的长度；
+2. malloc返回一个void指针，C++不允许将void赋值给其他任何指针，必须强转；
+3. malloc可能申请内存失败，所以必须判断返回值来确保内存分配成功；
+4. 用户在使用对象之前必须记住对它的初始化，<b>构造函数不能显式调用初始化（构造函数是由编译器调用）</b>，用户有可能忘记调用初始化函数。
+
+C的动态分配函数太复杂，容易令人混淆，是不可接受的，C++中我们推荐使用运算符new和delete。
+
+#### new operator
+
+C++中解决动态内存分配的方案是把创建一个对象所需要的操作都结合在一个称为new的运算符里。当用new创建一个对象时，它就在堆里为对象分配内存并调用构造函数完成初始化。
+
+```cpp
+Person* person = new Person;
+// 相当于：
+Person* person = (Person*)malloc(sizeof(Person));
+if (person == NULL)
+{
+    return 0;
+}
+person->init();
+```
+
+1. new给基本类型申请空间
+
+```cpp
+void test01()
+{
+    // 基本类型
+    int *p = NULL;
+    // p = (int *)calloc(1, sizeof(int));
+    p = new int;
+    *p = 100;
+    cout << "*p = " << *p << endl;
+
+    // 释放 free(p)
+    delete p;
+}
+```
+
+2. new 申请基本类型数组空间
+
+```cpp
+void test02()
+{
+    int *arr = NULL;
+    // arr = (int *)calloc(5, sizeof(int));
+    arr = new int[5];
+
+    int i = 0;
+    for (i = 0; i < 5; i++) {
+        cout << arr[i] << " ";
+    }
+    cout << endl;
+
+    // 释放 new时加了[] delete必须加[]
+    delete [] arr;
+}
+```
+
+> 动态分配数组初始化：`arr = new int[5]{1, 2, 3, 4, 5};`
+
+> delete [] arr;   中括号是一个标志，有[]，编译器会去拿arr的元素个数，然后释放对应个数的对象。
+
+3. new 申请char数组
+
+```cpp
+void test04()
+{
+    // char *arr = new char[32]{"hehe"};   // err, invalid conversion from 'const char*' to 'char'
+    // 大括号认为是给某一个元素赋值，只能逐个元素赋值；如果需要整体赋值，需要先申请空间，然后使用strcpy()或者memorycopy进行拷贝。字符串常量是char*
+    // 方法一：
+    char *arr = new char[32]{'h', 'e', 'h', 'e'};
+
+    // 方法二：
+    char *arr = new char[32];
+    strcpy(arr, "hehe");
+    cout << arr << endl;
+    delete [] arr;
+}
+```
+
+4. new从堆区实例化对象
+
+```cpp
+class Person
+{
+private:
+    char m_name[32];
+    int  m_num;
+public:
+    Person()
+    {
+        cout << "无参构造" << endl;
+    }
+    Person(char *name, int num)
+    {
+        strcpy(m_name, name);
+        m_num = num;
+        cout << "有参构造" << endl;
+    }
+    ~Person()
+    {
+        cout << "析构函数" << endl;
+    }
+
+    void showPerson()
+    {
+        cout << "m_name = " << m_name << "， num = " << m_num << endl;
+    }
+};
+
+void test05()
+{
+    // new按照Person申请空间，如果申请成功就会自动调用Person类的构造函数。
+    Person *person = new Person("lucy", 100);
+
+    // 由于person是指针，使用 -> 如果 person是普通对象，使用`.`
+    person->showPerson();
+    
+    // delete 先调用析构函数，再释放堆区空间
+    delete person;
+}
+```
+
+### 对象数组
+
+本质是数组，只是数组的每个元素是类的对象。
+
