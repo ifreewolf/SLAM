@@ -1547,20 +1547,63 @@ Singleton(单例)：在单例类的内部实现只生成一个实例，同时它
 步骤3： 为了防止在外部对其实例化，将其默认构造函数和拷贝构造函数设计为私有。
 
 ```cpp
-class Singleton
+#include <iostream>
+
+using namespace std;
+
+class Printer
 {
-private:
-    Singleton()
-    {
-
-    }
-    ~Singleton()
-    {
-
-    }
 public:
-    static Singleton* single = nullptr;
+    // 2. 提供一个方法获得单例指针
+    static Printer* getSinglePrint(void)
+    {
+        return singlePrint;
+    }
+
+    // 4. 设置功能函数（自定义）
+    void printText(char *str)
+    {
+        cout << "打印" << str << endl;
+        count++;
+    }
+
+    int count;
+private:
+    // 1. 定义一个静态的对象指针变量，保存唯一实例地址
+    static Printer *singlePrint;
+
+private:
+    // 3. 防止该类实例化其他对象，将构造函数全部私有
+    Printer() { count = 0; }
+    Printer(const Printer &ob)
+    {
+
+    }
+    ~Printer()
+    {
+
+    }
 };
+
+Printer *Printer::singlePrint = new Printer;
+
+int main(int argc, char **argv)
+{
+    // 打印任务1
+    Printer *p1 = Printer::getSinglePrint();
+    p1->printText("入职报告1");
+    p1->printText("体检报告2");
+    p1->printText("离职证明3");
+
+    // 打印任务2
+    Printer *p2 = Printer::getSinglePrint();
+    p2->printText("入职报告1");
+    p2->printText("体检报告2");
+    p2->printText("离职证明3");
+
+    cout << "打印任务数量：" << p2->count << endl;
+    return 0;
+}
 ```
 
 
