@@ -1302,5 +1302,135 @@ void test06()
     // 定义对象数组的时候，系统会自动给数组中的每个元素调用构造函数
     // 自动调用无参构造
     Person arr[5];
+
+    // 人为2为元素调用有参构造
+    // 前面两个元素会调用有参构造函数
+    Person arr1[5] = { Person("lucy", 18), Person("bob", 18)};
+    // arr1[0] // 第 0 个元素，就是Person对象
+    arr1[0].showPerson();   // lucy
+    arr1[1].showPerson();   // bob
 }
 ```
+
+#### 用new申请对象指针
+
+```cpp
+void test08()
+{
+    // 第一种方式
+    Person *arr = NULL;
+    arr = new Person[5];    //  调用无参构造
+
+    delete [] arr;
+
+    // 第二种方式：
+    // 初始化元素调用有参构造，没有初始化的调用无参构造
+    Person *arr2 = new Person[5]{Person("lucy", 18), Person("bob", 20)};
+    (*(arr2 + 0)).showPerson();
+    arr2[0].showPerson();
+    (arr2 + 0)->showPerson();
+
+    delete [] arr2;
+}
+```
+
+#### delete不让释放void指针
+
+```cpp
+void test09()
+{
+    Person *p = new Person("lucy", 18);
+    p->showPerson();
+
+    void *p1 = p;
+
+    delete p1;  // 运行不会出错，但不会调用Person的析构函数，说明没有被正确释放。
+}
+```
+
+> 尽量不要用delete释放void*。
+
+为什么没有析构？
+
+> delete有两步：1) 调用析构函数, 2) 释放内存。 \
+> delete发现p1指向的类型为void，无法从void中寻找相应的析构函数。
+
+> malloc、free和new、delete不能混搭使用。因为new操作符有两件事：分配内存和调用构造函数；delete操作符也有两件事：调用析构函数和释放内存。
+
+
+### 静态成员
+
+在类定义中，它的成员（包括成员变量和成员函数），这些成员可以用关键字static声明为静态的，称为静态成员。不管这个类创建了多少个对象，静态成员只有一个拷贝，这个拷贝被所有属于这个类的对象共享。
+
+#### 静态成员变量
+
+> 静态成员属于类而不是对象。 \
+> 静态变量是在编译阶段就分配空间，对象还没有创建时，就已经分配了空间。
+> <b>静态成员必须在类内声明，在类外定义</b>。因为在编译阶段类是不会分配空间的，只有在对象初始化的时候才会分配空间。
+
+```cpp
+class Data
+{
+public:
+    int num;    // 普通成员变量
+    static int data;    // 静态成员变量(类内声明)
+};
+
+// 定义的时候不需要加static
+int Data::data = 100;   // 类外定义+初始化
+
+void test01()
+{
+    // data是静态成员变量，是属于类，可以通过类名称直接访问
+    cout << Data::data << endl; // 100
+    // 赋值
+    Data::data = 200;
+    cout << Data::data << endl; // 200
+
+    // data是静态变量，是所有对象共享的，可以通过对象名访问
+    Data ob1;
+    ob1.data = 300;
+    cout << Data::data << endl; // 300
+
+    Data ob2;
+    cout << ob2.data << endl;
+
+    // 普通成员变量属于对象的，只能通过对象名访问
+}
+```
+
+#### 静态成员函数
+
+```cpp
+class Data
+{
+private:
+    int num;    // 普通成员变量
+    static int data;    // 静态成员变量(类内声明)
+
+public:
+    // 普通成员函数依赖于对象
+    int getData(void)
+    {
+        return data;
+    }
+};
+
+// 定义的时候不需要加static
+int Data::data = 100;   // 类外定义+初始化
+
+void test02()
+{
+    // cout << Data::data << endl; // err, 'int Data::data' is private.
+    // cout << Data::getData() << endl;    // err, getData()必须对象调用
+
+    Data ob;
+    cout << ob.getData() << endl;   // 可以访问
+
+    // 存在问题，data是静态的，在创建对象之前就已经存在。存在真空期，如果类没有实例化对象，就不能使用data？
+    // 解决方法：用静态成员函数
+}
+```
+
+> 当static类成员变量被private修饰时，在类外依然不能访问，而只能在类内被访问。但是static变量的定义依然需要在类外定义+初始化。
+
