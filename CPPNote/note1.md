@@ -1585,6 +1585,7 @@ private:
     }
 };
 
+// 申请一个唯一的实例
 Printer *Printer::singlePrint = new Printer;
 
 int main(int argc, char **argv)
@@ -1606,10 +1607,333 @@ int main(int argc, char **argv)
 }
 ```
 
+### this指针
+
+C++的封装性：将数据和方法封装在一起，数据和方法是分开存储。数据存储在每个对象中，而方法是对象共有的，存储在代码区。
+
+```cpp
+class Data
+{
+public:
+    int m_num;
+    void setNum(int num)
+    {
+        m_num = num;
+    }
+};
+
+void test01()
+{
+    Data ob1;
+    ob1.setNum(10);
+    cout << "ob1.m_num = " << ob1.m_num << endl;
+
+    Data ob2;
+    ob2.setNum(20);
+    cout << "ob1.m_num = " << ob2.m_num << endl;
+
+    Data ob3;
+    ob3.setNum(30);
+    cout << "ob1.m_num = " << ob3.m_num << endl;
+}
+```
+
+<b>思考：</b>
+1. m_num是ob1,ob2和ob3独有的，但是方法setNUm(int num)是在代码区，为什么方法可以精确的知道需要给哪个对象的m_num赋值呢？
+2. 当一个对象，调用setNum()方法时，会在setNum方法中产生一个this指针，this指针指向所调用方法的对象。
+    ```cpp
+    void setNum(int num)
+    {
+        this->m_num = num;
+        m_num = num;    // 相当于this->m_num = num;
+    }
+    ```
+3. 哪个对象调用方法，那么方法中的this就指向哪个对象。
+
+#### this指针的注意点
+
+1. this指针时隐含在对象成员函数内的一种指针；
+2. 成员函数通过this指针即可知道操作的是哪个对象的数据；
+3. 静态成员函数内部没有this指针，静态成员函数不能操作非静态成员变量。
+
+#### this指针的使用
+
+1. 当形参和成员变量同名时，可用this指针来区分
+
+```cpp
+class Data
+{
+public:
+    int num;
+
+    // 形参和成员名相同
+    void setNum(int num)
+    {
+        // 形参num
+        // 形参num this->num
+        // num = num;   // 就近原则，形参num赋值给形参num
+        this->num = num;
+        // 将形参num赋值给对象中成员num
+    }
+};
+```
+
+2. 在类的普通成员函数中返回对象本身（*this）
+
+```cpp
+class MyCout
+{
+public:
+    // 如果返回值是void就无法使用链式打印
+    // void myCout(char *str)
+    // {
+    //     cout << str;
+    // }
+
+    // 可以使用链式打印
+    MyCout& myCout(char *str)
+    {
+        cout << str;
+        return *this;   // *this代表就是当前调用该函数的对象
+    }
+};
+
+int main(int argc, char **argv)
+{
+    MyCout ob;
+    /*
+    ob.myCout("hehe");
+    ob.myCout("haha");
+    ob.myCout("xixi");
+    */
+
+    ob.myCout("hehe").myCout("haha").myCout("xixi");
+
+    return 0;
+}
+```
+
+## const修饰成员函数
+
+用const修饰的成员函数时，const修饰this指针指向的内存区域，成员函数体内不可以修改本类中的任何普通成员变量，当成员变量类型符用mutable修饰时例外。
+
+```cpp
+void myFun(void) const  // const修饰的是成员函数
+{
+
+}   // 函数内部不能修改普通成员变量，mutable修饰的例外
+
+class Data
+{
+private:
+    int data;
+    mutable int num;
+public:
+    // 遍历成员的函数，不会去修改成员的值
+    // 如果函数不会更改成员数据，就让编译器知道这是一个const函数
+    void myPrintData(void) const
+    {
+        // data = 1000; // err, const修饰函数，函数不能操作普通成员函数
+        // mutable修饰的成员变量，可以修改
+        num = 1000;
+        cout << this->data << endl;
+    }
+    Data()
+    {
+        cout << "无参构造" << endl;
+    }
+    Data(int data)
+    {
+        this->data = data;
+        cout << "有参构造" << endl;
+    }
+    Data(const Data &ob)
+    {
+        this->data = ob.data;
+        cout << "拷贝构造" << endl;
+    }
+    ~Data()
+    {
+        cout << "析构函数" << endl;
+    }
+};
+
+void test02()
+{
+    Data ob1(10);
+    ob1.myPrintData();
+}
+```
 
 
+### const修饰对象(叫常对象)
 
+`const int num = 10;`变量系统不会给num开辟空间，num被放入符号表中，如果后期对num取地址，这时系统才会给num开辟空间。
 
+```cpp
+class  Data
+{
+private:
+    int data;
+    mutable int num;
+public:
+    void myPrintData(void) const
+    {
+        cout << this->data << endl;
+    }
+    // 编译器认为普通成员函数存在修改成员变量的可能
+    void setData(int num) const
+    {
+        // this->data = num;
+        this->num = num;
+    }
+    Data()
+    {
+        cout << "无参构造" << endl;
+    }
+    Data(int data)
+    {
+        this->data = data;
+        cout << "有参构造" << endl;
+    }
+    Data(const Data &ob)
+    {
+        this->data = ob.data;
+        cout << "拷贝构造" << endl;
+    }
+    ~Data()
+    {
+        cout << "析构函数" << endl;
+    }
+};
+
+void test03()
+{
+    // 常对象
+    const Data ob1(200);
+
+    // 如果setData()函数使用const修饰，则不会出现修改对象成员的可能，则可以调用
+    // ob1.setData(20000); // err, 不管setData()函数是否修改成员变量的值，都无法编译通过
+    ob1.myPrintData();
+}
+```
+
+<b>总结：</b>
+
+1. 常对象只能调用使用const修饰的成员函数
+
+## 友元
+
+类的主要特点之一是数据隐藏，即类的私有成员变量无法在类外访问。类外访问类的私有成员，如何解决？
+
+使用友元函数，友元函数是一种特权函数，C++允许这个特权函数访问私有成员。
+
+`friend`关键字只出现在声明处，其他类、类成员函数、全局函数都可声明位友元，友元函数不是类的成员，不带this指针。友元函数可访问对象任意成员属性，包括私有属性。
+
+### 普通全局函数作为类的友元
+
+```cpp
+// 房间类
+class Room
+{
+    // 将goodGayVisit作为类的友元函数
+    // goodGayVisit可以访问类中所有数据 但它不是类的成员
+    friend void goodGayVisit(Room &room);  // 可以放在任何位置
+private:
+    string bedRoom; // 卧室
+public:
+    string sittingRoom; // 客厅
+public:
+    Room()
+    {
+        this->bedRoom = "卧室";
+        this->sittingRoom = "客厅";
+    }
+};
+
+// 普通全局函数作为类的友元
+// 好基友访问我的房间
+void goodGayVisit(Room &room)
+{
+    cout << "好基友访问了你的" << room.sittingRoom << endl;
+    cout << "好基友访问了你的" << room.bedRoom << endl; // 类外无法访问，bedRoom是私有变量；友元可以
+}
+
+void test01()
+{
+    Room myRoom;
+    goodGayVisit(myRoom);
+}
+```
+
+把函数声明全部复制到类中的任何位置，然后在前面添加`friend`即可。
+
+### 类的成员函数作为另一个类的友元
+
+```cpp
+class Room; // Room前置声明
+class GoodGay
+{
+public:
+    // void visit1(Room &room)  // Room前置之后，可以识别Room类。
+    // {
+    //     cout << "好基友访问了你的" << room.sittingRoom << endl;      // 即使Room已经前置声明了，依然无法访问类成员，因为还无法知道Room有哪些成员，所以需要在所有类下面定义。
+    //     cout << "好基友访问了你的" << room.bedRoom << endl;
+    // }
+    void visit(Room &room); // 只声明，不定义
+    void visit2(Room &room); // 只声明，不定义
+};
+
+// 房间类
+class Room
+{
+    // 如果想让 visit作为Room类的友元，那么visit就可以访问Room的私有数据
+    friend void GoodGay::visit(Room &room); // 需要使用类作用域
+private:
+    string bedRoom; // 卧室
+public:
+    string sittingRoom; // 客厅
+public:
+    Room()
+    {
+        this->bedRoom = "卧室";
+        this->sittingRoom = "客厅";
+    }
+};
+
+// 在所有类下方定义
+void GoodGay::visit(Room &room)
+{
+    cout << "好基友访问了你的" << room.sittingRoom << endl;
+    cout << "好基友访问了你的" << room.bedRoom << endl;
+}
+
+// 在所有类下方定义
+void GoodGay::visit2(Room &room)
+{
+    cout << "好基友访问了你的" << room.sittingRoom << endl;
+    // cout << "好基友访问了你的" << room.bedRoom << endl;
+}
+
+void test02()
+{
+    Room room;
+    GoodGay goodGay;
+    goodGay.visit(room);
+    goodGay.visit2(room);
+}
+```
+
+> 问题一：如果GoodGay类在前，Room在后，而GoodGay的visit()函数里面用到了Room，此时会出现错误：无法识别Room类。\
+> 解决方法：Room类向前声明，在GoodGay类前面添加`class Room;`
+
+> 问题二：Room类向前声明后，可以识别Room类，但是无法识别Room类中的sittingRoom和bedRoom成员。因为向前声明只能说明Room这个类存在，但不能描述Room有哪些成员。\
+> 解决方法：visit1函数定义放在所有类的下方，别在类中定义。
+
+> 问题三：Room前置以及函数在所有类最下方定义后，不存在无法识别的问题。但visit()函数依然无法访问Room类的私有成员变量。 \
+> 解决方法：使用友元`friend void GoodGay::visit(Room &room); // 需要使用类作用域`
+
+### 类作为另一个类的友元
 
 
 
