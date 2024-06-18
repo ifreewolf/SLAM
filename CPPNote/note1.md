@@ -1935,5 +1935,201 @@ void test02()
 
 ### 类作为另一个类的友元
 
+```cpp
+class Room; // Room前置声明
+class GoodGay
+{
+public:
+    void visit(Room &room); // 只声明，不定义
+    void visit2(Room &room); // 只声明，不定义
+};
 
+// 房间类
+class Room
+{
+    // 将GoodGay作为Room的友元
+    friend class GoodGay;
+private:
+    string bedRoom; // 卧室
+public:
+    string sittingRoom; // 客厅
+public:
+    Room()
+    {
+        this->bedRoom = "卧室";
+        this->sittingRoom = "客厅";
+    }
+}
 
+// 在所有类下方定义
+void GoodGay::visit(Room &room)
+{
+    cout << "好基友访问了你的" << room.sittingRoom << endl;
+    cout << "好基友访问了你的" << room.bedRoom << endl;
+}
+
+// 在所有类下方定义
+void GoodGay::visit2(Room &room)
+{
+    cout << "好基友访问了你的" << room.sittingRoom << endl;
+    // cout << "好基友访问了你的" << room.bedRoom << endl;
+}
+
+void test03()
+{
+    Room room;
+    GoodGay goodGay;
+    goodGay.visit(room);
+    goodGay.visit2(room);
+}
+```
+
+### 友元案例
+
+```cpp
+class TV
+{
+    friend class Remote;
+    // 默认为私有
+    enum{ On, Off };    // 电视状态
+    enum{ minVol, maxVol = 100 };   // 音量从0到100
+    enum{ minChannel = 1, maxChannel = 255 };   // 频道从1到255
+private:
+    int mState;     // 电视状态，开机/关机
+    int mVolume;    // 电视机音量
+    int mChannel;   // 电视频道
+public:
+    TV()
+    {
+        this->mState = Off; // 默认关机
+        this->mVolume = minVol;
+        this->mChannel = minChannel;
+    }
+
+    void onOrOff()
+    {
+        this->mState = (this->mState == On ? Off : On);
+    }
+
+    // 加大音量
+    void volumeUp(void)
+    {
+        if (this->mVolume >= maxVol) {
+            return;
+        }
+        this->mVolume++;
+    }
+
+    // 减小音量
+    void volumeDown(void)
+    {
+        if (this->mVolume <= 0) {
+            return;
+        }
+        this->mVolume--;
+    }
+
+    // 增加频道
+    void channelUp(void)
+    {
+        if (this->mChannel == maxChannel) {
+            this->mChannel = minChannel;
+            return;
+        }
+        this->mChannel++;
+    }
+
+    // 减小音量
+    void channelDown(void)
+    {
+        if (this->mChannel == minChannel) {
+            this->mChannel = maxChannel;
+            return;
+        }
+        this->mChannel--;
+    }
+
+    // 展示电视机状态
+    void showTVState(void)
+    {
+        cout << "电视机状态： " << (this->mState == On) ? "开机" : "关机" << endl;
+        cout << "电视机的频道： " << this->mChannel << endl;
+        cout << "电视机的音量： " << this->mVolume << endl;
+    }
+};
+
+// 遥控器类
+class Remote
+{
+private:
+    TV *pTv;
+public:
+    Remote(Tv *tv)
+    {
+        this->pTv = tv;
+    }
+    // 音量的加减
+    void volumeUp(void)
+    {
+        this->pTv->volumeUp();
+    }
+    void volumeDown(void)
+    {
+        this->pTv->volumeDown();
+    }
+
+    // 频道的加减
+    void channelUp(void)
+    {
+        this->pTv->channelUp();
+    }
+    void channelDown(void)
+    {
+        this->pTv->channelDown();
+    }
+
+    // 电视开关
+    void onOrOff(void)
+    {
+        this->pTv->onOrOff();
+    }
+
+    // 遥控器设置频道设置
+    void setChannel(int num)
+    {
+        // 判断频道是否有效
+        if (num < TV::minChannel || num > TV::maxChannel) { // minChannel和maxChannel是私有
+            std::cerr << "please input valid channel num, from 1 to 255" << std::endl;
+            return;
+        }
+        this->pTv->mChannel = num;  // 私有变量
+    }
+
+    void showTVState(void)
+    {
+        this->pTv->showTVState();
+    }
+};
+
+int main(int argc, char **argv)
+{
+    TV tv;
+    tv.onOrOff();   // 开机
+
+    tv.volumeUp();  // 调四次音量
+    tv.volumeUp();
+    tv.volumeUp();
+    tv.volumeUp();
+
+    tv.channelUp(); // 调三次频道
+    tv.channelUp();
+    tv.channelUp();
+
+    Remote remote(&tv);
+    remote.channelDown();
+    remote.setChannel(100);
+    remote.showTVState();
+}
+```
+
+### 数组类的强化
