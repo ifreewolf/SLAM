@@ -2132,4 +2132,1148 @@ int main(int argc, char **argv)
 }
 ```
 
-### 数组类的强化
+### 强化类的封装
+
+```cpp
+class MyArray
+{
+private:
+    int mCapacity;  // 数组容量
+    int mSize;      // 数组实际存放的元素个数
+    int *pAddress;  // 数组首元素地址
+public:
+    MyArray();
+    MyArray(int capacity);
+    ~MyArray();
+
+    // 往数组的尾部插入数据
+    void pushBack(int data);
+    // 获取指定位置的数据
+    int getData(int pos);
+    // 修改指定位置的数据
+    void setData(int pos, int data);
+    // 获取数组的容量
+    inline int getCapacity(void)
+    {
+        return this->mCapacity;
+    }
+    // 获取数组的实际大小
+    inline int getSize(void)
+    {
+        return this->mSize;
+    }
+
+    void printMyArray(void);
+
+};
+
+MyArray::MyArray()
+{
+    // 加入数组的容量为100
+    this->mCapacity = 100;
+    // 数组的size为0
+    this->mSize = 0;
+    // 根据容量给数组申请空间
+    this->pAddress = new int[this->mCapacity];
+}
+
+MyArray::MyArray(int capacity)
+{
+    this->mCapacity = capacity;
+    // 数组的size为0
+    this->mSize = 0;
+    // 根据容量给数组申请空间
+    this->pAddress = new int[this->mCapacity];
+}
+
+MyArray::~MyArray()
+{
+    if (this->pAddress != NULL) {
+        delete [] this->pAddress;
+        this->pAddress = NULL;
+    }
+}
+
+void MyArray::pushBack(int data)
+{
+    if (this->mCapacity <= this->mSize) {
+        cout << "数组已满" << endl;
+        return;
+    }
+    this->pAddress[this->mSize] = data;
+    this->mSize++;
+}
+
+int MyArray::getData(int pos)
+{
+    if (pos + 1 >= this->mSize || pos < 0) {
+        cout << "pos error" << endl;
+        return -1;
+    }
+    return this->pAddress[pos];
+}
+
+void MyArray::setData(int pos, int data)
+{
+    if (pos + 1 >= this->mSize || pos < 0) {
+        cout << "pos error" << endl;
+        return -1;
+    }
+    this->pAddress[pos] = data;
+    return;
+}
+
+void MyArray::printMyArray(void)
+{
+    int i = 0;
+    for (i = 0; i < this->mSize; i++)
+    {
+        cout << this->pAddress[i] << " ";
+    }
+    cout << endl;
+}
+
+int main(int argc, char **argv)
+{
+    MyArray myArray;
+    myArray.getSize();
+
+    MyArray arr2(50);
+}
+```
+
+## 运算符重载
+
+### 重载运算符的概述
+
+运算符重载，就是对<b>已有的运算符</b>重新进行定义，赋予其另一种功能，以适应不同的数据类型；\
+运算符重载的目的：简化操作，让已有的运算符适应不同的数据类型 \
+语法：函数的名字由关键字<b>operator</b>及其紧跟的<b>运算符</b>组成 \
+比如：重载+运算符：`operator+` 重载=号运算符：`operator=` \
+注意：重载运算符不要更改运算符的本质操作（+是数据的相加，不要重载成相减）
+
+### 运算符`<<`的重载
+
+```cpp
+class Person
+{
+    // 设置成友元函数，在函数内访问Person类的私有变量
+    friend void operator<<(ostream &out, Person &ob);
+    friend ostream& operator<<(ostream &out, Person &ob);
+private:
+    char *name;
+    int num;
+public:
+    Person(char *name, int num)
+    {
+        this->name = new char[strlen(name)+1];
+        strcpy(this->name, name);
+        this->num = num;
+        cout << "有参构造" << endl;
+    }
+    // 普通的成员函数
+    void printPerson(void)
+    {
+        cout << "name = " << name << ", num = " << num << endl;
+    }
+    ~Person()
+    {
+        if (this->name != NULL)
+        {
+            delete [] this->name;
+            this->name = NULL;
+        }
+        cout << "析构" << endl;
+    }
+};
+
+// cout是属于std，Person属于自定义类，像这种不是同一个类的情况，只能选择在全局区域重载
+void operator<<(ostream &out, Person &ob)   // out=cout, ob=ob1
+{
+    // 重新实现输出格式
+    out << ob.name << ", " << ob.num;   // name和num都是私有变量，类外无法访问，解决办法：使用友元
+}
+
+// 返回值为引用，一般用来迭代操作
+ostream& operator<<(ostream &out, Person &ob)
+{
+    out << ob.name << ", " << ob.num;
+    return out;
+}
+
+
+int main(int argc, char **argv)
+{
+    Person  ob1("lucy", 18);
+    // 普通的成员函数 遍历信息
+    ob1.printPerson();
+
+    // cout默认输出方式，无法识别自定义对象输出格式
+    // cout << ob1 << endl; // err, 没有定义操作符<<
+
+    // 运算符重载的调用方式1
+    operator<<(cout, ob1);  // name = lucy, num = 18
+    // 运算符重载的调用方式2：对方法1进行优化(去掉operator)，第一个参数放在运算符左边，第二个参数放在运算符的右边
+    cout << ob1;    // 等价operator<<(cout, ob1)
+
+    // 还可以继续优化，无法进行迭代操作，cout << ob1 << endl;
+    // 让操作符<<函数返回ostream&
+    Person ob2("bob", 19);
+    cout << ob1 << " " << ob2 << endl;
+}
+```
+
+### 全局友元函数重载加法运算符
+
+```cpp
+class Person
+{
+    // 设置成友元函数，在函数内访问Person类的私有变量
+    friend ostream& operator<<(ostream &out, Person &ob);
+    friend Person operator+(Person &ob1, Person &ob2);
+private:
+    char *name;
+    int num;
+public:
+    Person()
+    {
+
+    }
+    Person(char *name, int num)
+    {
+        this->name = new char[strlen(name)+1];
+        strcpy(this->name, name);
+        this->num = num;
+        cout << "有参构造" << endl;
+    }
+    // 普通的成员函数
+    void printPerson(void)
+    {
+        cout << "name = " << name << ", num = " << num << endl;
+    }
+    ~Person()
+    {
+        if (this->name != NULL)
+        {
+            delete [] this->name;
+            this->name = NULL;
+        }
+        cout << "析构" << endl;
+    }
+};
+
+// 全局函数 作为友元完成运算符重载，因为第一个参数不是Person类，所以必须在全局重载
+ostream& operator<<(ostream &out, Person &ob)
+{
+    out << ob.name << ", " << ob.num;
+    return out;
+}
+
+// 全局函数作为友元完成加法运算符重载，第一个元素是Person类，所以可以在全局也可以在类内进行重载
+// 这里必须返回Person，而不是引用。因为引用会在局部被释放对象，而返回对象则会进行拷贝
+Person operator+(Person &ob1, Person &ob2)    // ob1 ob2
+{
+    char *tmp_name = new char[strlen(ob1.name) + strlen(ob2.name) + 1];
+    strcpy(tmp_name, ob1.name);
+    strcat(tmp_name, bo2.name);
+
+    // name + name（字符串追加）
+    // num + num
+
+    Person tmp(tmp_name, ob1.num + ob2.num);
+
+    // 释放name的空间
+    if (tmp_name != NULL) {
+        delete [] tmp_name;
+        tmp_name = NULL;
+    }
+    return tmp;
+}
+
+void test02()
+{
+    Person ob1("lucy", 18);
+    Person ob2("bob", 19);
+
+    cout << ob1 << endl;
+    cout << ob2 << endl;
+
+    Person ob3;
+    ob3 = ob1 + ob2;    // 等价于operator+(ob1, ob2);
+    cout << ob3 << endl;
+}
+```
+
+### 成员函数重载加法运算符
+
+```cpp
+class Person
+{
+    // 设置成友元函数，在函数内访问Person类的私有变量
+    friend ostream& operator<<(ostream &out, Person &ob);
+private:
+    char *name;
+    int num;
+public:
+    Person()
+    {
+
+    }
+    Person(char *name, int num)
+    {
+        this->name = new char[strlen(name)+1];
+        strcpy(this->name, name);
+        this->num = num;
+        cout << "有参构造" << endl;
+    }
+    // 成员函数完成运算符重载 ob1用this代替
+    Person operator+(Person &ob2)
+    {
+        // this == &ob1
+        char *tmp_name = new char[strlen(this->name) + strlen(ob2.name) + 1];
+        strcpy(tmp_name, this->name);
+        strcat(tmp_name, bo2.name);
+
+        // name + name（字符串追加）
+        // num + num
+
+        Person tmp(tmp_name, this->num + ob2.num);
+
+        // 释放name的空间
+        if (tmp_name != NULL) {
+            delete [] tmp_name;
+            tmp_name = NULL;
+        }
+        return tmp;
+    }
+    ~Person()
+    {
+        if (this->name != NULL)
+        {
+            delete [] this->name;
+            this->name = NULL;
+        }
+        cout << "析构" << endl;
+    }
+};
+
+// 全局函数 作为友元完成运算符重载，因为第一个参数不是Person类，所以必须在全局重载
+ostream& operator<<(ostream &out, Person &ob)
+{
+    out << ob.name << ", " << ob.num;
+    return out;
+}
+
+void test03()
+{
+    Person ob1("lucy", 18);
+    Person ob2("bob", 19);
+
+    cout << ob1 << endl;
+    cout << ob2 << endl;
+
+    Person ob3 = ob1 + ob2; // 等价于 ob1.operator+(ob2)
+    cout << ob3 << endl;
+}
+```
+
+<b>可重载的运算符：</b>
+
+`+ - * / % ^ & | ~ ! = < > += -= *= `
+
+<b>不可重载的运算符：</b>
+
+`. :: .* ?: sizeof`
+
+### 加加和减减运算符重载
+
+重载的++和--运算符有点让人不知所措，因为我们总是希望能根据它们出现在所作用对象的前面还是后面来调用不同的函数。解决方法很简单，例如当编译器看到`++a`就调用`operator++(a)`，当编译器看到`a++`就调用`operator++(a,int)`
+
+```cpp
+class Data
+{
+    friend ostream& operator<<(ostream& out, Data &ob);
+private:
+    int a;
+    int b;
+public:
+    Data()
+    {
+        cout << "无参的构造函数" << endl;
+        a = 0;
+        b = 0;
+    }
+    Data(int a, int b) : a(a), b(b)
+    {
+        cout << "有参构造函数" << endl;
+    }
+
+    void showData(void)
+    {
+        cout << "a = " << a << ", b = " << b << endl;
+    }
+
+    ~Data()
+    {
+        cout << "析构函数" << endl;
+    }
+
+    // 成员函数重载前置++：++ob1;   // 先加后使用
+    // 编译器默认识别operator++(a)    // 但是a可以用this代替，从而化简成 operator++()
+    Data& operator++()
+    {
+        // 先加
+        this->a++;
+        this->b++;
+
+        // 后使用
+        return *this;
+    }
+
+    // 成员函数重载后置++， ob1++(先使用，后加)
+    // 编译器默认识别operator++(a, int) // 但是a可以用this代替，从而简化：operator++(int)   // int是占位符
+    Data operator++(int) // ob1++
+    {
+        // 先使用(备份加之前的值)
+        Data old = *this;   // 临时对象，退出作用域之后就会被释放，所以无法返回引用，如果使用static修饰即可。
+
+        // 后加
+        this->a++;
+        this->b++;
+
+        return old;
+    }
+
+    // 前置--：--ob3
+    Data& operator--()
+    {
+        this->a--;
+        this->b--;
+        return *this;
+    }
+
+    // 后置--：ob3--
+    Data operator--(int)
+    {
+        Data old = *this;
+        this->a--;
+        this->b--;
+        return old;
+    }
+
+    // 使用static修饰, 这样cout << ob-- << endl;    也是可以的
+    // Data& operator--(int)
+    // {
+    //     static Data old;
+    //     old = *this;
+    //     this->a--;
+    //     this->b--;
+    //     return old;
+    // }
+};
+
+ostream& operator<<(ostream& out, Data &ob)
+{
+    out << "a = " << ob.a << ", b = " << ob.b;
+    return out;
+}
+
+
+
+void test01()
+{
+    Data ob1(10, 20);
+    ob1.showData();
+
+    // 重载<<直接输出自定义对象的值
+    // operator<<(cout, ob1); 等价于下面的语句
+    cout << ob1 << endl;
+
+    // 成员函数重载++运算符
+    cout << ++ob1 << endl;  // 调用Data& operator++()重载函数;  // 11, 21
+    // ob1++;
+    // cout << ob1++ << endl;  // 调用operator++(int)  // 11， 21
+    // 这里不能直接使用 cout << ob1++ << endl; 因为返回的是Data对象，而不是引用，无法使用迭代输出。
+    Data ob2 = ob1++;
+    cout << ob2 << endl;    // 11, 21
+    cout << ob1 << endl;    // 12, 22
+
+    Data ob3(10, 20);
+    cout << --ob3 << endl;  // 9, 19
+    Data ob4 = ob3--;
+    cout << ob4 << endl;    // 9, 10
+    cout << ob3 << endl;    // 8, 18
+}
+```
+
+### 指针运算符重载(*,->)
+
+需求：智能指针设计
+
+```cpp
+class Person
+{
+private:
+    int num;
+public:
+    Person(int num) :num(num)
+    {
+        cout << "有参构造 num = " << num << endl;
+    }
+
+    void showPerson(void)
+    {
+        cout << "num = " << num << endl;
+    }
+    ~Person()
+    {
+        cout << "析构函数 num = " << num << endl;
+    }
+};
+
+// 设计一个智能指针 解决 Person堆区空间自动释放的问题
+class SmartPointer
+{
+public:
+    Person *pPerson;
+public:
+    SmartPointer(Person *p)
+    {
+        pPerson = p;
+    }
+
+    ~SmartPointer()
+    {
+        if (pPerson != nullptr)
+        {
+            delete pPerson;
+            pPerson = nullptr;
+        }
+    }
+
+    // 重载->运算符
+    Person* operator->()
+    {
+        return this->pPerson;
+    }
+
+    // 成员函数重载 *运算
+    Person& operator*()
+    {
+        return *(this->pPerson);
+    }
+};
+
+void test01()
+{
+    Person *p = new Person(100);
+    p->showPerson();
+
+    // 假如忘了 delete p;则堆区的空间没有释放
+    // delete p;
+
+    // 需求：自动的释放堆区空间（智能指针的概念）
+
+    SmartPinter pointer(new Person(200));
+
+    // pointer.pPerson->showPerson(); // 
+
+    // 可以做成如下的形式吗？重载->运算符即可。pointer-> 返回pPerson;
+    // 等价于 (pointer.operator->())->showPerson();
+    pointer->showPerson();
+    (*pointer).showPerson();
+}
+```
+
+### 重载赋值运算符
+
+<b>前提1：</b>如果类中没有指针成员，不需要重载=运算符(默认的浅拷贝就可以完成) \
+<b>前提2：</b>如果类中有指针成员，必须重载=运算符。
+
+```cpp
+class Person
+{
+    friend ostream& operator<<(ostream& out, Person &ob);
+private:
+    int a;
+    int b;
+public:
+    Person() : a(0), b(0)
+    {
+        cout << "无参构造" << endl;
+    }
+    Person(int a, int b) : a(a), b(b)
+    {
+        cout << "有参构造" << endl;
+    }
+    void showPerson(void)
+    {
+        cout << "a = " a << ", b = " << b << endl;
+    }
+    ~Person()
+    {
+        cout << "析构函数" << endl;
+    }
+};
+
+ostream& operator<<(ostream& out, Person &ob)
+{
+    out << "a = " << ob.a << ", b = " << ob.b;
+    return out;
+}
+
+int main(int argc, char **argv)
+{
+    Person ob1(10, 20);
+    ob1.showPerson();
+
+    // 旧对象给新对象赋值，调用的是拷贝构造（默认拷贝构造就是单纯的赋值）
+    Person ob2 = ob1;   // 这个地方，可不是调用赋值=运算符
+    ob2.showPerson();
+
+    Person ob3; 
+    ob3 = ob1;  // 此处才是调用的赋值=运算符，可以不需要重载=运算符（默认赋值=运算符是浅拷贝）
+    ob3.showPerson();
+
+    return 0;
+}
+```
+
+<b>类中有指针成员，必须重载赋值运算符。</b>
+
+指针作为类的成员：
+1. 拷贝构造函数必须自定义(默认浅拷贝)
+2. 必须重载赋值运算符(默认浅拷贝)
+
+```cpp
+class Person
+{
+private:
+    char *name; // 指针成员
+public:
+    Person()
+    {
+        name = NULL;
+        cout << "无参构造" << endl;
+    }
+    Person(char *name)
+    {
+        // 根据实际传入的参数,给this->name申请空间
+        this->name = new char[strlen(name)+1];
+
+        // 将name指向的字符串拷贝到this->name指向的空间中
+        strcpy(this->name, name);
+
+        cout << "有参构造" << endl;
+    }
+    Person(const Person &ob)
+    {
+        // this代表的是新对象
+        cout << "拷贝构造" << endl;
+        this->name = new char[strlen(ob.name) + 1];
+        strcpy(this->name, ob.name);
+    }
+    // 重载赋值运算符
+    Person& operator=(Person &ob)
+    {
+        // 如果有指向,先释放空间
+        if (this->name != nullptr)
+        {
+            delete [] this->name;
+            this->name = nullptr;
+        }
+        this->name = new char[strlen(ob.name) + 1];
+        strcpy(this->name, name);
+        return *this;
+    }
+    ~Person()
+    {
+        cout << "析构函数" << endl;
+        if (this->name != nullptr)
+        {
+            delete [] this->name;
+            this->name = nullptr;
+        }
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Person ob1("lucy");
+    ob1.showPerson();
+
+    Person ob2 = ob1;   // 调用拷贝构造
+    ob2.showPerson();
+
+    // Person ob3("bob");   // 如果是这种情况,需要首先释放name的空间
+    Person ob3;
+    ob3 = ob1;  // 使用赋值运算符
+    ob3.showPerson();
+
+    Person ob5, ob4;
+    ob5 = ob4 = ob1;    // 这种情况,要求赋值运算符有返回值,且返回值是对象
+
+    return 0;
+}
+```
+
+### 重载不等以及相等运算符
+
+```cpp
+class Person
+{
+private:
+    char *name; // 指针成员
+public:
+    Person()
+    {
+        name = NULL;
+        cout << "无参构造" << endl;
+    }
+    Person(char *name)
+    {
+        // 根据实际传入的参数,给this->name申请空间
+        this->name = new char[strlen(name)+1];
+
+        // 将name指向的字符串拷贝到this->name指向的空间中
+        strcpy(this->name, name);
+
+        cout << "有参构造" << endl;
+    }
+    Person(const Person &ob)
+    {
+        // this代表的是新对象
+        cout << "拷贝构造" << endl;
+        this->name = new char[strlen(ob.name) + 1];
+        strcpy(this->name, ob.name);
+    }
+    // 重载 == 运算符
+    bool operator==(Person &ob)
+    {
+        if (strcmp(this->name, ob.name) == 0)
+        {
+            return true;
+        }
+        return false;
+    }
+    // 重载!=运算符
+    bool operator!=(Person &ob)
+    {
+        if (strcmp(this->name, ob.name)) {
+            return true;
+        }
+        return false;
+    }
+    ~Person()
+    {
+        cout << "析构函数" << endl;
+        if (this->name != nullptr)
+        {
+            delete [] this->name;
+            this->name = nullptr;
+        }
+    }
+};
+
+void test02()
+{
+    Person ob1("lucy");
+    Person ob2("lucy");
+    Person ob3("bob");
+
+    if (ob1 == ob2)
+    {
+        cout << "ob1 == ob2" << endl;
+    } else {
+        cout << "ob1 != ob2" << endl;
+    }
+
+    if (ob1 == ob3)
+    {
+        cout << "ob1 == ob3" << endl;
+    } else {
+        cout << "ob1 != ob3" << endl;
+    }
+}
+```
+
+### 函数调用符()的重载
+
+<b>仿函数：</b> 就是类重载了`()`符号，也叫函数调用运算符。可以通过匿名类对象直接调用仿函数。
+
+
+```cpp
+class Fun
+{
+public:
+    int my_add(int x, int y)
+    {
+        return x+y;
+    }
+
+    // 重载()
+    // 第一个()是重载的符号,第二个()是表明要传参
+    int operator()(int x, int y)
+    {
+        return x + y;
+    }
+};
+
+void test01()
+{
+    Fun fun;
+    cout << fun.my_add(10, 20) << endl; // 30
+
+    cout << fun.operator()(100, 200) << endl;   // 300
+    // 优化 fun和()结合,就会自动寻找()运算符
+    cout << fun(1000, 2000) << endl;    // 3000
+    // 此处fun(1000, 2000)不是一个真正的函数,仅仅是一个对象名和()结合,调用()重载运算符而已
+    // fun不是函数名，只是fun(1000, 2000)类似一个函数调用，所以将fun(1000, 2000)叫作仿函数。
+
+    cout << Fun()(100, 200) << endl; // 300, Fun()是匿名类对象
+    // 此处Fun()匿名对象 Fun()(100, 200)就是匿名对象
+}
+```
+
+### 不要重载 && 和 ||
+
+<b>为什么？</b>
+
+因为无法用户无法实现&&和||的<b>短路特性</b>。
+
+&& 短路特性：A && B；如果A为假，B将不会执行
+|| 短路特性：A || B; 如果A为真，B将不会执行
+
+### 符号重载的总结
+
+=、[]、()和->操作符只能通过成员函数进行重载，<< 和 >>只能通过全局函数配合友元函数进行重载，不要重载&&和||操作符，因为无法实现短路规划。
+
+所有的一元运算符 --> 建议使用成员 \
+=()[]->*        --> 必须是成员 \
++= -= /= *= ^= &= != %= >>= <<= --> 成员 \
+其他二元运算符   --> 非成员
+
+### 强化训练 -- 字符串类封装
+
+```cpp
+// MyString.h
+#ifndef MYSTRING_H
+#define MYSTRING_H
+
+#include <iostream>
+#include <string.h>
+#include <ostream>
+
+class MyString
+{
+    friend std::ostream& operator<<(std::ostream &out, MyString &ob);
+    friend std::istream& operator>>(std::istream &in, MyString &ob);
+private:
+    char *str;
+    int size;
+public:
+    MyString();
+    explicit MyString(const char *str);
+    MyString(const MyString &ob);
+    ~MyString();
+    int Size(void);
+
+    // 重载[]
+    char& operator[](int index); // 如果返回值是char，则只能读，不能写。因为char返回的是具体值，是一个右值，必须返回一个引用
+    // 重载=，参数是对象
+    MyString& operator=(const MyString &ob);
+    // 重载=，参数是字符串常量 const char*
+    MyString& operator=(const char* str);
+    // 重载+，参数是对象
+    MyString& operator+(const MyString &ob);
+    // 重载+，参数是字符串常量，const char*
+    MyString& operator+(const char* str);
+    // 重载==运算符，参数是对象
+    bool operator==(const MyString &ob);
+    // 重载==运算符，参数是字符串常量
+    bool operator==(const char* str);
+};
+#endif
+
+// MyString.cpp
+#include "MyString.h"
+
+MyString::MyString()
+{
+    this->str = nullptr;
+    this->size = 0;
+    std::cout << "无参构造" << std::endl;
+}
+
+MyString::MyString(const char *str)
+{
+    std::cout << "char *有参构造函数" << std::endl;
+    // 申请空间
+    this->str = new char[strlen(str) + 1];
+    // 拷贝字符串
+    strcpy(this->str, str);
+    
+    // 更新size
+    this->size = strlen(str);
+}
+
+MyString::MyString(const MyString &ob)
+{
+    std::cout << "char *拷贝构造函数" << std::endl;
+    // 申请空间
+    this->str = new char[strlen(ob.str) + 1];
+    // 拷贝字符串
+    strcpy(this->str, ob.str);
+    
+    // 更新size
+    this->size = ob.size;
+}
+
+MyString::~MyString()
+{
+    std::cout << "析构函数" << std::endl;
+    if (this->str) {
+        delete [] this->str;
+        this->str = nullptr;
+    }
+}
+
+int MyString::Size()
+{
+    return this->size;
+}
+
+char& MyString::operator[](int index)
+{
+    std::cout << "[]运算符" << std::endl;
+    if (index >= this->size || index < 0) {
+        std::cerr << "the length of MyString is " << this->size << ", you index is out of range" << std::endl;
+        // return '\n';
+    } else {
+        return this->str[index];
+    }
+}
+
+MyString& MyString::operator=(const MyString &ob)
+{
+    std::cout << "=运算符，ob" << std::endl;
+    // 将ob.str拷贝到this->str中 
+    if (this->str) {
+        delete [] this->str;
+        this->str = nullptr;
+    }
+    this->str = new char[ob.size + 1];
+    strcpy(this->str, ob.str);
+    this->size = ob.size;
+    return *this;   // 返回引用，保证可以链式赋值
+}
+
+
+MyString& MyString::operator=(const char* str)
+{
+    std::cout << "=运算符，const char* str" << std::endl;
+    // 将ob.str拷贝到this->str中 
+    if (this->str) {
+        delete [] this->str;
+        this->str = nullptr;
+    }
+    this->str = new char[strlen(str) + 1];
+    strcpy(this->str, str);
+    this->size = strlen(str);
+    return *this;   // 返回引用，保证可以链式赋值
+}
+
+
+MyString& MyString::operator+(const MyString &ob)
+{
+    // this 指向的是str5, ob是str6的别名
+    int newSize = this->size + ob.size + 1;
+    char *tmp_str = new char[newSize];
+
+    // 清空tmp_str所指向的空间
+    memset(tmp_str, 0, newSize);
+
+    // 先将this->str拷贝到tmp_str中，然后将ob.str追加到tmp_str中
+    strcpy(tmp_str, this->str);
+    strcat(tmp_str, ob.str);
+
+    static MyString newString;
+    newString = tmp_str;
+    // 释放tmp_str指向的临时空间
+    if (tmp_str != nullptr) {
+        delete [] tmp_str;
+        tmp_str = nullptr;
+    }
+    return newString;
+}
+
+MyString& MyString::operator+(const char* str)
+{
+    // this 指向的是str5,str是字符串常量
+    int newSize = this->size + strlen(str) + 1;
+    char *tmp_str = new char[newSize];
+
+    // 清空tmp_str所指向的空间
+    memset(tmp_str, 0, newSize);
+
+    // 先将this->str拷贝到tmp_str中，然后将str追加到tmp_str中
+    strcpy(tmp_str, this->str);
+    strcat(tmp_str, str);
+
+    static MyString newString;
+    newString = tmp_str;
+    // 释放tmp_str指向的临时空间
+    if (tmp_str != nullptr) {
+        delete [] tmp_str;
+        tmp_str = nullptr;
+    }
+    return newString;
+}
+
+bool MyString::operator==(const MyString &ob)
+{
+    if ((strcmp(this->str, ob.str) == 0) && (this->size == ob.size)) {
+        return true;
+    }
+    return false;
+}
+
+
+bool MyString::operator==(const char* str)
+{
+    if ((strcmp(this->str, str) == 0) && (this->size == strlen(str))) {
+        return true;
+    }
+    return false;
+}
+
+
+std::ostream& operator<<(std::ostream &out, MyString &ob)
+{
+    out << ob.str << ", size = " << ob.Size();
+    return out;
+}
+
+std::istream& operator>>(std::istream &in, MyString &ob)
+{
+    // 方法一：
+    // std::cout << &(ob.str) << std::endl;
+    // in >> ob.str;
+    // std::cout << &(ob.str) << std::endl;
+
+    // 方法二：
+    // 记得将原有的数据清除
+    if (ob.str) {
+        delete [] ob.str;
+        ob.str = nullptr;
+    }
+    // 获取键盘输入的字符串
+    char buf[1024] = "";   // 临时buf
+    in >> buf;  // 先得到键盘输入的数据，然后根据buf的实际大小开辟空间
+    ob.size = strlen(buf);
+    ob.str = new char[strlen(buf) + 1];
+    strcpy(ob.str, buf);
+    return in;
+}
+
+// main.cpp
+#include "MyString.h"
+
+int main(int argc, char **argv)
+{
+    MyString str1("hehehaha");
+    std::cout << str1 << std::endl;
+
+    // 自定义对象 必须重载<< （普通全局函数）
+    std::cin >> str1;
+    std::cout << str1 << std::endl;
+
+    MyString str2("hello class");
+    // 重载[]运算符
+    std::cout << str2[10] << std::endl;
+
+    // 重载[]运算符，返回值必须是左值，才能写操作
+    // 重载[]运算符，返回值必须是引用
+    str2[1] = 'E';
+    std::cout << str2 << std::endl;
+
+    MyString str3("hello str3");
+    std::cout << str3 << std::endl;
+
+    // 将对象str2赋值给str3
+    str3 = str2;    // 默认赋值语句，是浅拷贝。重载等号运算符
+    std::cout << str3 << std::endl;
+
+    MyString str4("hello str4");
+    std::cout << str4 << std::endl;
+    // 重载=运算符
+    str4 = "hello string";  // 会调用默认的char*有参构造函数，构造了一个tmp对象，然后再使用=运算符赋值给str4对象。如果在有参构造函数前加上explict关键字之后，这句编译不通过
+    std::cout << str4 << std::endl;
+
+    // 字符串拼接
+    MyString str5("我爱大家");
+    MyString str6("我爱千峰");
+    // 重载+运算符, ob
+    std::cout << str5 + str6 << std::endl;
+    std::cout << str1 + str2 << std::endl;
+
+    MyString str7("大家爱我");
+    // 重载+运算符，const char*
+    std::cout << str7 + "前锋爱我" << std::endl;
+
+    MyString str8("hehe");
+    MyString str9("haha");
+    // 重载=运算符
+    if (str8 == str9) {
+        std::cout << "相等" << std::endl;
+    } else {
+        std::cout << "不相等" << std::endl;
+    }
+
+    if (str8 == "hehe") {
+        std::cout << "相等" << std::endl;
+    } else {
+        std::cout << "不相等" << std::endl;
+    }
+
+    std::cout << "====================" << std::endl;
+
+    MyString fgs1 = MyString("abc");    // 调用有参构造函数
+    MyString fgs2("abcd");  // 调用有参构造函数
+    return 0;
+}
+```
+
+## 五、继承和派生类
+
+代码复用
+
+<b>派生类格式</b>
+
+```cpp
+class 派生类名 : 继承方式 基类名 {
+    // 派生类新增的数据成员和成员函数
+};
+```
+
+<b>继承方式</b>
+
+1. public：共有继承
+2. private：私有继承
+3. protected：保护继承
+
+单继承：每个派生类都只继承一个基类 \
+多继承：多个基类派生出一个派生类的继承关系，多继承的派生类直接继承了不止一个基类的特征
+
+
+<b>注意：</b>
+子类继承父类，子类拥有父类中<b>全部成员变量和成员方法</b>(除了构造和析构之外的成员函数)。但是在派生类中，<b>继承的成员并不一定能直接访问</b>，不同的继承方式会导致不同的访问权限。
+
+
+
+### 5.1
+
+### 5.2
+
+
+
