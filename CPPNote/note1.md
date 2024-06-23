@@ -3246,7 +3246,7 @@ int main(int argc, char **argv)
 
 ## 五、继承和派生类
 
-代码复用
+继承的优点：减少代码的冗余，提高代码的复用性。
 
 <b>派生类格式</b>
 
@@ -3269,11 +3269,733 @@ class 派生类名 : 继承方式 基类名 {
 <b>注意：</b>
 子类继承父类，子类拥有父类中<b>全部成员变量和成员方法</b>(除了构造和析构之外的成员函数)。但是在派生类中，<b>继承的成员并不一定能直接访问</b>，不同的继承方式会导致不同的访问权限。
 
+<b>案例1：public继承</b>
+
+```cpp
+// 设置一个父类
+class Base
+{
+public:
+    int a;
+private:
+    int b;
+protected:
+    int c;
+};
+
+// 设置一个子类
+class Son : public Base
+{
+public:
+    // 子类的内部
+    void test()
+    {
+        a = 1000;
+        // b = 2000; // 不可访问
+        c = 3000;
+    }
+};
+
+class GrandSon : public Son
+{
+public:
+    void showGrandSon()
+    {
+        a = 10000;
+        // b = 20000; // 不可访问
+        c = 30000;
+    }
+};
+
+void test01()
+{
+    // 子类的外部
+    Son son;
+    std::cout << "son a = " << son.a << std::endl;
+    // std::cout << "son b = " << son.b << std::endl; // 不可访问
+    // std::cout << "son c = " << son.c << std::endl; // 不可访问
+
+    GrandSon grandSon;
+    std::cout << "grandSon a = " << grandSon.a << std::endl;
+    // std::cout << "grandSon b = " << grandSon.b << std::endl; // 不可访问
+    // std::cout << "grandSon c = " << grandSon.c << std::endl; // 不可访问
+
+};
+```
+
+public继承分析：
+1. 父类的public成员，在子类内、子类外以及孙子类内，外都可访问，说明父类的public成员在子类中依然是public权限；
+2. 父类的protected成员，在子类内以及孙子类的内部都可以访问，但在类外均不可访问，说明父类的protected成员在子类中是protected的
+3. 父类的private成员，在子类内、外，孙子类内、外均不可访问，说明父类private成员在子类中不可见，但依然存在。
+
+public继承总结：
+1. 父类public成员，在子类中是public权限；
+2. 父类protected成员，在子类中是protected权限；
+3. 父类private成员，在子类中是不可见的。
+
+<b>案例2：protected继承</b>
+
+```cpp
+class Base
+{
+public:
+    int a;
+private:
+    int b;
+protected:
+    int c;
+};
+
+class Son1 : protected Base
+{
+public:
+    // 子类的内部
+    void showSon()
+    {
+        a = 1000;
+        // b = 2000; // 不可访问
+        c = 3000;
+    }
+};
+
+class GrandSon1 : public Son
+{
+public:
+    void showGrandSon()
+    {
+        a = 10000;
+        // b = 20000; // 不可访问
+        c = 30000;
+    }
+};
+
+void test02()
+{
+    Son1 son1;
+    // std::cout << son1.a << std::endl;   // 无法访问
+}
+```
+
+protected继承分析：
+1. 父类的public成员在子类内部可以访问，在子类外部无法访问；在孙子类内部可以访问，说明父类的public成员在子类中是protected权限；
+2. 父类的protected成员在子类内部可以访问，子类外部无法访问；在孙子类内部可以访问，外部无法访问，说明父类的protected成员在子类中依然是protected权限；
+3. 父类的private成员在子类内部无法访问，说明父类的private成员在子类中是不可见的。
+
+protected继承总结：
+1. 父类public成员，在子类是protected权限；
+2. 父类protected成员，在子类中是protected权限；
+3. 父类private成员，在子类中是不可见的。
+
+<b>案例3：private继承</b>
+
+```cpp
+class Base
+{
+public:
+    int a;
+private:
+    int b;
+protected:
+    int c;
+};
+
+class Son2 : private Base
+{
+public:
+    // 子类的内部
+    void showSon()
+    {
+        a = 1000;
+        // b = 2000; // 不可访问
+        c = 3000;
+        std::cout << "a = " << a << ", c = " << c << std::endl;
+    }
+};
+
+class GrandSon2 : public Son2
+{
+public:
+    void showGrandSon()
+    {
+        // a = 10000; // 不可访问
+        // b = 20000; // 不可访问
+        // c = 30000; // 不可访问
+    }
+};
+
+void test03()
+{
+    Son2 son2;
+    std::cout << son2.a << std::endl;   // 不可访问
+    son2.showSon();
+
+    GrandSon2 grandson2;
+    grandson2.showGrandSon();
+    // std::cout << son2.a << std::endl;    // 不可见
+}
+```
+
+private继承分析：
+1. 父类的public成员在子类内部可以访问，在子类外部不可访问，且在孙子类中也无法访问，说明父类的public成员在子类中是private权限；
+2. 父类的protected成员在子类内部可以访问，在孙子类中不可访问，在子类外部也不可访问，说明父类的protected成员在子类中是private权限;
+3. 父类的private成员在子类无法访问，说明父类的private成员在子类中不可见。
+
+private继承总结：
+1. 父类的public成员在子类是private权限；
+2. 父类的protected成员在子类是private权限；
+3. 父类的private成员在子类是不可见的。
 
 
-### 5.1
+不管啥继承，父类中的私有数据在子类中不可见。
+ 
+### 5.1 子类的内层布局
 
-### 5.2
+```cpp
+#include <iostream>
 
+class Base
+{
+public:
+    int a;
+protected:
+    int b;
+private:
+    int c;
+};
+
+class Son : public Base
+{
+public:
+    int d;
+    int e;
+};
+
+void test()
+{
+
+    std::cout << sizeof(Son) << std::endl;  // 20 = 5 * 4字节
+}
+```
+
+<div align=center>
+    <img src="./images/son类结构.png" />
+</div>
+
+> abc三个变量是Base类的，de两个变量是Son类的。左边的数字是偏移。元素a的偏移是0，b的偏移是4，因为a占用4个字节。
+
+### 5.2 构造和析构的顺序
+
+#### 5.2.1 子类的构造和析构
+
+继承中的构造和析构：1.子类对象在创建时<b>会首先调用父类的构造函数</b>，父类的构造函数执行完毕后，才会调用子类的构造函数；2.当父类构造函数有参数时，需要在子类初始化列表(参数列表)中显式调用父类构造函；析构函数调用顺序和构造函数相反。
+
+```cpp
+#include <iostream>
+
+class Base
+{
+public:
+    Base()
+    {
+        std::cout << "父类的无参构造函数" << std::endl;
+    }
+    ~Base()
+    {
+        std::cout << "父类的析构函数" << std::endl;
+    }
+};
+
+class Son : public Base
+{
+public:
+    Son()
+    {
+        std::cout << "子类的构造函数" << std::endl;
+    }
+    ~Son()
+    {
+        std::cout << "子类的析构函数" << std::endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Son son;
+    return 0;
+}
+```
+
+运行结果：
+
+```bash
+父类的无参构造函数
+子类的构造函数
+子类的析构函数
+父类的析构函数
+```
+
+总结：
+1. 构造顺序：先父类构造--》子类构造；
+2. 析构顺序：先子类析构--》父类析构。
+
+#### 5.2.2 子类中有父类、对象成员的构造和析构的顺序
+
+父类的构造和析构、对象成员的构造和析构、子类自身的构造和析构
+
+<b>总结：</b>
+
+1. 构造顺序：父类的构造函数--》对象成员的构造函数--》子类的构造函数
+2. 析构顺序：子类的析构函数--》对象成员的析构函数--》父类的构造函数
+
+#### 详解子类中的构造
+
+```cpp
+#include <iostream>
+class Base
+{
+private:
+    int a;
+public:
+    Base()
+    {
+        std::cout << "[父类的无参构造函数]" << std::endl;
+    }
+    Base(int a)
+    {
+        this->a = a;
+        std::cout << "[父类的有参构造函数]" << std::endl;
+    }
+    ~Base()
+    {
+        std::cout << "[父类的析构函数]" << std::endl;
+    }
+};
+class Son : public Base
+{
+private:
+    int b;
+public:
+    Son()
+    {
+        std::cout << "[子类的无参构造函数]" << std::endl;
+    }
+    Son(int b)
+    {
+        this->b = b;
+        std::cout << "[子类的有参构造函数]" << std::endl;
+    }
+    // 子类必须用初始化列表显式调用父类的有参构造
+    Son(int a, int b) : Base(a)
+    {
+        this->b = b;
+        std::cout << "[子类的有参构造函数 a, b]" << std::endl;
+    }
+    ~Son()
+    {
+        std::cout << "[子类的析构函数]" << std::endl;
+    }
+};
+void test01()
+{
+    // 子类默认调用父类的无参构造，如果父类没有无参构造则会报错：no matching function for call to ‘Base::Base()’
+    Son son(10);
+
+    std::cout << "======================" << std::endl;
+    // 子类必须用初始化列表显式调用父类的有参构造
+    Son son2(10, 20);    
+}
+int main()
+{
+    test01();
+
+    return 0;
+}
+```
+
+1. 子类会默认调用父类的无参构造
+2. 如果要调用父类的有参构造，子类必须在初始化列表显式调用父类的有参构造，调用形式：<b>父类名称</b>
+
+其中，子类的初始化列表也可以改写如下：
+
+```cpp
+Son(int a, int b) : Base(a), b(b)
+{
+    std::cout << "[子类的有参构造函数 a, b]" << std::endl;
+}
+```
+
+> 在初始化列表中，父类构造函数的调用，不一定需要在第一个位置。
+
+### 5.3 继承中同名函数的处理
+
+### 5.3.1 父类和子类同名成员变量处理
+
+```cpp
+class Base
+{
+    // 父类的私有数据，一旦涉及继承，在子类中不可见
+public:
+    int num;
+public:
+    Base(int num)
+    {
+        this->num = num;
+        std::cout << "Base有参构造" << std::endl;
+    }
+    ~Base()
+    {
+        std::cout << "Base析构函数" << std::endl;
+    }
+};
+
+class Son : public Base
+{
+private:
+    int num;
+public:
+    Son(int num1, int num2) : num(num2), Base(num1)
+    {
+        std::cout << "Son有参构造 int int" << std::endl;
+    }
+    ~Son()
+    {
+        std::cout << "Son析构函数" << std::endl;
+    }
+    void showNum(void)
+    {
+        // 1. 当父类和子类成员变量同名时，在子类就近原则，选择本作用域的子类成员
+        //    1.1父类的num是private，在子类中不可见
+        // 2. 如果子类中必须使用父类中的同名成员变量，则必须使用父类的作用域
+        std::cout << "父类中的num = " << Base::num << std::endl;
+        std::cout << "子类中的num = " << num << std::endl;
+    }
+};
+void test01()
+{
+    Son son(10, 20);
+    son.showNum();
+}
+```
+
+<b>总结：</b>
+同名成员变量，在保证子类可以访问的前提下(父类中的public、protected权限的成员)，可以使用父类作用域去访问父类的同名成员变量。
+
+
+### 5.3.2 父类和子类同名成员函数处理
+
+#### 案例一
+
+```cpp
+class Base
+{
+public:
+    void func(void)
+    {
+        std::cout << "父类中的void func" << std::endl;
+    }
+    void func(int a)
+    {
+        std::cout << "父类中的int func a = " << a << std::endl;
+    }
+};
+
+class Son : public Base
+{
+public:
+};
+
+void test01()
+{
+    // 为啥构造和析构除外？因为父类的构造和析构，只有父类自己知道该怎么做(构造和析构由系统自动调用)
+    // 子类会继承父类所有成员函数(无参/有参构造、拷贝构造和析构函数除外)和变量
+    Son son;
+    son.func();     // 访问父类的func void
+    son.func(10);   // 访问附列的func int
+}
+```
+
+子类没有定义和父类同名的成员函数，且父类的成员函数是public的，所以在子类中可以直接访问。
+
+#### 案例二
+
+```cpp
+class Base
+{
+public:
+    void func(void)
+    {
+        std::cout << "父类中的void func" << std::endl;
+    }
+    void func(int a)
+    {
+        std::cout << "父类中的int func a = " << a << std::endl;
+    }
+};
+
+class Son : public Base
+{
+public:
+    void func(void)
+    {
+        std::cout << "子类中的void func" << std::endl;
+    }
+};
+
+void test01()
+{
+    Son son;
+    son.func();     // 访问子类的func void
+    // son.func(10);   // error: no matching function for call to ‘Son::func(int)’
+
+    son.Base::func();   // 访问父类的void func方法
+    son.Base::func(10); // 访问父类的int func方法
+}
+```
+
+<b>总结：</b>
+1. 一旦子类实现了父类的成员函数，将屏蔽所有父类同名成员函数；在类外将无法通过子类访问父类的int Func方法；
+2. 如果用户一定要访问父类的其他同名方法，可以通过`son.Base::func();`和`son.Base::func(10);`来访问；
+3. 建议：子类一旦实现了父类的一个同名函数，则尽量把父类的所有同名函数都实现；
+4. operator=也不能被继承，因为它完成类似构造函数的行为。
+
+### 5.3.3 父子类中静态成员同名分析
+
+<b>继承中的静态成员特性：</b>
+1. 它们都可以被继承到派生类中；
+2. 如果重新定义一个静态成员函数，所有在基类中的其他重载函数会被隐藏；
+3. 如果我们改变基类中一个函数的特征，所有使用该函数名的基类版本都会被隐藏。
+
+#### 5.3.3.1 静态成员变量同名分析
+
+```cpp
+class Base
+{
+public:
+    static int num; // 静态成员属于类，而不属于对象
+    static int data;
+    static void showData(void);
+};
+int Base::num = 100;
+int Base::data = 200;
+
+class Son : public Base
+{
+public:
+    static int data;    // 父类和子类静态成员同名
+    static void showData(void);
+};
+int Son::data = 300;
+
+void Base::showData(void)
+{
+    std::cout << "父类的showData" << std::endl;
+}
+
+void Son::showData(void)
+{
+    std::cout << "子类的showData" << std::endl;
+}
+
+void test01()
+{
+    // 从Base类中访问
+    std::cout << Base::num << std::endl;    // 100
+    // Son类也拥有了静态成员
+    std::cout << Son::num << std::endl; // 100
+    Son::num = 150;
+    std::cout << Base::num << std::endl;    // 150
+    std::cout << Son::num << std::endl; // 150
+
+    // 同名成员变量
+    // 父类和子类静态成员同名，访问子类中的成员变量
+    std::cout << Son::data << std::endl;    // 300
+    // 父类和子类静态成员同名，访问父类中的成员变量
+    std::cout << Son::Base::data << std::endl;  // 200
+
+    // 同名成员函数
+    // 父类和子类，同名静态成员函数，通过子类作用域默认访问子类的静态成员函数。
+    Son::showData();
+     // 父类和子类，同名静态成员函数，访问父类的成员函数。
+    Son::Base::showData();
+}
+```
+
+<b>总结：</b>
+
+1. 父类的静态成员在子类中一样存在，静态成员一样存在权限的限制：比如，private的static成员变量，在子类中以及类外都无法访问。
+2. 子类中的静态成员如果和父类中的不是同名，则父类和子类其实是同一个变量，根据子类作用域修改静态成员变量，则父类和子类的值都会修改。
+3. 同名静态成员变量，通过子类作用域访问的是子类的同名静态变量；通过`Son::Base`作用域访问的是父类的同名静态变量；
+4. 同名静态成员函数，通过子类作用域访问的是子类的同名静态函数；通过`Son::Base`作用域访问的是父类的同名静态函数。
+
+### 5.3.4 菱形继承
+
+多继承的格式：
+
+```cpp
+class 子类 : 继承方式1 父类名1, 继承方式2 父类名2, 继承方式3 父类名3, ....
+{
+
+};
+// 表示子类是由父类名1，父类名2，父类名3...共同派生出来
+```
+
+example:
+```cpp
+class Base1
+{
+public:
+    int a;
+};
+class Base2
+{
+public:
+    int a;
+    int b;
+};
+class Son : public Base1, public Base2
+{
+
+};
+void test01()
+{
+    Son son;
+    // std::cout << son.a << std::endl;   // error: request for member ‘a’ is ambiguous
+    std::cout << son.b << std::endl;
+    // 显式调用具体父类
+    std::cout << son.Base1::a << ", " << son.Base2::a << std::endl;
+}
+```
+
+多继承会带来一些二义性的问题，如果两个基类中有同名的函数或者变量，那么通过派生类对象去访问这个函数或变量时就不能明确到底调用从基类1继承的版本还是从基类2继承的版本？<b>解决方法就是显式指定调用哪个基类的版本。</b>
+
+菱形继承：
+
+```cpp
+class Animal
+{
+public:
+    Animal()
+    {
+        data = 100;
+    }
+    int data;
+};
+class Horse : public Animal
+{
+public:
+    Horse()
+    {
+        data = 300;
+    }
+};
+class Donkey : public Animal
+{
+public:
+    Donkey()
+    {
+        data = 400;
+    }
+};
+class Mule : public Horse, public Donkey
+{
+};
+void test01()
+{
+    Mule mule;
+    // std::cout << mule.data << std::endl;    // error: request for member ‘data’ is ambiguous
+
+    mule.Horse::Animal::data = 100;
+    std::cout << mule.Horse::data << std::endl; // 300
+    std::cout << mule.Donkey::data << std::endl;    // 400
+    // std::cout << mule.Horse::Animal::data << std::endl; // error: ‘Animal’ is an ambiguous base of ‘Mule’
+    // std::cout << mule.Donkey::Animal::data << std::endl; // error: ‘Animal’ is an ambiguous base of ‘Mule’
+}
+```
+
+<b>总结：</b>
+
+1. 菱形继承无法直接通过孙子类读取父类的成员变量，因为两个父类中存在同名的成员变量，存在二义性；
+2. 菱形继承可以通过父类的作用域读取两个父类的同名成员变量，但是无法通过`mule.Horse::Animal::data`访问父类的成员变量，因为Animal在孙子类中有两个，存在二义性。
+
+<div align=center>
+    <img src="./images/Animal类结构.png" />
+    <img src="./images/Horse类结构.png" />
+    <img src="./images/Donkey类结构.png" />
+    <img src="./images/Mule类结构.png" />
+</div>
+
+> 菱形继承中，父类的数据会在两个子类中各存在一份，孙子类会有双倍的父类数据，所以必须得使用作用域来区分。同时，父类在孙子类中也存在两个，存在二义性。
+
+### 5.3.5 虚继承
+
+`virtual`修饰继承方式
+
+```cpp
+class Animal
+{
+public:
+    Animal()
+    {
+        data = 100;
+    }
+    int data;
+};
+// 继承的动作：虚继承
+// 父类：虚基类
+class Horse : virtual public Animal
+{
+public:
+    Horse()
+    {
+        data = 300;
+    }
+};
+class Donkey : virtual public Animal
+{
+public:
+    Donkey()
+    {
+        data = 400;
+    }
+};
+class Mule : public Horse, public Donkey
+{
+};
+void test01()
+{
+    Mule mule;
+    mule.data = 200;
+    std::cout << "data = " << mule.data << std::endl;
+}
+```
+
+<div align=center>
+    <img src="./images/Animal类结构.png" />
+    <img src="./images/虚继承Horse类结构.png" />
+    <img src="./images/虚继承Donkey类结构.png" />
+    <img src="./images/虚继承Mule类结构.png" />
+    <img src="./images/虚继承Mule类结构2.png" />
+</div>
+
+> 1. 当使用虚继承时，会在子类产生一个虚基类指针(vbptr, virtual base pointer)，vbptr指向虚基类表。
+> 2. vbtable(虚基类表)存放的是data偏移量。0 0表示第一个偏移量是0，1 4表示第二个偏移量是4。
+> 3. 虚基类指针和虚基类表的目的：保证不管多少个继承，虚基类的数据只有一份。
+> 4. Sheep的vbptr是0开始，Tuo的vbptr是4开始；再去看虚函数表，Sheep需要偏移8个字节才能访问到data，Tuo需要偏移4字节才能访问到data。
+> 5. Mule、Donkey、Horse三个类共享了一份Animal数据。
+> 6. 虚函数表保存了当前的虚指针相对于虚基类的首地址的偏移量。
+
+<b>共享基类，那么基类的初始化是由谁来完成的？</b>
+
+> 1. 虚基类的初始化是由最后的子类完成，其他的初始化语句都不会调用。
+> 2. 虚继承只能解决具备公共祖先的多继承所带来的二义性问题，不能解决没有公共祖先的多继承。
+
+
+## 多态
+
+多态性(polymorphism)提供接口与具体实现之间的另一个层隔离，多态性改善了代码的可读性和组织性，同时也使创建的程序具有可扩展性，项目不仅在在最初创建时期可以扩展，而且当项目在需要有新的功能时也能扩展。
+
+C++支持编译时多态(静态多态)和运行时多态(动态多态)，运算符重载和函数重载就是编译时多态；而派生类和虚函数实现运行时多态。
+
+静态多态和动态多态的区别就是函数地址是早绑定(静态联编)还是晚绑定(动态联编)。如果函数的调用，在编译阶段就可以确定函数的调用地址，并产生代码，就是静态多态(编译时多态) ，也就是说地址是早绑定的。而如果函数的调用地址不能在编译期间确定，而需要在运行时才能决定，这就属于晚绑定(动态多态，运行时多态)。
 
 
