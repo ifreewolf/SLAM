@@ -3998,4 +3998,268 @@ C++支持编译时多态(静态多态)和运行时多态(动态多态)，运算�
 
 静态多态和动态多态的区别就是函数地址是早绑定(静态联编)还是晚绑定(动态联编)。如果函数的调用，在编译阶段就可以确定函数的调用地址，并产生代码，就是静态多态(编译时多态) ，也就是说地址是早绑定的。而如果函数的调用地址不能在编译期间确定，而需要在运行时才能决定，这就属于晚绑定(动态多态，运行时多态)。
 
+静态多态：运算符重载、函数重载
+动态多态：虚函数
 
+```cpp
+#include <iostream>
+
+class Animal
+{
+public:
+    void sleep(void)
+    {
+        std::cout << "animal 动态在睡觉" << std::endl;
+    }
+};
+
+class Cat : public Animal
+{
+public:
+    void sleep(void)
+    {
+        std::cout << "猫在睡觉" << std::endl;
+    }
+};
+
+void test01()
+{
+    Cat cat;
+    cat.sleep();    // 猫在睡觉，Animal类的sleep()函数被屏蔽了，编译器就近选择了子类的sleep函数。
+    cat.Animal::sleep();    // animal 动态在睡觉，访问的是父类的方法
+
+    // 用基类(指针或引用)保存了子类对象(向上转换)
+    Animal* p = new Cat;
+    p->sleep(); // animal 动态在睡觉，调用的是父类的方法
+    Animal animal = Cat();
+    animal.sleep(); // animal 动态在睡觉
+}
+```
+
+> 如果初始化子类对象，因为函数名相同，子类会屏蔽掉父类的同名函数；如果强制要通过子类访问父类的同名函数，则需要使用父类作用域。说明同名函数是存在的，只是不在子类的默认作用域下。\
+> 使用父类指针或父类引用来获得子类对象，这是合理的，叫作<b>向上转换</b>。此时，父类指针或引用指向的是子类中父类部分，所以只能访问父类的变量和方法，无法访问到子类的方法。
+
+<div align=center>
+    <img src="./images/父类指针子类对象.png" />
+</div>
+
+> 子类继承父类后，在子类中会存在一块空间，保存父类的变量和方法。父类指针指向的就是父类区域，所以是安全的；\
+> 相反，如果使用子类指针去指向父类对象，则存在访问非法内存的风险，因为指针类型表明对象大小，而子类对象所占空间显然大于父类对象。
+
+### 使用基类指针、引用访问子类对象中的成员方法(虚函数)
+
+```cpp
+class Animal
+{
+public:
+    // 虚函数，用virtual修饰的成员函数只要涉及到继承，子类中同名函数都是虚函数
+    // 虚函数，本质是一个函数指针变量
+    // 如果Animal不涉及到继承，函数指针变量就指向自身sleep
+    virtual void sleep(void)
+    {
+        std::cout << "animal 动态在睡觉" << std::endl;
+    }
+};
+class Cat : public Animal
+{
+public:
+    // 子类的同名函数不管是否使用virtual关键字修饰，都默认为virtual函数
+    virtual void sleep(void)
+    {
+        std::cout << "猫在睡觉" << std::endl;
+    }
+};
+void test01()
+{
+    // 需求：用基类(指针或引用)保存子类对象，同时还需要操作子类自身成员
+    Animal *p = new Cat;
+    p->sleep(); // 猫在睡觉
+}
+```
+
+> 虚函数就是在函数前面加上`virtual`关键字
+
+虚函数特点：
+
+<div align=center>
+    <img src="./images/Animal虚函数结构.png" />
+    <img src="./images/涉及继承的Cat类结构图.png" />
+    <br/>
+    <p>上图是不涉及继承的Animal类结构图，下图是设计继承的Cat类结构图</p>
+</b>
+</div>
+
+> 基类类成员中会产生一个虚函数指针，虚函数指针指向虚函数表，虚函数表存放的氏所保存的函数入口地址。\
+> 如果没涉及到继承，函数指针变量就指向自身sleep函数。\
+> 如果涉及到继承，子类的虚函数表会更新，函数入口地址改成了子类的成员函数。
+
+<div align=center>
+    <img src="./images/虚函数分析图.png" />
+</div>
+
+<b>总结：</b>
+
+当虚函数涉及到继承时，子类会继承父类的（虚函数指针vfptr和虚函数表vftable），编译器会将虚函数表中的函数入口地址更新成子类的同名（返回值、参数都相同）的函数入口地址。\
+如果基类指针、引用访问虚函数的时候，就会间接的调用子类的虚函数。
+
+#### 为什么使用虚函数
+
+使用虚函数的本质是为了用父类指针访问子类对象，而使用父类指针访问子类对象的目的是为了实现动态多态。
+
+#### 虚函数的应用案例
+
+基类指针、引用作为函数的参数
+
+<b>C++如何实现动态绑定？</b>
+
+> 当编译器发现我们的类中有虚函数的时候，编译器会创建一张虚函数表，把虚函数的函数入口地址放到虚函数表中，并且在类中秘密增加一个指针，这个指针就是虚函数指针，这个指针就是指向对象的虚函数表。在多态调用时，根据虚函数指针找到虚函数表来实现动态绑定。
+
+#### 虚析构
+
+1. 知识点的引入
+
+```cpp
+class Animal
+{
+public:
+    virtual void sleep(void)
+    {
+        std::cout << "animal 动态在睡觉" << std::endl;
+    }
+    ~Animal()
+    {
+        std::cout << "Animal的析构" << std::endl;
+    }
+};
+class Cat : public Animal
+{
+public:
+    virtual void sleep(void)
+    {
+        std::cout << "猫在睡觉" << std::endl;
+    }
+    ~Cat()
+    {
+        std::cout << "Cat的析构" << std::endl;
+    }
+};
+void test01()
+{
+    Animal* p = new Cat;
+    p->sleep();
+    
+    // 出现的问题：只能释放父类析构
+    delete p;   // 只调用了Animal的析构函数
+}
+```
+
+<b>原因分析：</b>
+
+<div align=center>
+    <img src="./images/未调用子类析构的原因.png" />
+</div>
+
+因为是使用父类指针指向的子类对象，指针类型决定了内存作用域，所以在父类指针中只能访问到父类的析构函数，而无法访问子类的析构函数。
+
+<b>解决方案：虚析构</b>
+
+虚析构的作用：通过基类指针、引用释放子类的所有空间。
+
+```cpp
+#include <iostream>
+
+class Animal
+{
+public:
+    virtual void sleep(void)
+    {
+        std::cout << "animal 动态在睡觉" << std::endl;
+    }
+    // 使用virtual修饰析构函数
+    virtual ~Animal()
+    {
+        std::cout << "Animal的析构" << std::endl;
+    }
+};
+class Cat : public Animal
+{
+public:
+    virtual void sleep(void)
+    {
+        std::cout << "猫在睡觉" << std::endl;
+    }
+    ~Cat()
+    {
+        std::cout << "Cat的析构" << std::endl;
+    }
+};
+void test01()
+{
+    Animal* p = new Cat;
+    p->sleep();
+
+    delete p;   
+    // Cat的析构
+    // Animal的析构
+}
+```
+
+> 给父类的析构函数前面使用`virtual`修饰后，`delete p;`将会首先调用子类的析构，然后调用父类的析构。
+
+##### 虚析构的分析
+
+<div align=center>
+    <img src="./images/虚析构Animal类结构图.png" />
+    <img src="./images/虚析构流程分析图.png" />
+    <br/>
+    <p>上图是Animal类的析构函数使用virtual修饰后的类结构图，下图是虚析构的调用流程。</p>
+</div>
+
+> 对父类的析构函数使用`virtual`修饰后，虚函数表内新增了析构函数的入口地址。
+> 子类继承父类后，在虚函数表中将析构函数的入口地址修改为子类的析构函数地址；所以在`delete p;`时，会默认调用子类的析构函数，同时<b>C++子类的析构被调用后，系统会自动的调用父类的析构函数</b>。因此完成了子类和父类的析构。
+
+### 抽象基类和纯虚函数(pure virtual function)
+
+目的：希望基类仅仅作为其派生类的一个接口，建立公共接口的目的是为了将子类公共的操作抽象出来，可以通过一个公共接口来操作一组类，且这个公共接口不需要实现(或者不需要完全实现).
+
+在虚函数中，如果使用父类指针来接收子类对象，则父类的同名虚函数则永远不会被调用，完全可以让基类只作为一个接口，而不做具体的实现。<b>纯虚函数(pure virtual function)</b>就是不提供任何实现的虚函数。
+
+如果基类中至少存在一个纯虚函数，则该基类称为抽象类(abstract class)，纯虚函数使用关键字`virtual`，并在其后面加上`=0`。抽象类编译器不允许实例化，子类必须去实现纯虚函数，否则抽象类的派生类依然是一个抽象类。
+
+`virtual void fun() = 0;`<b>告诉编译器在vtable中为函数保留了一个位置，但在这个特定位置不放地址。</b>
+
+```cpp
+class Animal
+{
+public:
+    // 纯虚函数：如果一个类中拥有纯虚函数，那么这个类就是抽象类
+    // 抽象类不能实例化对象
+    virtual void sleep() = 0;
+    virtual ~Animal() { std::cout << "Animal dtor" << std::endl; }
+};
+class Cat : public Animal
+{
+public:
+    virtual void sleep()
+    {
+        std::cout << "Cat在睡觉" << std::endl;
+    }
+    ~Cat()
+    {
+        std::cout << "Cat dtor" << std::endl;
+    }
+};
+void test01()
+{
+    Animal* p = new Cat;
+    p->sleep();
+    delete p;
+    // Animal抽象类不能实例化对象
+    // Animal ob;  // error: cannot declare variable ‘ob’ to be of abstract type ‘Animal’
+    Animal* animal; // 但这样是允许的，因为这只是声明了一个指针，而不是初始化对象
+}
+```
+
+1. 抽象类派生出子类，那么子类必须实现所有的纯虚函数；如果漏掉一个，那么子类依然是一个抽象类，无法初始化对象。
+
+#### 纯虚函数和抽象类的引用
