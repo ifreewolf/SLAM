@@ -37,10 +37,10 @@ T& myMax(T &a, T &b)
 
 // 方法一：提供函数模板具体化
 // C++标准不直接支持模板函数作为友元（特别是模板特化），所以无法解决要在类外访问私有成员变量
-template<> Person& myMax<Person>(Person &ob1, Person &ob2)
-{
-    return ob1.a > ob2.a ? ob1 : ob2;
-}
+// template<> Person& myMax<Person>(Person &ob1, Person &ob2)
+// {
+//     return ob1.a > ob2.a ? ob1 : ob2;
+// }
 
 // 方法二：重载>运算符
 

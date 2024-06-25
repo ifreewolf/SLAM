@@ -4549,3 +4549,161 @@ void test01()
 
 有时，有两个或多个类，其功能是相同的，仅仅是数据类型不同。类模板用于实现类所需数据的类型参数化。
 
+```cpp
+// 类模板
+template<class T1, class T2>
+class Data
+{
+private:
+    T1 name;
+    T2 num;
+public:
+    Data(T1 name, T2 num)
+    {
+        this->name = name;
+        this->num = num;
+        std::cout << "有参构造" << std::endl;
+    }
+    ~Data()
+    {
+        std::cout << "析构函数" << std::endl;
+    }
+    void showPerson()
+    {
+        std::cout << "name = " << this->name << ", num = " << this->num << std::endl;
+    }
+};
+void test01()
+{
+    // 类模板不能进行类型自动推导，c++17开始可以进行类型推导
+    // Data ob("德玛西亚", 18);    // error: missing template arguments before ‘ob’ ，必须要指明模板参数类型
+    Data<std::string, int> ob1("德玛西亚", 100);
+    ob1.showPerson();   // name = 德玛西亚, num = 100
+
+    Data<int, std::string> ob2(200, "提莫");
+    ob2.showPerson();   // name = 200, num = 提莫
+
+    Data ob3(100, 200); // 使用C++17编译可以通过
+    ob3.showPerson();
+
+    Data ob4("小炮", "德玛"); // 使用C++17编译可以通过
+    ob4.showPerson();
+}
+```
+
+> 在C++17之前，类模板不能进行模板类型的自动推导，所以`Data ob("德玛西亚", 18);`编译出错：`error: missing template arguments before ‘ob’`。必须指定模板的参数进行初始化。\
+> 在C++17及之后，类模板可以进行类型的自动推导，所以`ob3`和`ob4`都能正常编译通过，指定C++版本使用`set(CMAKE_CXX_FLAGS "-std=c++17")`。
+
+### 类模板做函数参数
+
+```cpp
+template<class T1, class T2>
+class Data
+{
+    friend void addData(Data<std::string, int> &ob);
+private:
+    T1 name;
+    T2 num;
+public:
+    Data(T1 name, T2 num)
+    {
+        this->name = name;
+        this->num = num;
+        std::cout << "有参构造" << std::endl;
+    }
+    ~Data()
+    {
+        std::cout << "析构函数" << std::endl;
+    }
+    void showPerson()
+    {
+        std::cout << "name = " << this->name << ", num = " << this->num << std::endl;
+    }
+};
+
+// 类模板做函数参数
+void addData(Data<std::string, int> &ob)
+{
+    ob.name += "_vip";
+    ob.num += 200;
+    return;
+}
+
+void test02()
+{
+    Data<std::string, int> ob("德玛西亚", 19);
+    addData(ob);
+    ob.showPerson();    // name = 德玛西亚_vip, num = 219
+}
+```
+
+> 类模板作为函数参数，这个函数参数需要指明模板参数的具体类型。
+
+### 类模板派生普通类
+
+```cpp
+template<class T>
+class Base
+{
+private:
+    T num;
+public:
+    Base(T num)
+    {
+        std::cout << "Base有参构造" << std::endl;
+        this->num = num;
+    }
+    ~Base()
+    {
+        std::cout << "Base析构函数" << std::endl;
+    }
+    void showNum(void)
+    {
+        std::cout << "Base num = " << this->num << std::endl;
+    }
+};
+
+// 类模板派生普通类，必须给基类指定类型
+class Son1 : public Base<int>
+{
+public:
+    // 基类构造函数初始化时，也必须指定类型
+    Son1(int a) : Base<int>(a)
+    {
+        std::cout << "Son1有参构造" << std::endl;
+    }
+    ~Son1()
+    {
+        std::cout << "Son1析构函数" << std::endl;
+    }
+};
+
+class Son2 : public Base<std::string>
+{
+public:
+    Son2(std::string str) : Base<std::string>(str)
+    {
+        std::cout << "Son2有参构造" << std::endl;
+    }
+    ~Son2()
+    {
+        std::cout << "Son2析构函数" << std::endl;
+    }
+};
+
+void test01()
+{
+    Son1 ob1(100);
+    ob1.showNum();
+
+    Son2 ob2("son2");
+    ob2.showNum();
+}
+```
+
+> 类模板派生出普通类，在继承时必须指定基类的模板类型。并且子类在构造函数中调用父类的构造函数时也必须指定模板类型。\
+> 子类实例化的时候需要具体化的父类，子类需要知道父类的具体类型是什么样的？这样C++编译器才能知道给子类分配多少内存。
+
+### 类模板类内实现
+
+### 类模板类外实现
