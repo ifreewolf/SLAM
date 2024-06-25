@@ -4315,3 +4315,237 @@ void test()
 重定义：子类重新定义父类的同名成员(非virtual函数)，隐藏了父类的同名成员。
 
 ## 函数模板
+
+C++特点：封装、继承、多态
+
+除此之外：面向对象编程(封装、继承、多态)、泛型编程(模板)
+
+
+<b>全局函数模板</b>
+
+```cpp
+// class 和 typename一样的
+template<typename T>
+void mySwap(T &a, T &b)
+{
+    T tmp = a;
+    a = b;
+    b = tmp;
+}
+void test01()
+{
+    int a = 1, b = 2;
+    std::cout << "a = " << a << ", b = " << b << std::endl; // a = 1, b = 2
+    mySwap<int>(a, b);
+    std::cout << "a = " << a << ", b = " << b << std::endl; // a = 2, b = 1
+
+    char c = 'a', d = 'b';
+    std::cout << "c = " << c << ", d = " << d << std::endl; // c = a, d = b
+    mySwap<char>(c, d);
+    std::cout << "c = " << c << ", d = " << d << std::endl; // c = b, d = a
+}
+```
+
+函数模板也可以自动推导，比如直接调用`mySwap(a, b);`将默认调用`mySwap<int>(a, b);`。
+
+<b>使用模板是为了实现泛型，可以减轻编程的工作量，增强函数的重用性。</b>
+
+### 函数模板和普通函数的区别
+
+```cpp
+void mySwap(int &a, int &b)
+{
+    std::cout << "普通函数" << std::endl;
+    int tmp;
+    tmp = a;
+    a = b;
+    b = tmp;
+}
+// class 和 typename一样的
+template<typename T>
+void mySwap(T &a, T &b)
+{
+    std::cout << "函数模板" << std::endl;
+    T tmp = a;
+    a = b;
+    b = tmp;
+}
+void test02()
+{
+    int data1 = 10, data2 = 20;
+    // 函数模板和普通函数都识别时，优先选择普通函数
+    mySwap(data1, data2);   // 普通函数
+
+    // 函数模板和普通函数都识别，强行选择函数模板 加<>
+    mySwap<int>(data1, data2);  // 函数模板
+
+    // 函数模板参数的类型不能自动转换
+    int a = 10;
+    char b = 'b';
+    // char无法强转为int&
+    // mySwap(a, b);  // error: cannot bind non-const lvalue reference of type ‘int&’ to an rvalue of type ‘int’
+}
+```
+
+> 当普通函数和函数模板都匹配时，编译器会优先选择普通函数；如果要强行选择函数模板可以在函数名后加`<>`。
+> 函数模板参数的类型不能自动转换，同时char无法强转为int&。
+
+```cpp
+void mySwap(int a, int b)
+{
+    std::cout << "普通函数" << std::endl;
+}
+template<typename T>
+void mySwap(T a, T b)
+{
+    std::cout << "函数模板" << std::endl;
+}
+void test01()
+{
+    int a = 100;
+    char b = 'a';
+    // 函数模板的参数类型，不能自动类型转换
+    // 普通函数的参数类型，可以自动类型转换
+    mySwap(a, b);   // 普通函数，这两个函数都没有引用
+
+    // 编译器自动转换指定T
+    // mySwap<>(a, b); // error: no matching function for call to ‘mySwap(int&, char&)’
+    mySwap<int>(a, b);  // 函数模板，指定T之后，相当于普通函数；因为自动转换编译器不知道该转换成int还是char
+}
+```
+
+> 函数模板无法自动类型转换，因为编译器无法确定是将int转换为char，还是将char转换为int。 \
+> 如果人为指定T的类型后，则相当于普通函数，可以确切的知道该使用什么类型了。\
+> 总之，只有当编译器确定类型了才行。
+
+#### 函数模板练习
+
+```cpp
+template<class T>
+void myPrintArrayTemplate(T arr[], int len)
+{
+    for (int i = 0; i < len; i++)
+    {
+        std::cout << arr[i] << " ";
+    }
+    std::cout << std::endl;
+}
+template<class T>
+void mySortArrayTemplate(T arr[], int len)
+{
+    int i = 0, j = 0;
+    for (i = 0; i < len - 1; i++) {
+        int min = i;
+        for (j = min + 1; j < len; j++) {
+            if (arr[min] > arr[j]) {
+                min = j;
+            }
+        }
+        if (min != i) {
+            T tmp = arr[min];
+            arr[min] = arr[i];
+            arr[i] = tmp;
+        }
+    }
+    return;
+}
+int main(int argc, char **argv)
+{
+    char str[] = "hello template";
+    int arr[] = {5, 3, 4, 7, 8, 9, 1, 6, 10};
+    int str_len = strlen(str);
+    int arr_len = sizeof(arr) / sizeof(arr[0]);
+
+    // 用函数模板遍历数组
+    myPrintArrayTemplate(str, str_len);
+    myPrintArrayTemplate(arr, arr_len);
+
+    // 用函数模板遍历数组
+    mySortArrayTemplate(str, str_len);
+    mySortArrayTemplate(arr, arr_len);
+
+    myPrintArrayTemplate(str, str_len);
+    myPrintArrayTemplate(arr, arr_len);
+
+    return 0;
+}
+```
+> 函数模板也可以重载，通常是参数个数的不同。
+
+函数模板机制结论：编译器并不是把函数模板处理成能够处理任何类型给的函数，函数模板通过具体类型产生不同的函数。编译器会对函数模板进行两次编译，在声明的地方对模板代码本身进行编译，在调用的地方对参数替换后的代码进行编译。
+
+### 模板的局限性
+
+假设如下模板函数：
+```cpp
+template<class T>
+void func(T a, T b){}
+```
+
+如果代码实现了a>b，如下代码所示：
+
+```cpp
+class Person
+{
+    friend std::ostream& operator<<(std::ostream &out, Person &ob);
+private:
+    int a;
+    int b;
+public:
+    Person(int a, int b) : a(a), b(b)
+    {
+        std::cout << "构造函数" << std::endl;
+    }
+    ~Person()
+    {
+        std::cout << "析构函数" << std::endl;
+    }
+    // 方法二：重载>运算符
+    bool operator>(Person &ob)
+    {
+        return this->a > ob.a;
+    }
+};
+std::ostream& operator<<(std::ostream &out, Person &ob)
+{
+    out << "a = " << ob.a << ", b = " << ob.b << std::endl;
+    return out;
+}
+
+template<typename T>
+T& myMax(T &a, T &b)
+{
+    return a > b ? a : b;   // error: no match for ‘operator>’ (operand types are ‘Person’ and ‘Person’)
+}
+
+// 方法一：提供函数模板具体化
+// C++标准不直接支持模板函数作为友元（特别是模板特化），所以无法解决要在类外访问私有成员变量
+template<> Person& myMax<Person>(Person &ob1, Person &ob2)
+{
+    return ob1.a > ob2.a ? ob1 : ob2;
+}
+
+// 方法二：重载>运算符
+
+void test01()
+{
+    int data1 = 10, data2 = 20;
+    std::cout << myMax(data1, data2) << std::endl;   // 20
+
+    Person ob1(10, 20);
+    Person ob2(100, 200);
+    std::cout << myMax(ob1, ob2) << std::endl;  // a = 100, b = 200
+}
+```
+
+> 类Person如果没有定义`>`操作符，则出现错误：`error: no match for ‘operator>’ (operand types are ‘Person’ and ‘Person’)`;
+
+</b>解决方案：</b>
+
+<b>方案一：</b>提供函数模板具体化(也是模板的重载)。需要注意： C++标准不直接支持模板函数作为友元（特别是模板特化），所以如果要在函数模板中访问类的私有成员变量，这种方案不行；\
+<b>方案二：</b>在类成员函数中重载`>`操作符。
+
+## 类模板
+
+有时，有两个或多个类，其功能是相同的，仅仅是数据类型不同。类模板用于实现类所需数据的类型参数化。
+
