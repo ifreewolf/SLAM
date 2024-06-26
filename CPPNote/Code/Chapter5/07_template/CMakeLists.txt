@@ -5,6 +5,7 @@ set(CMAKE_CXX_FLAGS "-std=c++17")
 
 add_executable(test1 test1.cpp)
 add_executable(test2 test2.cpp)
+add_executable(test3 test3.cpp)
 add_executable(templateSort templateSort.cpp)
 add_executable(templateTest templateTest.cpp)
 add_executable(classTemplate classTemplate.cpp)
