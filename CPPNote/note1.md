@@ -4709,8 +4709,148 @@ void test01()
 类模板的函数类外实现
 
 ```cpp
+template<class T1, class T2>
+class Person
+{
+private:
+    T1 name;
+    T2 age;
+public:
+    Person(T1 name, T2 age)
+    {
+        this->name = name;
+        this->age = age;
+    }
+    void showPerson()
+    {
+        std::cout << "name = " << this->name << ", age = " << this->age << std::endl;
+    }
+};
 
+void test01()
+{
+    // Person p1("德玛西亚", 18);   // 类模板不能进行类型自动推导
+    Person<std::string, int> p1("德玛西亚", 18);
+    p1.showPerson();
+}
 ```
 
 
+
 ### 类模板类外实现
+
+```cpp
+// 严格来说：类模板的类型不是Person而是Person<T1, T2>，传不同的类型代表不同的类
+template<class T1, class T2>
+class Person
+{
+private:
+    T1 name;
+    T2 age;
+public:
+    // 类内声明
+    Person(T1 name, T2 age);
+    ~Person();
+    void showPerson();
+};
+// 类外定义
+template<class T1, class T2>
+// Person::Person(T1 name, T2 age)  // Person作用域是不对的，因为类型是Person<T1, T2>
+Person<T1, T2>::Person(T1 name, T2 age)
+{
+    std::cout << "有参构造" << std::endl;
+    this->name = name;
+    this->age = age;
+}
+template<class T1, class T2>
+void Person<T1, T2>::showPerson()
+{
+    std::cout << "name = " << this->name << ", age = " << this->age << std::endl;
+}
+template<class T1, class T2>
+Person<T1, T2>::~Person()
+{
+    std::cout << "析构函数" << std::endl;
+}
+int main(int argc, char **argv)
+{
+    Person<std::string, int> ob1("德玛西亚", 18);
+    ob1.showPerson();
+
+    Person<int, int> ob2(100, 200);
+    ob2.showPerson();
+
+    return 0;
+}
+```
+
+> 每个类外的成员函数实现都需要添加`template<class T1, class T2>`
+
+### 类模板头文件和源文件分离问题</b
+
+```cpp
+// person.h
+#ifndef PERSON_HPP
+#define PERSON_HPP
+#include <iostream>
+#include <string>
+template<class T1, class T2>
+class Person
+{
+private:
+    T1 name;
+    T2 age;
+public:
+    Person(T1 name, T2 age);
+    void showPerson();
+};
+#endif
+// person.cpp
+#include "person.h"
+
+// 类外定义
+template<class T1, class T2>
+Person<T1, T2>::Person(T1 name, T2 age)
+{
+    std::cout << "有参构造" << std::endl;
+    this->name = name;
+    this->age = age;
+}
+
+template<class T1, class T2>
+void Person<T1, T2>::showPerson()
+{
+    std::cout << "name = " << this->name << ", age = " << this->age << std::endl;
+}
+// main.cpp
+#include "person.h"
+// 但是include一般不会引入cpp文件
+#include "person.cpp"
+#include <string>
+
+int main(int argc, char **argv)
+{
+    // 类模板会经过两次编译，第一次是类模板本身编译(这一步没问题)，第二次是类模板的成员函数调用的时候会再次编译
+    // C++/C 独立文件编译
+    // 由于本文件只引入了person.h文件，所以在编译下面的对象时，会把参数替换person.h的T1和T2。person.cpp文件没有导入，所以函数的实现没法替换，所以会报错：undefined reference
+    // 如果类模板的.cpp和.h分文件，出错的原因在第二次。
+    // 如果#include "person.cpp"也引入进来，则可以编译通过。
+    // 建议.cpp和.h放在一个文件下
+    Person<std::string, int> ob1("德玛西亚", 18);   // undefined reference to `Person<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, int>::Person(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, int)'
+
+    // ob1.showPerson();
+
+    return 0;
+}
+```
+
+> 类模板会经过两次编译，第一次是类模板本身编译(这一步没问题)，第二次是类模板的成员函数调用的时候会再次编译。由于本文件只引入了person.h文件，所以在编译具体的对象时，会把头文件中的函数声明参数替换位T1和T2。person.cpp文件没有导入，所以函数的实现没法替换，所以会报错：`undefined reference`。如果#include "person.cpp"也引入进来，则可以编译通过。建议.cpp和.h放在一个文件下。
+
+> 上述案例带啊吗在qt编译器顺利通过编译并执行，但是在Linux和vs编辑器下如果只包含头文件，那么会报错链接错误，需要包含cpp文件，但是如果类模板中有友元类，那么编译失败！\
+> <b>解决方案</b>：类模板的声明和实现放到一个文件中，我们把这个文件命名为`.hpp`。\
+> <b>原因</b>：类模板需要二次编译，在出现模板的地方编译一次，在嗲用模板的地方再次编译。C++编译规则为独立编译。
+
+### 类模板案例
+
+
+
