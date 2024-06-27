@@ -3,6 +3,7 @@
 
 class Person
 {
+    friend std::ostream& operator<<(std::ostream &out, const Person &ob);
 private:
     std::string name;
     int age;
@@ -13,6 +14,12 @@ public:
         this->age = age;
     }
 };
+
+std::ostream& operator<<(std::ostream &out, const Person &ob)
+{
+    out << "name = " << ob.name << ", age = " << ob.age << std::endl;
+    return out;
+}
 
 int main(int argc, char **argv)
 {
@@ -38,6 +45,7 @@ int main(int argc, char **argv)
     ob3.push_back(Person("小法", 20));
     ob3.push_back(Person("米兰", 21));
     ob3.push_back(Person("艾米", 22));
+    ob3.printArray();
 
     return 0;
 }

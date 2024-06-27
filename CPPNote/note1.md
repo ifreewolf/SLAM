@@ -4852,5 +4852,202 @@ int main(int argc, char **argv)
 
 ### 类模板案例
 
+```cpp
+// myarray.hpp
+#ifndef MYARRAY_HPP
+#define MYARRAY_HPP
 
+#include <iostream>
+
+template<class T>
+class MyArray
+{
+private:
+    T *addr;
+    int capacity;
+    int size;
+public:
+    MyArray(int capacity);
+    MyArray(const MyArray &ob);
+    ~MyArray();
+
+    // 尾插法
+    void push_back(const T &val);
+    // 遍历数组
+    void printArray(void);
+};
+
+#endif
+
+template<class T>
+MyArray<T>::MyArray(int capacity)
+{
+    // 对于自定义数据类型，new Person[10]; 数组中的每个元素都会调用无参构造
+    this->addr = new T[capacity];
+    this->capacity = capacity;
+    this->size = 0;
+}
+
+template<class T>
+MyArray<T>::MyArray(const MyArray &ob)
+{
+    this->capacity = ob.capacity;
+    this->addr = new T[this->capacity];
+
+    int i = 0;
+    for (i = 0; i < ob.size; i++)
+    {
+        this->addr[i] = ob.addr[i];
+    }
+    this->size = ob.size;
+}
+
+template<class T>
+MyArray<T>::~MyArray()
+{
+    if (this->addr != nullptr)
+    {
+        delete [] this->addr;
+        this->addr = nullptr;
+    }
+}
+
+template<class T>
+void MyArray<T>::push_back(const T &val)
+{
+    // 数组的实际个数size 不超过capacity
+    if (this->size == this->capacity) {
+        std::cout << "容器已满" << std::endl;
+        return;
+    }
+    this->addr[this->size] = val;
+    this->size++;
+}
+
+template<class T>
+void MyArray<T>::printArray(void)
+{
+    int i;
+    for (i = 0; i < this->size; i++) {
+        std::cout << this->addr[i] << " ";
+    }
+    std::cout << std::endl;
+}
+// main.cpp
+#include <string>
+#include "myarray.hpp"
+
+class Person
+{
+    friend std::ostream& operator<<(std::ostream &out, const Person &ob);
+private:
+    std::string name;
+    int age;
+public:
+    Person(){}
+    Person(std::string name, int age) {
+        this->name = name;
+        this->age = age;
+    }
+};
+
+std::ostream& operator<<(std::ostream &out, const Person &ob)
+{
+    out << "name = " << ob.name << ", age = " << ob.age << std::endl;
+    return out;
+}
+
+int main(int argc, char **argv)
+{
+    MyArray<char> ob(10);
+    ob.push_back('a');
+    ob.push_back('b');
+    ob.push_back('c');
+    ob.push_back('d');
+    ob.printArray();
+
+    MyArray<int> ob2(10);
+    ob2.push_back(10);
+    ob2.push_back(20);
+    ob2.push_back(30);
+    ob2.push_back(40);
+    ob2.push_back(50);
+    ob2.printArray();
+
+    // 存放自定义数据
+    MyArray<Person> ob3(10);
+    ob3.push_back(Person("德玛", 18));
+    ob3.push_back(Person("西亚", 19));
+    ob3.push_back(Person("小法", 20));
+    ob3.push_back(Person("米兰", 21));
+    ob3.push_back(Person("艾米", 22));
+    ob3.printArray();
+
+    return 0;
+}
+```
+
+### 类模板和友元
+
+```cpp
+#include <iostream>
+
+// Person类向前声明
+template<class T1, class T2> class Person;
+// 提前声明函数模板，告诉编译器printPerson02这个函数是存在的
+template<class T1, class T2> void printPerson02(Person<T1, T2> &ob);
+
+template<class T1, class T2>
+class Person
+{
+private:
+    T1 name;
+    T2 age;
+public:
+    Person(T1 name, T2 age);
+    // 1、友元函数在类中定义（友元不属于该类成员函数）
+    friend void printPerson01(Person<T1, T2> &ob)
+    {
+        std::cout << "name = " << ob.name << ", age = " << ob.age << std::endl;
+    }
+    // 2、友元函数在类外定义，必须告诉编译器该友元函数是模板函数
+    friend void printPerson02<>(Person<T1, T2> &ob);
+};
+
+// 2、友元函数在类外定义
+template<class T1, class T2>
+void printPerson02(Person<T1, T2> &ob)
+{
+    std::cout << "name = " << ob.name << ", age = " << ob.age << std::endl;
+}
+
+template<class T1, class T2>
+Person<T1, T2>::Person(T1 name, T2 age)
+{
+    this->name = name;
+    this->age = age;
+}
+
+int main(int argc, char **argv)
+{
+    Person<std::string, int> ob("德玛", 18);
+    // 通过友元 访问类模板中的数据
+    printPerson01(ob);
+    printPerson02<std::string, int>(ob);
+    return 0;
+}
+```
+
+> 方法一：在类内定义友元函数，这个函数不属于类的成员函数。
+> 方法二：在类外定义友元函数，声明友元函数时需要加`<>`:`friend void printPerson02<>(Person<T1, T2> &ob);`;模板类的友元函数需要在类前声明，同时声明的时候因为要用到`Person`类，所以`Person`类需要向前声明。
+
+# 六、类型转换
+
+## 6.1 静态转换`static_cast`
+
+## 6.2 动态转换`dynamic_cast`
+
+## 6.3 常量转换`const_cast`
+
+## 6.4 编译转换`reinterpret_cast`
 
