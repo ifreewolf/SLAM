@@ -5043,11 +5043,458 @@ int main(int argc, char **argv)
 
 # 六、类型转换
 
+C++风格的强制转换，相当于对编译器说：忘记类型检查，把它看做其他的类型，优点是能更清晰的表明它们要干什么。程序员只要扫一眼这样的代码，就能立即知道一个强制转换的目的。
+
+<B>新类型的强制转换可以提供更好的控制强制转换过程，允许控制各种不同种类的强制转换。</B>
+
 ## 6.1 静态转换`static_cast`
+
+用于将类层次结构中的基类和派生类之间指针或引用的转换。进行上行转换(把派生类的指针或引用转换成基类表示)是安全的；进行下行转换(把基类指针或引用转换成派生类表示)时，由于没有动态类型检查，所以是不安全的。
+
+<b>进行上行转换：</b>用基类指针、引用指向子类空间(安全)
+<b>进行下行转换：</b>用子类指针、引用指向基类空间(不安全)
+
+<div align=center>
+    <img src="./images/继承中的上行转换和下行转换.png" />
+</div>
+
+用于基本数据类型之间的转换，如把int转换成char，把char转换成int。这种转换的安全性也要开发人员来保证。
+
+```cpp
+class Animal{};
+class Dog : public Animal{};
+class Other{};
+
+// 静态转换static_cast
+void test01()
+{
+    // static_cast作用于基本类型
+    char ch = 'a';
+    double b = (double)ch;  // 强制转换
+    double c = static_cast<double>(ch);
+    std::cout << "b = " << b << std::endl;  // 97
+    std::cout << "c = " << c << std::endl;  // 97
+
+    // static_cast 作用域自定义数据类型（结构体和类）
+    // 有关系的类之间
+    // 上行转换
+    Animal *p = new Dog;    // 编辑器默认接受
+    Animal *p1 = static_cast<Animal*>(new Dog);
+    // 下行转换，不安全，容易越界
+    // Dog* dog = new Animal;  // error: invalid conversion from ‘Animal*’ to ‘Dog*’ [-fpermissive]
+    Dog* dog = (Dog*)(new Animal);  // 使用强制转换
+    Dog* dog1 = static_cast<Dog *>(new Animal); // 使用静态转换
+
+    // static_cast不能作用于不相关的类之间转换
+    // Animal* p2 = static_cast<Animal *>(new Other);  // error: invalid static_cast from type ‘Other*’ to type ‘Animal*’
+    Animal* p3 = (Animal *)(new Other); // 强制转换是可以的，但是内存访问会很不安全，static转换更加安全
+
+}
+```
 
 ## 6.2 动态转换`dynamic_cast`
 
+```cpp
+// dynamic_cast动态转换
+void test02()
+{
+    // 1、dynamic_cast不支持基本类型
+    char ch = 'a';
+    // double d = dynamic_cast<double>(ch);    //  cannot dynamic_cast ‘ch’ (of type ‘char’) to type ‘double’ (target is not pointer or reference)
+
+    // 2、dynamic_cast 上行转换（父类指针指向子类空间，安全)
+    Animal *p1 = dynamic_cast<Animal *>(new Dog);
+
+    // 3、dynamic_cast 下行转换（子类指针指向父类空间，不安全）
+    // Dog *p2 = dynamic_cast<Dog *>(new Animal);  // 不支持不安全的转换
+    // error: cannot dynamic_cast ‘(Animal*)operator new(1)’ (of type ‘class Animal*’) to type ‘class Dog*’ (source type is not polymorphic)
+
+    // 4、dynamic_cast不支持没有关系的类型转换
+    // Animal *p3 = dynamic_cast<Animal *>(new Other); // cannot dynamic_cast ‘(Other*)operator new(1)’ (of type ‘class Other*’) to type ‘class Animal*’ (source type is not polymorphic)
+}
+```
+
 ## 6.3 常量转换`const_cast`
 
-## 6.4 编译转换`reinterpret_cast`
+```cpp
+// const_cast常量转换
+// 常量与变量之间的互转
+void test03()
+{
+    const int *p = nullptr;
+    // int *p1 = p;    //  error: invalid conversion from ‘const int*’ to ‘int*’ [-fpermissive]
+    int *p1 = (int *)p; // 这样是可以的
+    int *p2 = const_cast<int *>(p); // 这个比较安全
 
+    int *p3 = nullptr;
+    const int *p4 = p3; // 编译通过
+    const int *p5 = (const int *)p1; // 编译通过
+    const int *p6 = const_cast<int *>(p2);
+    
+    // const_cast不支持非指针或引用的转换
+    const int a = 100;
+    // int b = const_cast<int>(a); //  error: invalid use of const_cast with type ‘int’, which is not a pointer, reference, nor a pointer-to-data-member type
+
+    int data = 100;
+    // 常量引用转换成普通引用
+    const int &ob = data;
+    int &ob2 = const_cast<int &>(ob);
+}
+```
+
+## 6.4 重新解释转换`reinterpret_cast`
+
+```cpp
+// reinterpret_cast重新编译转换
+// 这个转换和C语言风格十分类似，什么类型都能转换，非常霸道，强制类型转换
+// 不支持基本类型
+void test04()
+{
+    char ch = 'a';
+    // double d = reinterpret_cast<double>(ch); //  error: invalid cast from type ‘char’ to type ‘double’
+
+    // reinterpret_cast
+    Animal *p1 = reinterpret_cast<Animal *>(new Other);  // 可以编译
+
+    // 上行转换
+    Animal *p2 = reinterpret_cast<Animal *>(new Dog);   // 可以编译
+
+    // 下行转换
+    Dog *p3 = reinterpret_cast<Dog *>(new Animal);  // 可以编译
+}
+```
+
+<b>总结：</b>
+
+1. `static_cast`不支持不相关的类型转换、支持基本数据类型、自定义类和结构体(上行和下行转换)
+2. `dynamic_cast`不支持基本数据类型、不支持不安全的转换(类下行转换)、不支持不相关的类型转换
+3. `const_cast`只支持const指针/引用与普通指针/引用的互转
+4. `reinterpret_cast`除了不支持基本数据类型的转换外，其他都支持
+
+# 七、C++异常
+
+## 7.1 异常基本概念
+
+C++异常的基本思想是：让一个函数在发现了自己无法处理的错误时抛出(throw)一个异常，然后它的(直接或间接)调用者能够处理这个问题。将问题监测和问题处理相分离。
+
+常见的异常：除0异常、数组下标越界、读取文件不存在、空指针、 内存不足等。
+
+C语言对错误的处理总是围绕两种方法：一是使用整形的返回值标识错误；二是使用errno宏(可以简单的理解为一个全局整形变量)去记录错误。这两种方法最大的缺陷就是会出现不一致问题，例如有些函数返回1表示成功，返回0表示出错；而有些函数返回0表示成功，返回1表示出错。还有一个缺点就是，函数的返回值只有一个，通过函数的返回值表示错误代码，那么函数就不能返回其他的值。可以通过指针或引用来返回另外的值，但程序将会更加晦涩难懂。
+
+C++异常机制相比C语言异常处理的优势？函数的返回值可以忽略，但异常不可忽略。如果程序出现异常，但是没有被捕获，程序将会终止，这多少会促使程序员开发出来的程序更健壮一点。而如果使用C语言的errno宏或者函数返回值，调用者都有可能忘记检查，从而没有对错误进行处理，结果造成程序莫名其妙的终止或出现错误的结果。整型返回值缺乏相关的上下文信息。而异常却包含语义信息。异常作为一个类，可以拥有自己的成员，这些成员就可以传递足够的信息。
+
+异常处理可以在调用跳级，这是一个代码编写时的问题：假设在有多个函数的调用栈中出现了某个错误，使用整型返回码要求你在每一级函数中都要进行处理。而使用异常处理的栈展开机制，只需要在一处进行处理就可以了，不需要每级函数都处理。
+
+<b>C++的异常一旦抛出，如果不捕获该异常程序直接退出</b>
+
+<B>C风格的异常处理问题：</b>
+
+```cpp
+int myDiv(int a, int b)
+{
+    if (b == 0) {
+        return -1;  // -1表示失败
+    }
+    return a / b;
+}
+void test01()
+{
+    int ret = myDiv(10, -10);
+    if (ret == -1) {    // 返回值标识错误值与计算值冲突了
+        std::cout << "程序异常" << std::endl;
+    } else {
+        std::cout << "程序正常" << std::endl;
+    }
+}
+```
+
+> 如果使用 `-1`返回值标识失败的标识符，那么如果是计算值等于`-1`时，将会出现二义性。返回值标识错误值与计算值冲突了。
+
+<B>C++风格的异常处理</b>
+
+```cpp
+int myDiv(int a, int b)
+{
+    if (b == 0) {
+        throw 0;    // 抛出异常
+    }
+    return a / b;
+}
+void test01()
+{
+    try {
+        int ret = myDiv(10, 0);
+        std::cout << "ret = " << ret << std::endl;
+    } catch(int e) {    // 只捕获抛出是int类型的异常
+        std::cout << "捕获到int类型异常 e = " << e << std::endl;
+    } catch (float e) {// 只捕获抛出是int类型的异常
+        std::cout << "捕获到float类型异常 e = " << e << std::endl;
+    } catch (char e) {// 只捕获抛出是int类型的异常
+        std::cout << "捕获到char类型异常 e = " << e << std::endl;
+    } catch (...) {
+        std::cout << "捕获到其他异常" << std::endl;
+    }
+    std::cout << "程序做其他事情" << std::endl;
+}
+```
+
+> `myDiv`函数抛出异常，在函数调用处抛出。如果异常没有被捕获到依然会程序中断。如果异常被捕获到之后，程序可以继续执行。
+> 异常捕获对于类型敏感，只能捕获对应抛出的异常类型。
+
+## 7.2 栈解旋(unwinding)
+
+异常被抛出后，从进入try块起，到异常被抛掷前，这期间在栈上构造的所有对象，都会被自动析构。析构的顺序与构造的顺序相反，这一过程被称为栈的解旋(unwinding)。
+
+```cpp
+#include <iostream>
+#include <string>
+
+class Person
+{
+private:
+    std::string name;
+public:
+    Person(std::string name)
+    {
+        this->name = name;
+        std::cout << "Person " << name << " 构造函数" << std::endl;
+    }
+    ~Person()
+    {
+        std::cout << "Person " << this->name << " 析构函数" << std::endl;
+    }
+};
+
+
+void test01()
+{
+    try {
+        Person ob1("00_德玛");
+        Person ob2("01_小炮");
+        Person ob3("02_小法");
+        Person ob4("03_提莫");
+
+        throw 10;
+    } catch (int e) {
+        std::cout << "捕获到int异常 e = " << e << std::endl;
+    }
+}
+```
+
+<b>运行结果：</b>
+
+```bash
+Person 00_德玛 构造函数
+Person 01_小炮 构造函数
+Person 02_小法 构造函数
+Person 03_提莫 构造函数
+Person 03_提莫 析构函数
+Person 02_小法 析构函数
+Person 01_小炮 析构函数
+Person 00_德玛 析构函数
+捕获到int异常 e = 10
+```
+
+## 7.3 异常接口声明
+
+为了加强程序的可读性，可以在函数声明中列出可能抛出异常的所有类型，例如：`void func() throw(A,B,C);`这个函数`func`能够且只能抛出类型`A,B,C`及其子类型的异常。如果在函数声明中没有包含异常接口声明，则此函数可以抛任何类型的异常，例如：`void func()`一个不抛任何类型异常的函数可声明为：`void func() throw()`。如果一个函数抛出了它的异常接口声明所不允许抛出的异常，`unexcepted`函数会被调用，该函数默认行为调用`terminate`函数中断程序。
+
+`throw except(int, char, char *)`只抛出int、char、char*类型的异常
+
+<b>1. 可以抛出任何异常</b>
+
+```cpp
+void testFunc01()
+{
+    // 函数内部可以抛出任何异常
+    // throw 10;
+    // throw 0.0f;
+    // throw 'a';
+    throw "hehe";
+    // std::string str = "qee";
+    // throw str;
+}
+```
+<b>2. 抛出指定异常</b>
+
+```cpp
+// warning: dynamic exception specifications are deprecated in C++11 [-Wdeprecated]
+void testFunc02() throw(int, char, std::string) // error: ISO C++17 does not allow dynamic exception specifications
+{
+    // throw 10;
+    // throw 'a';
+    // throw "heeh";   // terminate called after throwing an instance of 'char const*'
+    std::string ob = "heihei";
+    throw ob;
+}
+```
+
+> 这个方式在C++11中开始被丢弃了(deprecated)，在C++17中开始不支持了。也不建议继续用这种方式。建议不指定抛出的异常类型，在函数调用处捕获所有类型。
+
+<b>3. 不抛出任何异常</b>
+
+```cpp
+// 函数不抛出任何异常
+void testFunc03() throw() // warning: throw will always call terminate() [-Wterminate]
+{
+    throw 3;    // terminate called after throwing an instance of 'int'
+}
+
+void test01()
+{
+    try {
+        testFunc03();
+    } catch(int e) {    // 只捕获抛出是int类型的异常
+        std::cout << "捕获到int类型异常 e = " << e << std::endl;
+    } catch (float e) {// 只捕获抛出是int类型的异常
+        std::cout << "捕获到float类型异常 e = " << e << std::endl;
+    } catch (char e) {// 只捕获抛出是int类型的异常
+        std::cout << "捕获到char类型异常 e = " << e << std::endl;
+    } catch (char const *e) {
+        std::cout << "捕获到char const *类型异常 e = " << e << std::endl;
+    } catch (std::string e) {
+        std::cout << "捕获到string异常" << std::endl;
+    }
+    std::cout << "程序做其他事情" << std::endl;
+}
+```
+
+> 不抛出任何异常的方式，但凡抛出了异常就会触发中断程序。
+
+## 7.4 异常的生命周期
+
+<b>1. 抛出类对象</b>
+
+```cpp
+class MyException
+{
+public:
+    MyException()
+    {
+        std::cout << "异常构造" << std::endl;
+    }
+    MyException(const MyException &ob)
+    {
+        std::cout << "异常拷贝构造" << std::endl;
+    }
+    ~MyException()
+    {
+        std::cout << "异常的析构" << std::endl;
+    }
+};
+void test01()
+{
+    try {
+        MyException ob; // 第一个构造
+        throw ob;       // 抛出的时候，把这个对象拷贝到一个临时区域，发生了一次拷贝构造
+        // 离开这个作用区域之后，第一个构造需要析构
+    } catch (MyException e) {   // 临时对象赋给形参，又发生了一次拷贝。
+        std::cout << "捕获到MyException异常" << std::endl;
+    }   // 离开这个区域之后，发生了两次析构
+}
+```
+
+<b>运行结果：</b>
+
+```bash
+异常构造
+异常拷贝构造
+异常的析构
+异常拷贝构造
+捕获到MyException异常
+异常的析构
+异常的析构
+```
+
+> 所以尽量不要用类对象去接异常，可以使用引用或者指针。
+
+<b>1.1 抛出类对象，但使用引用去接收 </b>
+
+上面的`catch (MyException e)`修改为`catch (MyException &e)`，运行结果立马少了一次拷贝构造：
+
+```bash
+异常构造
+异常拷贝构造
+异常的析构
+捕获到MyException&异常
+异常的析构
+```
+
+<b>2. 抛出类指针 </b>
+
+```cpp
+class MyException
+{
+public:
+    MyException()
+    {
+        std::cout << "异常构造" << std::endl;
+    }
+    MyException(const MyException &ob)
+    {
+        std::cout << "异常拷贝构造" << std::endl;
+    }
+    ~MyException()
+    {
+        std::cout << "异常的析构" << std::endl;
+    }
+};
+void test01()
+{
+    try {
+        throw new MyException;
+    } catch (MyException *e) {
+        std::cout << "捕获到MyException*异常" << std::endl;
+        delete e;
+    }
+}
+```
+
+```bash
+异常构造
+捕获到MyException*异常
+异常的析构
+```
+
+> 使用指针后，抛出的临时对象，以及形参都是指针，不需要初始化对象。必须记得要`delete e;`。
+
+<b>3. 抛出临时对象，并使用类引用接收</b>
+
+```cpp
+class MyException
+{
+public:
+    MyException()
+    {
+        std::cout << "异常构造" << std::endl;
+    }
+    MyException(const MyException &ob)
+    {
+        std::cout << "异常拷贝构造" << std::endl;
+    }
+    ~MyException()
+    {
+        std::cout << "异常的析构" << std::endl;
+    }
+};
+
+void test01()
+{
+    try {
+        throw MyException();
+    }
+    catch (MyException &e) {
+        std::cout << "捕获到MyException&异常" << std::endl;
+    }
+}
+```
+
+运行结果：
+
+```bash
+异常构造
+捕获到MyException&异常
+异常的析构
+```
+
+> 也只有一次构造和析构，推荐使用引用处理。
