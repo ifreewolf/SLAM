@@ -5360,6 +5360,7 @@ void test01()
 ```
 
 > 不抛出任何异常的方式，但凡抛出了异常就会触发中断程序。
+> 不抛出任何异常，在C++17中也可以使用关键字`noexcept`来修饰：`void testFunc03() noexcept;`
 
 ## 7.4 异常的生命周期
 
@@ -5498,3 +5499,196 @@ void test01()
 ```
 
 > 也只有一次构造和析构，推荐使用引用处理。
+
+
+## 7.5 标准异常
+
+### 7.5.1 标准库介绍
+
+标准库中也提供了很多的异常类，它们是通过类继承组织起来的。异常类继承层级结构图如下：
+
+<div align=center>
+    <img src="./images/异常类标注库.png" />
+</div>
+
+1. 在上述继承体系中，每个类都有提供了构造函数、复制构造函数、和赋值操作符重载；
+2. logicerror类及其子类、runtimeerror类及其子类，它们的构造函数都是接受一个string类型的形式参数，用于异常信息的描述；
+3. 所有的异常类都有一个`what()`方法，返回`const char*`类型(C风格字符串)的值，描述异常信息。
+
+```cpp
+class Person
+{
+private:
+    int age;
+public:
+    Person(int age)
+    {
+        if (age <0 || age > 150) {
+            throw std::out_of_range("age无效");
+        }
+        this->age = age;
+    }
+};
+
+void test01()
+{
+    try {
+        Person ob(200);
+    } catch (std::exception &e) {
+        std::cout << "捕获到异常" << e.what() << std::endl; // 捕获到异常age无效
+    }
+}
+```
+
+### 7.5.2 编写自己的异常类
+
+1. 标准库中的异常是有限的；
+2. 在自己的异常类中，可以添加自己的信息。(标准库中的异常类值允许设置一个用来描述异常的字符串)。
+
+<b>如何编写自己的异常类？</b>
+
+1. 建议自己的异常类要继承标准异常类。因为C++中可以抛出任何类型的异常，所以我们的异常类可以不继承自标准异常，但是这样可能会导致程序混乱，尤其是当我们多人协同开发时；
+2. 当继承标准异常类时，应该重载父类的`what`函数和虚析构函数；
+3. 因为栈展开的过程中，要复制异常类型，那么要根据你在类中添加的成员考虑是否提供自己的复制构造函数。
+
+```cpp
+// 自定义异常类
+class MyOutOfRange : public std::exception
+{
+public:
+    MyOutOfRange(const std::string errorInfo)
+    {
+        this->m_Error = errorInfo;
+    }
+    MyOutOfRange(const char* errorInfo)
+    {
+        this->m_Error = std::string(errorInfo);
+    }
+    virtual ~MyOutOfRange()
+    {
+
+    }
+    virtual const char* what() const noexcept
+    {
+        return this->m_Error.c_str();
+    }
+    std::string m_Error;
+};
+class Person
+{
+public:
+    Person(int age)
+    {
+        if (age <= 0 ||age > 150) {
+            // 抛出异常越界
+            // std::cout << "越界" << std::endl;
+            // throw std::out_of_range("年龄必须在0~150之间");
+
+            // throw length_error("长度异常");
+            throw MyOutOfRange("我的异常 年龄必须在0~150之间");
+        } else {
+            this->m_Age = age;
+        }
+    }
+    int m_Age;
+};
+int main(int argc, char **argv)
+{
+    try {
+        Person p(151);
+    }
+    catch (std::out_of_range &e) {
+        std::cout << e.what() << std::endl;
+    }
+    catch (std::length_error &e) {
+        std::cout << e.what() << std::endl;
+    }
+    catch (MyOutOfRange e) {
+        std::cout << e.what() << std::endl;
+    }
+
+    return 0;
+}
+```
+
+> 继承自`std::exception`，重写`what()`在C++17中是：`virtual const char* what() const noexcept`。
+
+# cin拓展
+
+```cpp
+#include <iostream>
+
+// 1. 获取一个字符
+void test01()
+{
+    int data = 0;
+    std::cin >> data;
+    std::cout << "data = " << data << std::endl;
+
+    char ch;
+    std::cin >> ch;
+    std::cout << "ch = " << ch << std::endl;
+
+    // 获取一个字符
+    char ch1 = '\0';
+    ch1 = std::cin.get();    // 获取一个字符
+    std::cout << "ch1 = " << ch1 << std::endl;
+
+    char name[128] = "";
+    std::cin >> name;   // 遇到空格、回车结束获取
+    std::cout << "name = " << name << std::endl;
+}
+
+// 2. 获取带空格的字符串
+void test02()
+{
+    char name[128] = "";
+    std::cin.getline(name, sizeof(name));   // 可以获取带空格的字符串
+    std::cout << "name = " << name << std::endl;
+
+}
+
+// 3. 忽略缓冲区的前n个字符
+void test03()
+{
+    char name[128] = "";
+    std::cin.ignore(2); // 忽略前2字节
+    std::cin >> name;
+    std::cout << "name = " << name << std::endl;
+    // hello world
+    // name = llo
+}
+
+// 4. 放回缓冲区 cin.putback()
+void test04()
+{
+    char ch = 0, ch2 = 0;
+    ch = std::cin.get();    // 获取一个字符
+    std::cout << "ch = " << ch <<std::endl;
+
+    ch2 = std::cin.get();
+    std::cout << "ch2 = " << ch2 << std::endl;
+
+    std::cin.putback(ch);   // 将ch的字符放回缓冲区
+
+    char name[32] = "";
+    std::cin >> name;
+    std::cout << "name = " << name << std::endl;
+    // qwreert
+    // ch = q
+    // ch2 = w
+    // name = qreert
+}
+
+// 5. 偷窥 cin.peek
+void test05()
+{
+    char ch = '\0';
+    ch = std::cin.peek();
+    std::cout << "偷窥缓冲区的数据为：" << ch << std::endl;
+
+    char name[32] = "";
+    std::cin >> name;
+    std::cout << "name = " << name << std::endl;
+}
+```
