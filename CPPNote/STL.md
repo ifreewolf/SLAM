@@ -600,5 +600,90 @@ v的大小size: 100
 ```
 
 > 容量 >= 元素的个数size \
-> 为啥插入100个元素容量却是128？原因：vector的未雨绸缪机制。
+> 为啥插入100个元素容量却是128？原因：vector的未雨绸缪机制。\
+> 只要空间满，就会另寻空间。
+
+### 2.3.2 vector的构造函数
+
+```cpp
+vector<T> v; // 采用模板实现类对象，默认构造函数
+vector(v.begin(), v.end()); // 将v[begin(), end()]区间中的元素拷贝给本身
+vector(n, elem); // 构造函数将n个elem拷贝给本身
+vector(const vector &vec); // 拷贝构造函数
+```
+
+```cpp
+void test03()
+{
+    // vector(n, elem); // 构造函数将n个elem拷贝给本身
+    vector<int> v1(10, 5);
+    for_each(v1.begin(), v1.end(), [](int val){ cout << val << " ";});
+    cout << endl;
+
+    // vector(v.begin(), v.end()); // 将v[begin(), end()]区间中的元素拷贝给本身
+    vector<int> v2(v1.begin(), v1.end() - 2);
+    for_each(v2.begin(), v2.end(), [](int val){ cout << val << " ";});
+    cout << endl;
+
+    vector<int> v3(v1);
+    for_each(v3.begin(), v3.end(), [](int val){ cout << val << " ";});
+    cout << endl;
+
+    // 使用int数组赋值
+    int arr[] = {2, 3, 4, 1, 9};
+    vector<int> v4(arr, arr + sizeof(arr) / sizeof(int));
+    for_each(v4.begin(), v4.end(), [](int val){ cout << val << " ";});  // 2 3 4 1 9
+    cout << endl;
+}
+```
+
+> 可以使用int数组赋值，int数组的变量名就是第一个元素的地址。
+
+### 2.3.3 vector的赋值语句
+
+```cpp
+assign(beg, end); // 将[beg,end)区间中的数据拷贝赋值给本身
+assign(n, elem); // 将n个elem拷贝赋值给本身
+vector& operator=(const vector &vec); // 重载等号操作符
+swap(vec);  // 将vec与自身的元素互换
+```
+
+```cpp
+void test04()
+{
+    vector<int> v1(5, 10);
+    vector<int> v2;
+
+    // vector& operator=(const vector &vec); // 重载等号操作符，是深拷贝。
+    v2 = v1;
+    printVectorInt(v2); // 10 10 10 10 10 
+    v2[1] = 5;
+    printVectorInt(v1); // 10 10 10 10 10 
+    printVectorInt(v2); // 10 5 10 10 10 
+
+    // assign(n, elem); // 将n个elem拷贝赋值给本身
+    vector<int> v3;
+    v3.assign(5, 100);
+    printVectorInt(v3);
+
+    // assign(beg, end); // 将[beg,end)区间中的数据拷贝赋值给本身
+    vector<int> v4;
+    v4.assign(v3.begin(), v3.end());
+    printVectorInt(v4);
+
+    // swap(vec);  // 将vec与自身的元素互换
+    vector<int> v5(5, 20);
+    vector<int> v6(10, 40);
+    printVectorInt(v5);
+    printVectorInt(v6);
+    v5.swap(v6);
+    printVectorInt(v5);
+    printVectorInt(v6);
+}
+```
+
+> `vector& operator=(const vector &vec);`是深拷贝。
+
+
+### 2.3.4 vector大小操作
 
