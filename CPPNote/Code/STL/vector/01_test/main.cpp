@@ -91,12 +91,37 @@ void test03()
     v1.push_back(20);
     v1.push_back(30);
     v1.push_back(40);
+
+    v2.push_back(100);
+    v2.push_back(200);
+    v2.push_back(300);
+    v2.push_back(400);
+
+    v3.push_back(1000);
+    v3.push_back(2000);
+    v3.push_back(3000);
+    v3.push_back(4000);
+
+    // 需求：再定义一个vector容器，存放v1,v2,v3
+    std::vector<std::vector<int>> v;
+    v.push_back(v1);
+    v.push_back(v2);
+    v.push_back(v3);
+
+    // for 循环遍历
+    for (std::vector<std::vector<int>>::iterator it = v.begin(); it != v.end(); it++) {
+        for (std::vector<int>::iterator mit = (*it).begin(); mit != (*it).end(); mit++) {
+            std::cout << *mit << "\t";
+        }
+        std::cout << std::endl;
+    }
 }
 
 int main(int argc, char **argv)
 {
     // test01();
-    test02();
+    // test02();
+    test03();
 
     return 0;
 }
