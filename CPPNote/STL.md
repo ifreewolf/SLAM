@@ -687,3 +687,204 @@ void test04()
 
 ### 2.3.4 vector大小操作
 
+```cpp
+size(); // 返回容器中元素的个数
+empty(); // 判断容器是否为空
+resize(int num); // 重新指定容器的长度为num，若容器变长，则以默认值填充新位置。
+resize(int num, elem); // 重新指定容器的长度为num，若容器变长，则以elem值填充新位置。
+capacity(); // 容器的容量
+reserve(int len); // 容器预留len个元素长度，预留位置不初始化，元素不可访问
+```
+
+```cpp
+void test05()
+{
+    vector<int> v;
+    v.push_back(10);
+    v.push_back(20);
+    v.push_back(30);
+    v.push_back(40);
+
+    if (v.empty()) {
+        cout << "v容器为空" << endl;
+    } else {
+        cout << "容器非空" << endl;
+        cout << "size = " << v.size() << endl;
+        cout << "capacity = " << v.capacity() << endl;
+    }
+
+    printVectorInt(v); // 10 20 30 40
+
+    v.resize(8);
+    printVectorInt(v); // 10 20 30 40 0 0 0 0
+    v.resize(3);
+    printVectorInt(v); // 10 20 30
+
+    v.resize(8, 2);
+    printVectorInt(v); // 10 20 30 2 2 2 2 2
+
+    v.reserve(100); // 预留空间，但是不初始化，且不可访问
+    printVectorInt(v); // 10 20 30 2 2 2 2 2
+    cout << "v的容量： " << v.capacity() << endl; // 100
+    cout << "v的大小：" << v.size() << endl; // 8
+
+    v.resize(5);
+    printVectorInt(v);
+    cout << "v的容量： " << v.capacity() << endl; // 100, resize不会改变容器的容量
+    cout << "v的大小：" << v.size() << endl; // 5
+
+    v.resize(400, 8);
+    printVectorInt(v);
+    cout << "v的容量： " << v.capacity() << endl; // 400
+    cout << "v的大小：" << v.size() << endl; // 400
+}
+```
+
+> resize作用的容器的大小，不会更改容器的容量。
+
+### 2.3.5 使用swap收缩容器容量
+
+```cpp
+void test06()
+{
+    vector<int> v;
+    for (int i = 0; i < 1000; i++) {
+        v.push_back(i);
+    }
+    cout << "size: " << v.size() << endl; // 1000
+    cout << "capacity: " << v.capacity() << endl; // 1024
+
+    // 使用resize将空间置为10个元素（可以吗？）
+    v.resize(10); // 不能修改容量，只能修改size
+    cout << "size: " << v.size() << endl; // 10
+    cout << "capacity: " << v.capacity() << endl; // 1024
+
+    // 使用swap收缩容器的容量
+    cout << vector<int>(v).size() << endl;  // 10
+    cout << vector<int>(v).capacity() << endl;  // 10
+    vector<int>(v).swap(v);
+    cout << "size: " << v.size() << endl; // 10
+    cout << "capacity: " << v.capacity() << endl; // 10
+}
+```
+
+> 操作步骤：1）`v.resize(10);`先resize到10；2）`vector<int>(v).swap(v);`通过swap交换 \
+> 原理：resize之后，v的size只剩下10；`vector<int>(v)`是一个匿名对象容器，将v的实际元素赋值给匿名容器，大小为10，容量也为10；`swap(v)`交换，使用匿名对象和v进行交换，交换之后，v代表匿名对象，匿名对象代表原来的v，`swap()`结束后匿名对象会被释放，相当于把原来的v对象释放了。
+
+### 2.3.6 reserve预留空间
+
+```cpp
+// reserve(int len); // 容器预留len个元素长度，预留位置不初始化，元素不可访问
+```
+
+```cpp
+void test07()
+{
+    vector<int> v;
+
+    // 一次性给够空间，叫空间预留
+    v.reserve(1000); // 预留空间，1000个元素
+    int *p = NULL;
+    int count = 0;
+    for (int i = 0; i < 1000; i++) {
+        v.push_back(i);
+        if (p != &v[0]) {
+            count++;
+            p = &v[0];
+        }
+    }
+    cout << "重新另寻空间次数：" << count << endl; // 11，reserve(1000)之后，只另寻了1次
+}
+```
+
+### 2.3.7 vector数据的存取
+
+```cpp
+at(int idx); // 返回索引idx所指的数据，如果idx越界，抛出out_of_range异常。
+operator[]; // 返回索引idx所指的数据，越界时，运行直接报错
+front(); // 返回容器中的第一个数据元素
+back(); // 返回容器中的最后一个数据元素
+```
+
+```cpp
+void test08()
+{
+    vector<int> v;
+    v.push_back(10);
+    v.push_back(20);
+    v.push_back(30);
+    v.push_back(40);
+
+    printVectorInt(v); // 10
+    cout << v[2] << endl;    // 30
+    cout << v.at(2) << endl; // 30
+
+    // []越界不抛出异常
+    // at越界抛出异常
+    cout << v[100] << endl; // 0
+    cout << v.at(100) << endl; // throwing an instance of 'std::out_of_range'
+
+    cout << "front = " << v.front() << endl; // 10
+    cout << "end = " << v.back() << endl; // 40
+}
+```
+
+### 2.3.8 vector的插入和删除
+
+```cpp
+insert(const_iterator pos, int count, ele); // 迭代器指向位置pos插入count个ele元素
+push_back(ele); // 尾部插入元素ele
+pop_back(); // 删除最后一个元素
+erase(const_iterator start, const_iterator end); // 删除迭代器从start到end之间的元素
+erase(const_iterator pos); // 删除迭代器指向的元素
+clear(); // 删除容器中所有元素
+```
+
+```cpp
+void test09()
+{
+    vector<int> v;
+    v.push_back(10);
+    v.push_back(20);
+    v.push_back(30);
+    v.push_back(40);
+    printVectorInt(v); // 10 20 30 40
+
+    // insert(const_iterator pos, int count, ele); // 迭代器指向位置pos插入count个ele元素
+    v.insert(v.begin() + 2, 3, 100);
+    cout << "size = " << v.size() << endl; // 7
+    cout << "capacity = " << v.capacity() << endl; // 8，按照动态扩充的逻辑在扩充容量
+    printVectorInt(v); // 10 20 100 100 100 30 40
+
+    // 尾部删除
+    v.pop_back(); // 删除了40    
+    cout << "size = " << v.size() << endl; // 6
+    cout << "capacity = " << v.capacity() << endl; // 8
+    printVectorInt(v); // 10 20 100 100 100 30
+
+    // erase(const_iterator start, const_iterator end); // 删除迭代器从start到end之间的元素
+    // [begin, end)
+    v.erase(v.begin() + 2, v.end());
+    cout << "size = " << v.size() << endl; // 2
+    cout << "capacity = " << v.capacity() << endl; // 8
+    printVectorInt(v); // 10 20
+
+    // erase(const_iterator pos); // 删除迭代器指向的元素
+    v.erase(v.begin() + 1);
+    cout << "size = " << v.size() << endl; // 1
+    cout << "capacity = " << v.capacity() << endl; // 8
+    printVectorInt(v); // 10
+
+    // clear(); // 删除容器中所有元素
+    v.clear();
+    cout << "size = " << v.size() << endl; // 0
+    cout << "capacity = " << v.capacity() << endl; // 8
+}
+```
+
+## 2.4 deque容器
+
+## 2.3.1 deque容器基本概念
+
+`vector`容器是单向开口的连续内存空间，deque则是一种双向开口的连续性空间。所谓的双向开口，意思是可以在头尾两端分别做元素的插入和删除操作，当然，vector容器也可以在头尾两端插入元素，但是在其头部操作效率奇差，无法被接受。
+
