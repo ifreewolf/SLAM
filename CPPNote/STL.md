@@ -884,7 +884,300 @@ void test09()
 
 ## 2.4 deque容器
 
-## 2.3.1 deque容器基本概念
+双端动态数组。
+
+### 2.4.1 deque容器基本概念
 
 `vector`容器是单向开口的连续内存空间，deque则是一种双向开口的连续性空间。所谓的双向开口，意思是可以在头尾两端分别做元素的插入和删除操作，当然，vector容器也可以在头尾两端插入元素，但是在其头部操作效率奇差，无法被接受。
 
+<div align=center>
+    <img src="./images/deque容器.png" />
+</div>
+
+<b>deque容器和vector容器最大的差异</b>，一在于deque允许使用常数项时间对头端进行元素的插入和删除操作。二在于deque没有容量的概念，因为它是动态的以分段连续空间组合而成，随时可以增加一段新的空间并链接起来，换句话说，像vector那样，“旧空间不足而重新配置一块更大空间，然后复制元素，再释放旧空间”这样的事情在deque身上是不会发生的。也因此，deque没有必须要提供所谓的空间保留(reserve)功能。
+
+虽然deque容器也提供了Random Access Iterator，但是它的迭代器并不是普通的指针，其复杂度和vector不是一个量级，这当然影响各个运算的层面。因此，除非有必要，应尽可能的使用vector，而不是deque。对deque进行的排序操作，为了最高效率，可将deque先完整的复制到一个vector中，对vector容器进行排序，再复制回deque中。
+
+### 2.4.2 deque容器实现原理
+
+deque容器是连续的空间，至少逻辑上看来如此，连续现行空间总是令我们联想到array和vector，array无法成长，vector虽可成长，却只想向尾端成长，而且其成长其实是一个假象，事实上(1)申请更大空间 (2)原数据复制新空间 (3)释放原空间 三步骤，如果不是vector每次配置新的空间时都留有余裕，其成长假象所带来的的代价是非常昂贵的。
+
+<b>Deque是由一段一段的定量的连续空间构成</b>。一旦有必要在deque前端或者尾端增加新的空间，便配置一段连续定量的空间，串接在deque的头端或尾端。deque最大的工作就是维护这些分段连续的内存空间的整体性的假象，并提供随机存取的接口，避开了重新配置空间，复制，释放的轮回，代价就是复杂的迭代器架构。既然deque是分段连续内存空间，那么必须有中央控制，维持整体连续的假象，数据结构的设计及迭代器的前进后退操作颇为繁琐。
+
+<b>定量说明是等长的。</b>
+
+deque代码的实现远比vector或list都多得多。deque采取一块所谓的map(注意，不是STL的map容器)作为主控，这里所谓的map是一小块连续的内存空间，其中每一个元素(此处成为一个节点)都是一个指针，指向另一段连续性内存空间，称作缓冲区。缓冲区才是deque的存储空间的主体。
+
+<div align=center>
+    <img src="./images/deque缓冲区.png" />
+</div>
+
+### 2.4.3 deque常用API
+
+#### 2.4.3.1 deque的构造和赋值
+
+```cpp
+1. deque构造函数
+deque<T> deqT; // 默认构造形式
+deque(beg, end); // 构造函数将[beg, end)区间中的元素拷贝给本身
+deque(n, elem); // 构造函数将n个elem拷贝给本身
+deque(const deque &deq); // 拷贝构造函数
+
+2. deque赋值操作
+assign(beg, end); // 将[beg, end)区间中的数据拷贝赋值给本身
+assign(n, elem); // 将n个elem拷贝赋值给本身
+deque& operator=(const deque &deq); // 重载等号操作符
+swap(deq); //将deq与本身的元素互换
+```
+
+```cpp
+void test01()
+{
+    deque<int> d(5, 10);
+    printDequeInt(d); // 10 10 10 10 10
+
+    // assign(n, elem); // 将n个elem拷贝赋值给本身
+    deque<int> d1;
+    d1.assign(5, 100);
+    printDequeInt(d1); // 100 100 100 100 100
+
+    // deque& operator=(const deque &deq); // 重载等号操作符
+    deque<int> d2;
+    d2 = d1;
+    printDequeInt(d2); // 100 100 100 100 100
+
+    // swap(deq); //将deq与本身的元素互换
+    deque<int> d3(5, 1);
+    deque<int> d4(5, 2);
+    printDequeInt(d3); // 1 1 1 1 1
+    printDequeInt(d4); // 2 2 2 2 2
+    d3.swap(d4);
+    printDequeInt(d3); // 2 2 2 2 2
+    printDequeInt(d4); // 1 1 1 1 1
+
+    vector<int> v(10, 100);
+    deque<int> d5(v.begin(), v.end());
+    printDequeInt(d5); // 100 100 100 100 100 100 100 100 100 100
+    deque<int> d6;
+    d6.assign(v.begin(), v.end());
+    printDequeInt(d6); // 100 100 100 100 100 100 100 100 100 100
+
+    deque<int> d7;
+    d7.assign(d2.begin(), d2.end());
+    printDequeInt(d7); // 100 100 100 100 100=
+}
+```
+
+#### 2.4.3.2 deque容器的大小操作、双端插入删除操作、元素访问操作
+
+```cpp
+3. deque大小操作
+size(); // 返回容器中元素的个数
+empty(); // 判断容器是否为空
+resize(num); // 重新指定容器的长度为num，若容器变长，则以默认值填充新位置。
+resize(num, elem); // 重新指定容器的长度为num，若容器变长，则以elem值填充
+
+4. deque双端插入和删除操作
+push_back(elem); // 在容器尾部添加一个数据
+push_front(elem); // 在容器头部插入一个数据
+pop_back(); // 删除容器最后一个数据
+pop_front(); // 删除容器第一个数据
+
+5. deque数据存取
+at(idx); // 返回索引idx所指的数据，如果idx越界，抛出out_of_range
+operator[]; // 返回索引idx所指的数据，如果idx越界，不抛出异常，直接出错
+front(); // 返回第一个数据
+back(); // 返回最后一个数据
+```
+
+```cpp
+void test02()
+{
+    deque<int> d;
+    // 尾部插入
+    d.push_back(10);
+    d.push_back(20);
+    d.push_back(30);
+
+    // 头部插入
+    d.push_front(40);
+    d.push_front(50);
+    d.push_front(60);
+    printDequeInt(d); // 60 50 40 10 20 30
+
+    // 头部删除
+    d.pop_front(); // 50 40 10 20 30
+    d.pop_back(); // 50 40 10 20
+    printDequeInt(d); // 50 40 10 20
+
+    if (d.empty()) {
+        cout << "d容器为空" << endl;
+    } else {
+        cout << "d容器非空" << endl;
+        cout << "size = " << d.size() << endl; // size = 4
+    }
+
+    // []方位第二个元素
+    cout << "d[2] = " << d[2] << endl; // d[2] = 10
+    cout << "d.at(2) = " << d.at(2) << endl; // d.at(2) = 10
+    cout << "头元素 = " << d.front() << endl; // 头元素 = 50
+    cout << "尾元素 = " << d.back() << endl; // 尾元素 = 20
+}
+```
+
+#### 2.4.3.3 deque容器的插入和删除
+
+```cpp
+6. deque插入操作
+insert(pos, elem); // 在pos位置插入一个elem元素的拷贝，返回新数据的位置。
+insert(pos, n, elem); // 在pos位置插入n个elem数据，无返回值。
+insert(pos, beg, end); // 在pos位置插入[beg,end)区间的数据，无返回值。
+
+7. deque删除操作
+clear(); // 移除容器的所有数据
+erase(beg, end); // 删除[beg,end)区间的数据，返回下一个数据的位置
+erase(pos); // 删除pos位置的数据，返回下一个数据的位置
+```
+
+```cpp
+void test03()
+{
+    deque<int> d;
+    d.insert(d.begin(), 5, 100);
+    printDequeInt(d); // 100 100 100 100 100
+
+    d.clear();
+    cout << "size = " << d.size() << endl; // size = 0
+}
+```
+
+#### 2.4.3.4 案例
+
+```bash
+5名选手，ABCDE，10个评委分别对每一名选手打分，去除最高分，去除最低分，取平均分。
+1. 创建五名选手，放到vector中；
+2. 遍历vector容器，取出来每一个选手，执行for循环，可以把10个评分存到deque容器中；
+3. sort算法对deque容器中分数排序，pop_back，pop_front去除最高和最低分；
+4. deque容器遍历一遍，累加分数，累加分数/d.size();
+5. person.score = 平均分。
+```
+
+```cpp
+class Person
+{
+public:
+    string name;
+    float score;
+    Person(string name, float score)
+    {
+        this->name = name;
+        this->score = score;
+    }
+};
+void createPerson(vector<Person> &v)
+{
+    // 5名选手，ABCDE
+    string nameTemp = "ABCDE";
+    for (int i = 0; i < 5; i++) {
+        string name = "选手:";
+        name += nameTemp[i];
+
+        // 将选手的姓名 分数0 放入vector容器中
+        v.push_back(Person(name, 0.0));
+    }
+}
+void printVectorPerson(vector<Person> &v)
+{
+    for (vector<Person>::iterator it = v.begin(); it != v.end(); it++) {
+        cout << (*it).name << ", " << (*it).score << endl;
+    }
+}
+void palyGame(vector<Person> &v)
+{
+    // 设计随机种子
+    srand(time(NULL));
+    // 容器中的每个人逐一参加比赛
+    for (vector<Person>::iterator it = v.begin(); it != v.end(); it++) {
+        // 每位选手都要被10个评委打分
+        deque<int> d;
+        for (int i = 0; i < 10; i++) { // 10个评委
+            int score = rand() % 41 + 60; // 60 ~ 100
+            d.push_back(score);
+        }
+
+        // 对deque容器（评委的10个分数）排序
+        sort(d.begin(), d.end());
+
+        for (deque<int>::iterator mit = d.begin(); mit != d.end(); mit++) {
+            cout << *mit << " ";
+        }
+        cout << endl;
+
+        // 去掉一个最低分，一个最高分
+        d.pop_front();
+        d.pop_back();
+        
+        // 得到总分数
+        int sum = accumulate(d.begin(), d.end(), 0);
+        // 获取平均分，选手的score        
+        it->score = (float)sum / d.size();
+    }
+}
+int main(int argc, char **argv)
+{
+    // 1. 定义一个vector容器存放Person
+    vector<Person> v;
+    createPerson(v);
+
+    // 2. 遍历vector容器
+    printVectorPerson(v);
+
+    // 2. 5名选手逐一参加比赛
+    palyGame(v);
+
+    printVectorPerson(v);
+
+    return 0;
+}
+```
+
+#### 2.4.3.5 随机数
+
+```cpp
+#include <iostream>
+
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    // 设置随机数种子，如果种子是固定的，随机数也是固定的
+    // time(NULL)获取当前时间，则每次运行，随机数种子都是不一样的
+    srand(time(NULL));
+    for (int i = 0; i < 10; i++)
+    {
+        // rand() 函数的返回值就是随机数
+        int num = rand();
+        cout << num << " ";
+    
+    }
+    cout << endl;
+
+    return 0;
+}
+```
+
+## 2.5 stack容器
+
+### 2.5.1 statck容器基本概念
+
+stack是一种先进后出(First In Last Out, FILO)的数据结构，它只有一个出口，形式如下图所示。stack容器允许新增元素，移除元素，取得栈顶元素，但是除了最顶端外，没有任何其他方法可以存取stack的其他元素。换言之，stack不允许有遍历行为。有元素推入栈的操作称为：push，将元素推出stack的操作称为pop。
+
+### 2.5.2 stack没有迭代器
+
+stack所有元素的进出都必须符合“先进后出”的条件，只有stack顶端的元素，才有机会被外界取用。stack不提供遍历功能，也不提供迭代器。
+
+### 2.5.3 stack常用API
+
+#### 2.5.3.1 stack构造函数
+
+#### 2.5.3.2 stack赋值操作
