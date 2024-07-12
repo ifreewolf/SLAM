@@ -2709,3 +2709,36 @@ void test05()
 
 > 使用函数指针适配器，就可以使用普通函数作为适配器函数。
 
+## 3.5 算法概述
+
+算法主要是有头文件组成。是所有STL头文件中最大的一个，其中常用的功能涉及到比较、交换、查找、遍历、复制、修改、反转、排序、合并等，体积很小，只包括在几个序列容器上进行的简单运算的模板函数，定义了一些模板类，用以声明函数对象。
+
+## 3.6 常用遍历算法
+
+### 3.6.1 for_each遍历算法
+
+```cpp
+/*
+遍历算法：遍历容器元素
+@param beg 开始迭代器
+@param end 结束迭代器
+@param _callback 函数回调或者函数对象
+@return 函数对象
+*/
+for_each(iterator beg, iterator end, _callback);
+```
+
+### 3.6.2 transform算法
+
+```cpp
+/*
+transform算法将指定容器区间元素搬运到另一容器中
+注意：transform不会给目标容器分配内存，所以需要我们提前分配好内存
+@param beg1 源容器开始迭代器
+@param end1 源容器结束迭代器
+@param beg2 目标容器开始迭代器
+@param _callback 回调函数或者函数对象
+@return 返回目标容器迭代器
+*/
+transform(iterator beg1, iterator end1, iterator beg2, _callback);
+```

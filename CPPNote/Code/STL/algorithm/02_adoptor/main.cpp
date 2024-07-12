@@ -169,7 +169,7 @@ void test05()
         v.push_back(i);
     }
     // ptr_fun()把一个普通的函数指针适配成函数对象
-    for_each(v.begin(), v.end(), bind2nd(ptr_fun(myPrint), 100));
+    for_each(v.begin(), v.end(), bind2nd(ptr_fun(myPrint), 100)); // 100 101 102 103 104 105 106 107 108 109
     cout << endl;
 }
 
