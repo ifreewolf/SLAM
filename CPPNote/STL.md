@@ -2416,7 +2416,7 @@ template<class T> T negate<T> // 取反仿函数
 template<class T> bool equal_to<T> // 等于
 template<class T> bool not_equal_to<T> // 不等于
 template<class T> bool greater<T> // 大于
-template<class T> bool greater_equat<T> // 大于等于
+template<class T> bool greater_equal<T> // 大于等于
 template<class T> bool less<T> // 小于
 template<class T> bool less_equal<T> // 小于等于
 ```
@@ -2742,3 +2742,517 @@ transform算法将指定容器区间元素搬运到另一容器中
 */
 transform(iterator beg1, iterator end1, iterator beg2, _callback);
 ```
+
+```cpp
+int myTransInt(int val)
+{
+    return val;
+}
+
+int myTransAdd(int val, int tmp)
+{
+    return val + tmp;
+}
+
+void test01()
+{
+    vector<int> v1;
+    v1.push_back(10);
+    v1.push_back(20);
+    v1.push_back(30);
+    v1.push_back(40);
+    v1.push_back(50);
+
+    // 将v1容器的元素搬运到v2中
+    vector<int> v2;
+    // 预先：设置v2的大小
+    v2.resize(v1.size());
+    transform(v1.begin(), v1.end(), v2.begin(), myTransInt);
+
+    for_each(v2.begin(), v2.end(), [](int val){ cout << val << " ";}); // 10 20 30 40 50
+    cout << endl;
+
+    vector<int> v3(v1.size(), 0);
+    transform(v1.begin(), v1.end(), v2.begin(), bind2nd(ptr_fun(myTransAdd), 100));
+    for_each(v2.begin(), v2.end(), [](int val){ cout << val << " ";}); // 110 120 130 140 150
+    cout << endl;
+}
+```
+
+<div align=center>
+    <img src="./images/transform搬运过程.png" />
+    <br/>
+    <p>搬运过程</p>
+</div>
+
+搬运过程可以对元素进行特殊处理，比如：
+```cpp
+int myTransInt(int val)
+{
+    return val + 1000;
+}
+```
+
+## 3.7 常用查找算法
+
+### 3.7.1 find算法
+
+```cpp
+/*
+    find算法：查找元素
+    @param beg 容器开始迭代器
+    @param end 容器结束迭代器
+    @param value 查找的元素
+    return 返回查找元素的位置
+*/
+find(iterator beg, iterator end, value);
+```
+
+### 3.7.2 find_if算法
+
+```cpp
+/*
+    find_if算法 条件查找
+    @param beg 容器开始迭代器
+    @param end 容器结束迭代器
+    @param callback 回调函数或者谓词(返回bool类型的函数对象)
+    @return 返回迭代器，如果未查找到则返回容器end()的迭代器
+*/
+find_if(iterator beg, iterator end, _callback);
+```
+
+### 3.7.3 adjacent_find算法
+
+```cpp
+/*
+    adjacent_find算法，查找相邻重复元素
+    @param beg 容器开始迭代器
+    @param end 容器结束迭代器
+    @param _callback 回调函数或者谓词(返回bool类型的函数对象)
+    @return 返回相邻元素的第一个位置的迭代器
+*/
+adjacent_find(iterator beg, iterator end, _callback);
+```
+
+```cpp
+void test03()
+{
+    vector<int> v1;
+    v1.push_back(10);
+    v1.push_back(20);
+    v1.push_back(30);
+    v1.push_back(30);
+    v1.push_back(40);
+    v1.push_back(50);
+    v1.push_back(50);
+
+    vector<int>::iterator it;
+    // 对于普通数据，不需要回调函数
+    it = adjacent_find(v1.begin(), v1.end());
+    if (it != v1.end()) {
+        cout << "寻找到重复的数据：" << *it << endl; // 30
+    } else {
+        cout << "不存在重复的数据" << endl;
+    }
+
+    // 对于自定义数据，需要提供operator==运算符
+    vector<Person> v2;
+    v2.push_back(Person("德玛西亚", 18));
+    v2.push_back(Person("小法", 19));
+    v2.push_back(Person("小炮", 20));
+    v2.push_back(Person("小炮", 20));
+    v2.push_back(Person("牛头", 21));
+    vector<Person>::iterator pit;
+    pit = adjacent_find(v2.begin(), v2.end());
+    if (pit != v2.end()) {
+        cout << "寻找到重复的数据： name = " << pit->name << ", age = " << pit->age << endl; // 寻找到重复的数据： name = 小炮, age = 20
+    } else {
+        cout << "不存在重复的数据" << endl;
+    }
+}
+```
+
+### 3.7.4 binary_search算法
+
+```cpp
+/*
+    binary_search算法 ，二分查找法
+    注意：在无序序列中不可用
+    @param beg 容器开始迭代器
+    @param end 容器结束迭代器
+    @param value 查找的元素
+    @return bool 查找到返回true，否则返回false
+*/
+bool binary_search(iterator beg, iterator end, value);
+```
+
+```cpp
+void test04()
+{
+    vector<int> v1;
+    v1.push_back(10);
+    v1.push_back(20);
+    v1.push_back(30);
+    v1.push_back(40);
+    v1.push_back(50);
+
+    bool ret = binary_search(v1.begin(), v1.end(), 30);
+    if (ret) {
+        cout << "找到了30" << endl; // 找到了30
+    } else {
+        cout << "未找到" << endl;
+    }
+}
+```
+
+### 3.7.5 count算法
+
+```cpp
+/*
+    count算法 统计元素出现次数
+    @param beg 容器开始迭代器
+    @param end 容器结束迭代器
+    @param value 回调函数或者谓词(返回bool类型的函数对象)
+    @return int返回元素个数
+*/
+int count(iterator beg, iterator end, value)
+```
+
+```cpp
+void test05()
+{
+    vector<int> v1;
+    v1.push_back(10);
+    v1.push_back(20);
+    v1.push_back(10);
+    v1.push_back(40);
+    v1.push_back(50);
+    v1.push_back(10);
+
+    int cnt = count(v1.begin(), v1.end(), 10);
+    cout << "10的个数：" << cnt << endl; // 3
+}
+```
+
+### 3.7.6 count_if算法
+
+```cpp
+/*
+    count_if算法 统计元素出现次数
+    @param beg 容器开始迭代器
+    @param end 容器结束迭代器
+    @param callback  回调函数或者谓词(返回bool类型的函数对象)
+    @return int 返回元素个数
+*/
+count_if(iterator beg, iterator end, _callback);
+```
+
+```cpp
+void test06()
+{
+    vector<int> v1;
+    v1.push_back(10);
+    v1.push_back(20);
+    v1.push_back(30);
+    v1.push_back(40);
+    v1.push_back(50);
+
+    int cnt = count_if(v1.begin(), v1.end(), bind2nd(greater_equal<int>(), 20));
+    cout << "大于等于20的个数：" << cnt << endl; // 4
+}
+```
+
+## 3.8 常用排序算法
+
+### 3.8.1 merge算法
+
+```cpp
+/*
+    merge算法 容器元素合并，并存储到另一容器中
+    注意：两个容器必须是有序的
+    @param beg1 容器1开始迭代器
+    @param end1 容器1结束迭代器
+    @param beg2 容器2开始迭代器
+    @param end2 容器2结束迭代器
+    @param dest 目标容器开始迭代器，需要预先设置目标容器的大小
+*/
+merge(iterator beg1, iterator end1, iterator beg2, iterator end2, iterator dest);
+```
+
+```cpp
+void test01()
+{
+    vector<int> v1;
+    v1.push_back(1);
+    v1.push_back(3);
+    v1.push_back(5);
+    v1.push_back(7);
+
+    vector<int> v2;
+    v2.push_back(2);
+    v2.push_back(4);
+    v2.push_back(6);
+    v2.push_back(8);
+
+    vector<int> v3;
+    // 预先设置v3的大小
+    v3.resize(v1.size() + v2.size());
+    merge(v1.begin(), v1.end(), v2.begin(), v2.end(), v3.begin());
+    for_each(v3.begin(), v3.end(), [](int val) { cout << val << " "; }); // 1 2 3 4 5 6 7 8
+    cout << endl;
+}
+```
+
+### 3.8.2 sort算法
+
+```cpp
+/*
+    sort算法 容器元素排序
+    @param beg 容器1开始迭代器
+    @param end 容器1结束迭代器
+    @param _callback 回调函数或者谓词(返回bool类型的函数对象)
+*/
+sort(iterator beg, iterator end, _callback);
+```
+
+### 3.8.3 random_shuffle算法
+
+```cpp
+/*
+    random_shuffle 算法，对指定范围内的元素随机调整次序
+    @param beg 容器开始迭代器
+    @param end 容器结束迭代器
+*/
+random_shuffle(iterator beg, iterator end)
+```
+
+```cpp
+void test02()
+{
+    srand(time(NULL));
+    vector<int> v1;
+    v1.push_back(1);
+    v1.push_back(3);
+    v1.push_back(5);
+    v1.push_back(7);
+
+    for_each(v1.begin(), v1.end(), [](int val) { cout << val << " "; }); // 1 3 5 7
+    cout << endl;
+
+    random_shuffle(v1.begin(), v1.end());
+
+    for_each(v1.begin(), v1.end(), [](int val) { cout << val << " "; }); // 1 7 3 5，每次都是1735，需要设置种子
+    cout << endl;
+}
+```
+
+### 3.8.4 reverse算法
+
+```cpp
+/*
+    reverse算法 反转指定范围的元素
+    @param beg 容器开始迭代器
+    @param end 容器结束迭代器
+*/
+reverse(iterator beg, iterator end)
+```
+
+```cpp
+void test03()
+{
+    vector<int> v1;
+    v1.push_back(1);
+    v1.push_back(3);
+    v1.push_back(5);
+    v1.push_back(7);
+
+    for_each(v1.begin(), v1.end(), [](int val) { cout << val << " "; }); // 1 3 5 7
+    cout << endl;
+
+    reverse(v1.begin(), v1.end());
+
+    for_each(v1.begin(), v1.end(), [](int val) { cout << val << " "; }); // 7 5 3 1
+    cout << endl;
+}
+```
+
+## 3.9 常用拷贝和替换算法
+
+### 3.9.1 copy算法
+
+```cpp
+/*
+    copy算法，将容器内指定范围的元素拷贝到另一个容器中
+    @param beg 容器开始迭代器
+    @param end 容器结束迭代器
+    @param dest 目标起始迭代器
+*/
+copy(iterator beg, iterator end, iterator dest)
+```
+
+```cpp
+#include <iterator>
+void test04()
+{
+    vector<int> v1;
+    v1.push_back(1);
+    v1.push_back(3);
+    v1.push_back(5);
+    v1.push_back(7);
+
+    for_each(v1.begin(), v1.end(), [](int val) { cout << val << " "; }); // 1 3 5 7
+    cout << endl;
+
+    vector<int> v2;
+    // 预先设置大小
+    v2.resize(v1.size());
+    copy(v1.begin(), v1.end(), v2.begin());
+
+    for_each(v2.begin(), v2.end(), [](int val) { cout << val << " "; }); // 1 3 5 7
+    cout << endl;
+
+    // copy秀一下：用copy输出
+    copy(v2.begin(), v2.end(), ostream_iterator<int>(cout, " ")); // 1 3 5 7
+}
+```
+
+> 可以用copy将数据输出到屏幕上，需要引入`include <iterator>`头文件。
+
+### 3.9.2 replace算法
+
+```cpp
+/*
+    replace算法 将容器内指定范围的旧元素修改为新元素
+    @param beg容器开始迭代器
+    @param end容器结束迭代器
+    @param oldvalue旧元素
+    @param newvalue新元素
+*/
+replace(iterator beg, iterator end, oldvalue, newvalue);
+```
+
+```cpp
+void test05()
+{
+    vector<int> v1;
+    v1.push_back(1);
+    v1.push_back(3);
+    v1.push_back(5);
+    v1.push_back(7);
+
+    replace(v1.begin(), v1.end(), 3, 3000);
+
+    copy(v1.begin(), v1.end(), ostream_iterator<int>(cout, " ")); // 1 3000 5 7
+    cout << endl;
+}
+```
+
+### 3.9.3 replace_if算法
+
+```cpp
+/*
+    replace_if算法，将容器内指定范围满足条件的元素替换为新元素
+    @param beg 容器开始迭代器
+    @param end 容器结束迭代器
+    @param callback 函数回调或者谓词(返回bool类型的函数对象)
+    @praram newvalue 新元素
+*/
+replace_if(iterator beg, iterator end, _callback, newvalue)
+```
+
+```cpp
+
+```
+
+### 3.9.4 swap算法
+
+```cpp
+/*
+    swap算法，互换两个容器的元素
+    @param c1容器1
+    @param c2容器2
+*/
+swap(container c1, container c2);
+```
+
+## 3.10 常用算法生成算法
+
+### 3.10.1 accumulate算法
+
+```cpp
+/*
+    accumulate算法，计算容器元素累计总和
+    @param beg 容器开始迭代器
+    @param end 容器结束迭代器
+    @param value 累加值
+*/
+accumulate(iterator beg, iterator end, value);
+```
+
+### 3.10.2 fill算法
+
+```cpp
+/*
+    fill算法，向容器中添加元素
+    @param beg 容器开始迭代器
+    @param end 容器结束迭代器
+    @param value 填充元素
+*/
+fill(iterator beg, iterator end, value);
+```
+
+## 3.11 常用集合算法
+
+### 3.11.1 set_intersection算法
+
+```cpp
+/*
+    set_intersection算法，求两个set集合的交集
+    注意：两个集合必须是有序序列
+    @param beg1 容器1开始迭代器
+    @param end1 容器1结束迭代器
+    @param beg2 容器2开始迭代器
+    @param end2 容器2结束迭代器
+    @param dest 目标容器开始迭代器
+    @return 目标容器的最后一个元素的迭代器地址
+*/
+set_intersection(iterator beg1, iterator end1, iterator beg2, iterator end2, iterator dest)
+```
+
+### 3.11.2 set_union算法
+
+```cpp
+/*
+    set_union算法，求两个set集合的并集
+    注意：两个集合必须是有序序列
+    @param beg1 容器1开始迭代器
+    @param end1 容器1结束迭代器
+    @param beg2 容器2开始迭代器
+    @param end2 容器2结束迭代器
+    @param dest 目标容器开始迭代器
+    @return 目标容器的最后一个元素的迭代器地址
+*/
+set_union(iterator beg1, iterator end1, iterator beg2, iterator end2, iterator dest)
+```
+
+### 3.11.3 set_difference算法
+
+```cpp
+/*
+    set_difference算法，求两个set集合的差集
+    注意：两个集合必须是有序序列
+    @param beg1 容器1开始迭代器
+    @param end1 容器1结束迭代器
+    @param beg2 容器2开始迭代器
+    @param end2 容器2结束迭代器
+    @param dest 目标容器开始迭代器
+    @return 目标容器的最后一个元素的迭代器地址
+*/
+set_difference(iterator beg1, iterator end1, iterator beg2, iterator end2, iterator dest)
+```
+
+## 3.12 STL综合案例
+
+演讲比赛：
+
+
