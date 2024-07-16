@@ -137,8 +137,40 @@ void test06()
     cout << endl;
 }
 
+/*
+accumulate
+*/
+#include <numeric>
+void test07()
+{
+    vector<int> v1;
+    v1.push_back(1);
+    v1.push_back(3);
+    v1.push_back(5);
+    v1.push_back(7);
+
+    int sum = accumulate(v1.begin(), v1.end(), 0);
+    cout << "sum = " << sum << endl; // sum = 16
+}
+
+/*
+    fill算法，向容器中添加元素
+    @param beg 容器开始迭代器
+    @param end 容器结束迭代器
+    @param value 填充元素
+*/
+void test08()
+{
+    vector<int> v1;
+    v1.resize(10);
+    // v1.reserve(10); // reserve不行，因为reserve是预留空间，但未开辟内存，此时begin()==end()
+    fill(v1.begin(), v1.end(), 100);
+    copy(v1.begin(), v1.end(), ostream_iterator<int>(cout, " "));
+    cout << endl;
+}
+
 int main(int argc, char **argv)
 {
-    test06();
+    test08();
     return 0;
 }

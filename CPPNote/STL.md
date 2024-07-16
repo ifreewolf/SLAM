@@ -1,3 +1,115 @@
+- [一、STL 概述](#一stl-概述)
+  - [1.1 STL 基本概念](#11-stl-基本概念)
+  - [1.2 STL六大组件](#12-stl六大组件)
+    - [1.2.1 算法的分类](#121-算法的分类)
+    - [1.2.2 迭代器](#122-迭代器)
+  - [1.3 vector](#13-vector)
+    - [1.3.1 for\_each 迭代器](#131-for_each-迭代器)
+    - [1.3.2 存放自定义数据](#132-存放自定义数据)
+    - [1.3.4 容器嵌套容器](#134-容器嵌套容器)
+- [二、常用容器](#二常用容器)
+  - [2.1. string](#21-string)
+  - [2.2 string容器常用操作](#22-string容器常用操作)
+    - [2.2.1 `string`构造函数](#221-string构造函数)
+    - [2.2.2 `string`基本赋值操作](#222-string基本赋值操作)
+      - [2.2.2.1 字符串的存取](#2221-字符串的存取)
+    - [2.2.3 字符串拼接操作](#223-字符串拼接操作)
+    - [2.2.4 字符串查找和替换](#224-字符串查找和替换)
+    - [2.2.5 字符串比较](#225-字符串比较)
+    - [2.2.6 字符串提取](#226-字符串提取)
+    - [2.2.7 字符串的插入删除](#227-字符串的插入删除)
+    - [2.2.8 string和c风格的字符串转换](#228-string和c风格的字符串转换)
+  - [2.3 vector容器](#23-vector容器)
+    - [2.3.1 vector的容量和大小](#231-vector的容量和大小)
+    - [2.3.2 vector的构造函数](#232-vector的构造函数)
+    - [2.3.3 vector的赋值语句](#233-vector的赋值语句)
+    - [2.3.4 vector大小操作](#234-vector大小操作)
+    - [2.3.5 使用swap收缩容器容量](#235-使用swap收缩容器容量)
+    - [2.3.6 reserve预留空间](#236-reserve预留空间)
+    - [2.3.7 vector数据的存取](#237-vector数据的存取)
+    - [2.3.8 vector的插入和删除](#238-vector的插入和删除)
+  - [2.4 deque容器](#24-deque容器)
+    - [2.4.1 deque容器基本概念](#241-deque容器基本概念)
+    - [2.4.2 deque容器实现原理](#242-deque容器实现原理)
+    - [2.4.3 deque常用API](#243-deque常用api)
+      - [2.4.3.1 deque的构造和赋值](#2431-deque的构造和赋值)
+      - [2.4.3.2 deque容器的大小操作、双端插入删除操作、元素访问操作](#2432-deque容器的大小操作双端插入删除操作元素访问操作)
+      - [2.4.3.3 deque容器的插入和删除](#2433-deque容器的插入和删除)
+      - [2.4.3.4 案例](#2434-案例)
+      - [2.4.3.5 随机数](#2435-随机数)
+  - [2.5 stack容器](#25-stack容器)
+    - [2.5.1 statck容器基本概念](#251-statck容器基本概念)
+    - [2.5.2 stack没有迭代器](#252-stack没有迭代器)
+    - [2.5.3 stack常用API](#253-stack常用api)
+  - [2.6 queue容器](#26-queue容器)
+    - [2.6.1 queue没有迭代器](#261-queue没有迭代器)
+    - [2.6.2 queue常用API](#262-queue常用api)
+  - [2.7 list链表容器](#27-list链表容器)
+    - [2.7.1 链表的常用API](#271-链表的常用api)
+    - [2.7.2 list容器存放自定义数据](#272-list容器存放自定义数据)
+    - [2.7.3 list容器自定数据排序，必须实现排序规则](#273-list容器自定数据排序必须实现排序规则)
+    - [2.7.4 vector对自定义数据排序指定排序规则](#274-vector对自定义数据排序指定排序规则)
+    - [2.7.5 仿函数指定排序规则](#275-仿函数指定排序规则)
+    - [2.7.6 仿函数回顾](#276-仿函数回顾)
+  - [2.8 lambda表达式](#28-lambda表达式)
+  - [2.9 set容器](#29-set容器)
+    - [2.9.1 set容器常用API](#291-set容器常用api)
+    - [2.9.2 set查找操作](#292-set查找操作)
+    - [2.9.3 set上、下限查找](#293-set上下限查找)
+    - [2.9.4 set equal\_ubound查找](#294-set-equal_ubound查找)
+    - [2.9.5 对组 pair](#295-对组-pair)
+    - [2.9.6 set更改容器的默认排序规则(推荐使用仿函数)](#296-set更改容器的默认排序规则推荐使用仿函数)
+    - [2.9.7 set容器自定义数据必须指定排序规则,重载\<运算符](#297-set容器自定义数据必须指定排序规则重载运算符)
+    - [2.9.7 set容器自定义数据必须指定排序规则,指定排序规则](#297-set容器自定义数据必须指定排序规则指定排序规则)
+    - [2.9.8 multiset容器](#298-multiset容器)
+  - [2.10 map容器](#210-map容器)
+    - [2.10.1 map容器的常用API](#2101-map容器的常用api)
+    - [2.10.2 map和vector容器配合使用](#2102-map和vector容器配合使用)
+      - [2.10.2.1 LOL职业联赛：有4个战队，随机抽签出场， 请打印出场顺序](#21021-lol职业联赛有4个战队随机抽签出场-请打印出场顺序)
+      - [2.10.2.2 5名员工加入3个部门](#21022-5名员工加入3个部门)
+  - [STL容器使用时机](#stl容器使用时机)
+- [三、算法](#三算法)
+  - [3.1 函数对象](#31-函数对象)
+  - [3.2 谓词](#32-谓词)
+    - [3.2.1 一元谓词](#321-一元谓词)
+    - [3.2.2 二元谓词](#322-二元谓词)
+  - [3.3 内建函数对象](#33-内建函数对象)
+  - [3.4 函数适配器](#34-函数适配器)
+    - [3.4.1 绑定适配器](#341-绑定适配器)
+    - [3.4.2 取反适配器](#342-取反适配器)
+    - [3.4.3 成员函数适配器](#343-成员函数适配器)
+    - [3.4.4 函数指针适配器](#344-函数指针适配器)
+  - [3.5 算法概述](#35-算法概述)
+  - [3.6 常用遍历算法](#36-常用遍历算法)
+    - [3.6.1 for\_each遍历算法](#361-for_each遍历算法)
+    - [3.6.2 transform算法](#362-transform算法)
+  - [3.7 常用查找算法](#37-常用查找算法)
+    - [3.7.1 find算法](#371-find算法)
+    - [3.7.2 find\_if算法](#372-find_if算法)
+    - [3.7.3 adjacent\_find算法](#373-adjacent_find算法)
+    - [3.7.4 binary\_search算法](#374-binary_search算法)
+    - [3.7.5 count算法](#375-count算法)
+    - [3.7.6 count\_if算法](#376-count_if算法)
+  - [3.8 常用排序算法](#38-常用排序算法)
+    - [3.8.1 merge算法](#381-merge算法)
+    - [3.8.2 sort算法](#382-sort算法)
+    - [3.8.3 random\_shuffle算法](#383-random_shuffle算法)
+    - [3.8.4 reverse算法](#384-reverse算法)
+  - [3.9 常用拷贝和替换算法](#39-常用拷贝和替换算法)
+    - [3.9.1 copy算法](#391-copy算法)
+    - [3.9.2 replace算法](#392-replace算法)
+    - [3.9.3 replace\_if算法](#393-replace_if算法)
+    - [3.9.4 swap算法](#394-swap算法)
+  - [3.10 常用算术生成算法](#310-常用算术生成算法)
+    - [3.10.1 accumulate算法](#3101-accumulate算法)
+    - [3.10.2 fill算法](#3102-fill算法)
+  - [3.11 常用集合算法](#311-常用集合算法)
+    - [3.11.1 set\_intersection算法](#3111-set_intersection算法)
+    - [3.11.2 set\_union算法](#3112-set_union算法)
+    - [3.11.3 set\_difference算法](#3113-set_difference算法)
+  - [3.12 STL综合案例](#312-stl综合案例)
+
+
 # 一、STL 概述
 
 ## 1.1 STL 基本概念
@@ -3161,7 +3273,20 @@ replace_if(iterator beg, iterator end, _callback, newvalue)
 ```
 
 ```cpp
+void test06()
+{
+    vector<int> v1;
+    v1.push_back(1);
+    v1.push_back(3);
+    v1.push_back(5);
+    v1.push_back(7);
 
+    // 将容器中大于3替换成3000
+    replace_if(v1.begin(), v1.end(), bind2nd(greater<int>(), 3), 3000);
+
+    for_each(v1.begin(), v1.end(), [](int val) { cout << val << " "; }); // 1 3 3000 3000
+    cout << endl;
+}
 ```
 
 ### 3.9.4 swap算法
@@ -3175,7 +3300,7 @@ replace_if(iterator beg, iterator end, _callback, newvalue)
 swap(container c1, container c2);
 ```
 
-## 3.10 常用算法生成算法
+## 3.10 常用算术生成算法
 
 ### 3.10.1 accumulate算法
 
@@ -3189,6 +3314,23 @@ swap(container c1, container c2);
 accumulate(iterator beg, iterator end, value);
 ```
 
+```cpp
+#include <numeric>
+void test07()
+{
+    vector<int> v1;
+    v1.push_back(1);
+    v1.push_back(3);
+    v1.push_back(5);
+    v1.push_back(7);
+
+    int sum = accumulate(v1.begin(), v1.end(), 0);
+    cout << "sum = " << sum << endl; // sum = 16
+}
+```
+
+> 得引入`#include <numeric>`头文件。
+
 ### 3.10.2 fill算法
 
 ```cpp
@@ -3201,6 +3343,18 @@ accumulate(iterator beg, iterator end, value);
 fill(iterator beg, iterator end, value);
 ```
 
+```cpp
+void test08()
+{
+    vector<int> v1;
+    v1.resize(10);
+    // v1.reserve(10); // reserve不行，因为reserve是预留空间，但未开辟内存，此时begin()==end()
+    fill(v1.begin(), v1.end(), 100);
+    copy(v1.begin(), v1.end(), ostream_iterator<int>(cout, " "));
+    cout << endl;
+}
+```
+
 ## 3.11 常用集合算法
 
 ### 3.11.1 set_intersection算法
@@ -3208,7 +3362,7 @@ fill(iterator beg, iterator end, value);
 ```cpp
 /*
     set_intersection算法，求两个set集合的交集
-    注意：两个集合必须是有序序列
+    注意：两个集合必须是有序序列，无序的也行
     @param beg1 容器1开始迭代器
     @param end1 容器1结束迭代器
     @param beg2 容器2开始迭代器
@@ -3219,12 +3373,59 @@ fill(iterator beg, iterator end, value);
 set_intersection(iterator beg1, iterator end1, iterator beg2, iterator end2, iterator dest)
 ```
 
+```cpp
+void test01()
+{
+    vector<int> A;
+    A.push_back(1);
+    A.push_back(3);
+    A.push_back(5);
+    A.push_back(7);
+    A.push_back(9);
+    
+    vector<int> B;
+    B.push_back(7);
+    B.push_back(9);
+    B.push_back(2);
+    B.push_back(4);
+    B.push_back(6);
+
+    // 求交集
+    vector<int> iv; // 存放交集
+    iv.resize(min(A.size(), B.size()));
+    vector<int>::iterator it;
+    it = set_intersection(A.begin(), A.end(), B.begin(), B.end(), iv.begin());
+    // copy(iv.begin(), iv.end(), ostream_iterator<int>(cout, " ")); // 7 9 0 0 0
+    // 存在后面的3个0，如何解决？
+    // 方法一：不使用resize，而是用reserve.
+    copy(iv.begin(), it, ostream_iterator<int>(cout, " ")); // 7 9
+    cout << endl;
+
+    vector<int> uv;
+    uv.resize(A.size() + B.size());
+    it = set_union(A.begin(), A.end(), B.begin(), B.end(), uv.begin());
+    copy(uv.begin(), it, ostream_iterator<int>(cout, " ")); // 1 3 5 7 9 2 4 6
+    cout << endl;
+
+    vector<int> dv;
+    dv.resize(A.size());
+    it = set_difference(A.begin(), A.end(), B.begin(), B.end(), dv.begin());
+    copy(dv.begin(), it, ostream_iterator<int>(cout, " ")); // 1 3 5
+    cout << endl;
+
+    dv.resize(B.size());
+    it = set_difference(B.begin(), B.end(), A.begin(), A.end(), dv.begin());
+    copy(dv.begin(), it, ostream_iterator<int>(cout, " ")); // 2 4 6
+    cout << endl;
+}
+```
+
 ### 3.11.2 set_union算法
 
 ```cpp
 /*
     set_union算法，求两个set集合的并集
-    注意：两个集合必须是有序序列
+    注意：两个集合必须是有序序列，无序的也行
     @param beg1 容器1开始迭代器
     @param end1 容器1结束迭代器
     @param beg2 容器2开始迭代器
@@ -3240,7 +3441,7 @@ set_union(iterator beg1, iterator end1, iterator beg2, iterator end2, iterator d
 ```cpp
 /*
     set_difference算法，求两个set集合的差集
-    注意：两个集合必须是有序序列
+    // 注意：两个集合必须是有序序列，无序的也行
     @param beg1 容器1开始迭代器
     @param end1 容器1结束迭代器
     @param beg2 容器2开始迭代器
@@ -3255,4 +3456,151 @@ set_difference(iterator beg1, iterator end1, iterator beg2, iterator end2, itera
 
 演讲比赛：
 
+```cpp
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <unistd.h>
+#include <deque>
+#include <cstring>
+#include <numeric>
+#include <map>
+using namespace std;
 
+class Speaker
+{
+public:
+    string name;
+    int score[3];
+public:
+    Speaker(){}
+    Speaker(string name)
+    {
+        this->name = name;
+        memset(score, 0, sizeof(score));
+    }
+};
+
+void createSpeaker(vector<int> &v, map<int, Speaker> &m)
+{
+    for (int i = 0; i < 24; i++)
+    {
+        // 存放选手编号
+        v.push_back(100 + i);
+        string name = "选手";
+        name += 'A' + i;
+        m.insert(make_pair(i+100, Speaker(name)));
+    }
+}
+
+void speech_contest(int epoch, vector<int> &v, map<int, Speaker> &m, vector<int> &v1)
+{
+    int count = 0;
+    // 设计一个<分数，编号>容器
+    multimap<int, int, greater<int>> m2; 
+    // 选手逐一登台比赛
+    for (vector<int>::iterator it = v.begin(); it != v.end(); it++) {
+        count++;
+        deque<int> d;
+        for (int i = 0; i < 10; i++) { // 10个评委打分
+            int score = rand() % 41 + 60;
+            d.push_back(score);
+        }
+        // 对d容器排序
+        sort(d.begin(), d.end());
+        // 去掉最高分，去掉最低分
+        d.pop_back();
+        d.pop_front();
+        // 求取总分数
+        int sum = accumulate(d.begin(), d.end(), 0);
+
+        int avg = sum / d.size();
+        m[*it].score[epoch - 1] = avg;
+        m2.insert(make_pair(avg, *it));
+
+        if (count % 6 == 0) { // 刚好6人，把上面的6人的成绩取3
+            // 90 80 70 60 50 40
+            int i = 0;
+            for (multimap<int, int, greater<int>>::iterator mit = m2.begin(); mit != m2.end() && i < 3; mit++, i++) {
+                v1.push_back(mit->second);
+            }
+            m2.clear(); // 清空
+        }
+    }
+}
+
+/*
+18690705637
+*/
+
+void printSpeechResult(int epoch, vector<int> &v, map<int, Speaker> &m, vector<int> &v1)
+{
+    cout << "第" << epoch << "轮比赛成绩如下" << endl;
+    int count  = 0;
+    int grp = 0;
+    for (vector<int>::iterator it = v.begin(); it != v.end(); it++) {
+        if (count % 6 == 0) {
+            grp = count/6 + 1;
+            cout << "第" << grp << "组的成绩如下：" << endl;
+        }
+
+        cout << "\t姓名：" << m[*it].name << ", 得分：" << m[*it].score[epoch - 1] << endl;
+        
+        count++;
+
+        // 每个组的成绩打印完，立马打印晋级名单
+        if (count % 6 == 0) {
+            cout << "第" << grp << "组晋级名单如下：" << endl;
+            int cnt = 0;
+            for (vector<int>::iterator vit = v1.begin() + (grp - 1)*3; vit != v1.end() && cnt < 3; vit++, cnt++) {
+                cout << "\t姓名：" << m[*vit].name << ", 得分：" << m[*vit].score[epoch-1] << endl;
+            }
+        }
+    }
+}
+
+int main(int argc, char **argv)
+{
+    // 创建24名选手，将选手<编号，选手>放入map容器中，选手编号放vector<>容器中
+    vector<int> v; // 选手编号
+    map<int, Speaker> m; // <编号，选手>
+    createSpeaker(v, m);
+
+    // for_each(m.begin(), m.end(), [](const pair<int, Speaker> &p){
+    //     cout << p.first << ", " << p.second.name << endl;
+    // });
+
+    // 设置种子
+    srand(time(NULL));
+    // 第一轮：参加的选手抽签
+    random_shuffle(v.begin(), v.end());
+    // 进行第一轮比赛
+    // 1表示当前轮数，v选手编号，m选手信息，v1晋级容器
+    vector<int> v1;
+    speech_contest(1, v, m, v1);
+    // 打印第一轮比赛结果：所有参与比赛的成绩 晋级的名单
+    printSpeechResult(1, v, m, v1);
+
+    cout << "=============================================" << endl;
+    // 第二轮：参加的选手抽签
+    random_shuffle(v1.begin(), v1.end());
+    // 进行第二轮比赛
+    // 2表示当前轮数，v选手编号，m选手信息，v1晋级容器
+    vector<int> v2;
+    speech_contest(2, v1, m, v2);
+    // 打印第二轮比赛结果：所有参与比赛的成绩 晋级的名单
+    printSpeechResult(2, v1, m, v2);
+
+    cout << "=============================================" << endl;
+    // 第三轮：参加的选手抽签
+    random_shuffle(v2.begin(), v2.end());
+    // 进行第三轮比赛
+    // 3表示当前轮数，v选手编号，m选手信息，v1晋级容器
+    vector<int> v3;
+    speech_contest(3, v2, m, v3);
+    // 打印第一轮比赛结果：所有参与比赛的成绩 晋级的名单
+    printSpeechResult(3, v2, m, v3);
+    return 0;
+}
+```
