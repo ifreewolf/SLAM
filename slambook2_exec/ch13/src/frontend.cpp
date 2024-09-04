@@ -79,6 +79,30 @@ bool Frontend::InsertKeyframe() {
 
     SetObservationsForKeyFrame();
     DetectFeatures(); // detect new features
+
+    // track in right image
+    FindFeaturesInRight();
+    // triangulate map points
+    TriangulateNewPoints();
+    // update backend because we have a new keyframe
+    backend_->UpdateMap();
+
+    if (viewer_) viewer_->UpdateMap();
+
+    return true;
+}
+
+void Frontend::SetObservationsForKeyFrame() {
+    for (auto &feat : current_frame_->features_left_) {
+        auto mp = feat->map_point_.lock();
+        if (mp) mp->AddObservation(feat);
+    }
+}
+
+
+int Frontend::TriangulateNewPoints() {
+    std::vector<SE3> poses{camera_left_->pose(), camera_right_->pose()};
+    SE3 cu
 }
 
 }
