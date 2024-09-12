@@ -289,7 +289,107 @@ int Frontend::TrackLastFrame() {
     return num_good_pts;
 }
 
+// 跟踪成功之后可以求解精准的current_post
+// EstimateCurrentPose()求解精准的CurrentPose
+int Frontend::EstimateCurrentPose() {
+    // setup g2o
+    typedef g2o::BlockSolver_6_3 BlockSolverType;
+    typedef g2o::LinearSolverDense<BlockSolverType::PoseMatrixType> LinearSolverType;
+    auto solver = new g2o::OptimizationAlgorithmLevenberg(g2o::make_unqiue<BlockSolverType>(g2o::make_unique<LinearSolverType>()));
+    g2o::SparseOptimizer optimizer;
+    optimizer.setAlgorithm(solver);
+
+    // 明确一下这个过程中我们要优化的变量是什么，这里我们认为地图的3D位置是不用再去优化的(想优化也可以)，所以这个过程中只需要优化R，t
+    // 而R，t可以统一为一个变量SE3，所以这个两帧间的SE3就是我们的优化对象，也就是g2o中的一个顶点(一个变量)
+    // vertex
+    VertexPose *vertex_pose = new VertexPose(); // camera vertex_pose
+    vertex_pose->setId(0);
+    vertex_pose->setEstimate(current_frame_->Pose()); // 设定初值
+    optimizer.addVertex(vertex_pose); // 添加顶点
+
+    // K
+    Mat33 K = camera_left_->K(); // 左目内参矩阵
+
+    // edges
+    // 设定边
+    int index = 1; // 建立索引
+    std::vector<EdgeProjectionPoseOnly *> edges; // 建立边的容器，边类型为EdgeProjectionPoseOnly
+    std::vector<Feature::Ptr> features; // 建立一个特征容器
+
+    // 因为有多个投影点构成多个方程，所以有多个边，一对特征就有一个重投影误差项，就是一条边。
+
+    // 建立并添加边
+    for (size_t i = 0; i < current_frame_->features_left_.size(); ++i) {
+        auto mp = current_frame_->features_left_[i]->map_point_.lock();
+        if (mp) { // 有些特征虽然被跟踪到了，但是并没有受到三角化，即没有map_point_
+            // 这里对feature有没有map_point_进行判断，有则可以往下进行重投影，没有则不行，因为重投影需要点的3D位置
+            features.push_back(current_frame_->features_left_[i]);
+            EdgeProjectionPoseOnly *edge =  new EdgeProjectionPoseOnly(mp->pos_, K);
+            edge->setId(index);
+            edge->setVertex(0, vertex_pose);
+            edge->setMeasurement(toVec2(current_frame_->features_left_[i]->position_.pt));
+            edge->setInformation(Eigen::Matrix2d::Identity());
+            edge->setRobustKernel(new g2o::RobustKernelHuber);
+            edges.push_back(edge);
+            optimizer.addEdge(edge);
+            index++;
+        }
+    }
+
+    // estimate the Pose the determine the outliers
+    const double chi2_th = 5.991;
+    int cnt_outlier = 0;
+    for (int iteration = 0; iteration < 4; ++iteration) {
+        // 总共优化了40遍，以10遍为一个优化周期，对outlier进行一次判断并舍弃掉outlier的边，随后再进行下一个10步优化
+        vertex_pose->setEstimate(current_frame_->Pose()); // 每次优化的初值都设定为current_frame_->Pose()
+        // 但每次涉及的特征都不一样，所以每次的重投影误差都不一样
+        // 就有可能发现新的outlier，这是一个不断筛查，删除，精化的过程
+        optimizer.initializeOptimization();
+        optimizer.optimize(10);
+        cnt_outlier = 0;
+
+        // count the outliers
+        for (size_t i = 0; i < edges.size(); ++i) {
+            auto e = edges[i];
+            if (features[i]->is_outlier_) {
+                e->computeError();
+            }
+            if (e->chi2() > chi2_th) {
+                features[i]->is_outlier_ = true;
+                e->setLevel(1);
+                // 这里每个边都有一个level的概念，默认情况下，g2o只处理level=0的边，在orbslam中，
+                // 如果确定某个边的重投影误差过大，则把level设置为1，也就是舍弃这个边对于整个优化的影响
+                cnt_outlier++;
+            } else {
+                features[i]->is_outlier_ = false;
+                e->setLevel(0);
+            }
+
+            if (iteration == 2) {
+                e->setRobustKernel(nullptr);
+            }
+        }
+    }
+
+    LOG(INFO) << "Outlier/Inlier in pose estimating: " << cnt_outlier << "/" << features.size() - cnt_outlier;
+    // Set pose and outlier
+    current_frame_->SetPose(vertex_pose->estimate());
+
+    LOG(INFO) << "Current Pose = \n" << current_frame_->Pose().matrix();
+
+    for (auto &feat : features) {
+        if (feat->is_outlier_) {
+            feat->map_point_.reset(); // 弱指针自带的操作函数reset，作用是将指针置空
+            feat->is_outlier_ = false; // maybe we can still use it in future
+        }
+    }
+
+    return features.size() - cnt_outlier; // inliers
+}
+
+// 在完成前后帧的跟踪和pose估计后，我们需要对新来的每一帧进行关键帧判别，看它是不是一个关键帧，这里就需要用到InsertKeyframe函数
 bool Frontend::InsertKeyframe() {
+    // 当跟踪到的特征数目小于阈值时认为运动已有足够大的空间，时间幅度，可视做一个新的关键帧
     if (tracking_inliers_ >= num_features_needed_for_keyframe_) {
         // still have enough features, don't insert keyframe
         return false;
@@ -301,7 +401,7 @@ bool Frontend::InsertKeyframe() {
     LOG(INFO) << "Set frame " << current_frame_->id_ << " as keyframe " << current_frame_->keyframe_id_;
 
     SetObservationsForKeyFrame();
-    DetectFeatures(); // detect new features
+    DetectFeatures(); // detect new features，如果是关键帧才能执行到这一步，是关键帧的话其跟踪到的内点数目就会相应不足，需要补充
 
     // track in right image
     FindFeaturesInRight();
@@ -315,19 +415,16 @@ bool Frontend::InsertKeyframe() {
     return true;
 }
 
-void Frontend::SetObservationsForKeyFrame() {
-    for (auto &feat : current_frame_->features_left_) {
-        auto mp = feat->map_point_.lock();
-        if (mp) mp->AddObservation(feat);
-    }
-}
-
-
+// 在InsertKeyFrame函数中出现了一个三角化步骤，这是因为当一个新的关键帧到来后，我们势必需要补充一系列新的特征点
+// 此时则需要像建立初始地图一样，对这些新加入的特征点进行三角化，求其3D位置。
 int Frontend::TriangulateNewPoints() {
+    // 这个函数其实与BuildInitMap差不多
+
     std::vector<SE3> poses{camera_left_->pose(), camera_right_->pose()};
-    SE3 current_pose_Twc = current_frame_->Pose().inverse();
-    int cnt_triangulated_pts = 0;
-    for (size_t i = 0; i < current_frame_->features_left_.size(); ++i) {
+    SE3 current_pose_Twc = current_frame_->Pose().inverse(); // current_frame_->Pose()是从世界到相机，逆就是从相机到世界
+    int cnt_triangulated_pts = 0; // 三角化成功的点的数目
+
+    for (size_t i = 0; i < current_frame_->features_left_.size(); ++i) { // 遍历新的关键帧(左目)内的所有特征点
         if (current_frame_->features_left_[i]->map_point_.expired() &&
             current_frame_->features_right_[i] != nullptr) {
             // 左图的特征点未关联地图点且存在右图匹配点，尝试三角化
@@ -357,5 +454,12 @@ int Frontend::TriangulateNewPoints() {
     }
     LOG(INFO) << "new landmarks: " << cnt_triangulated_pts;
     return cnt_triangulated_pts;
+}
+
+void Frontend::SetObservationsForKeyFrame() {
+    for (auto &feat : current_frame_->features_left_) {
+        auto mp = feat->map_point_.lock();
+        if (mp) mp->AddObservation(feat);
+    }
 }
 }
