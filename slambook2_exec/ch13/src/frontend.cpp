@@ -425,38 +425,48 @@ int Frontend::TriangulateNewPoints() {
     int cnt_triangulated_pts = 0; // 三角化成功的点的数目
 
     for (size_t i = 0; i < current_frame_->features_left_.size(); ++i) { // 遍历新的关键帧(左目)内的所有特征点
-        if (current_frame_->features_left_[i]->map_point_.expired() &&
+        // 和右目对应点做三角化
+        if (current_frame_->features_left_[i]->map_point_.expired() && //  通过调用std::weak_ptr类提供的expired()方法来判断观测的资源是否已经被释放
             current_frame_->features_right_[i] != nullptr) {
             // 左图的特征点未关联地图点且存在右图匹配点，尝试三角化
-            std::vector<Vec3> points{
+            std::vector<Vec3> points{ // 将匹配的像素点从像素坐标转化到相机坐标下
                 camera_left_->pixel2camera(
                     Vec2(current_frame_->features_left_[i]->position_.pt.x,
                             current_frame_->features_left_[i]->position_.pt.y)),
                 camera_right_->pixel2camera(
                     Vec2(current_frame_->features_right_[i]->position_.pt.x,
                             current_frame_->features_right_[i]->position_.pt.y))};
-            Vec3 pworld = Vec3::Zero();
+            Vec3 pworld = Vec3::Zero(); // 声明相机坐标系下点的3D位置坐标
 
-            if (triangulation(poses, points, pworld) && pworld[2] > 0) {
+            if (triangulation(poses, points, pworld) && pworld[2] > 0) { // 如果三角化流程运行成功且得到的深度值pworld[2]大于0有意义
+                // 创建并设立地图点
                 auto new_map_point = MapPoint::CreateNewMappoint();
-                pworld =  current_pose_Twc * pworld;
+                pworld =  current_pose_Twc * pworld; // 从相机坐标系转到世界坐标系
                 new_map_point->SetPos(pworld);
+
+                // 为地图点添加特征成员变量
                 new_map_point->AddObservation(
                     current_frame_->features_left_[i]);
                 new_map_point->AddObservation(
                     current_frame_->features_right_[i]);
+
+                // 为特征类添加地图点成员变量
                 current_frame_->features_left_[i]->map_point_ = new_map_point;
                 current_frame_->features_right_[i]->map_point_ = new_map_point;
+
+                // 既然有了一个新的地图点mappoint，那就应当更新一下地图(类)，向地图类的对象中添加地图点
                 map_->InsertMapPoint(new_map_point);
                 cnt_triangulated_pts++;
             }
         }
     }
-    LOG(INFO) << "new landmarks: " << cnt_triangulated_pts;
+    LOG(INFO) << "new landmarks: " << cnt_triangulated_pts; // 新添加了多少个地图点(landmarks)
     return cnt_triangulated_pts;
 }
 
+// 查找当前帧中的特征，看是否对应已有的地图点，若对应则为地图点天啊及当前帧内的特征观测
 void Frontend::SetObservationsForKeyFrame() {
+    // 若不对应则不做操作，跳过即可
     for (auto &feat : current_frame_->features_left_) {
         auto mp = feat->map_point_.lock();
         if (mp) mp->AddObservation(feat);
