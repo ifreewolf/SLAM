@@ -16,7 +16,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 include_directories("/usr/include/eigen3")
 
 #OpenCV
-find_package(OpenCV 3.1 REQUIRED)
+find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 # pangolin
@@ -28,11 +28,11 @@ find_package(Sophus REQUIRED)
 include_directories(${Sophus_INCLUDE_DIRS})
 
 # G2O
-find_package(G2O REQUIRED)
+find_package(g2o REQUIRED)
 include_directories(${G2O_INCLUDE_DIRS})
 
 # glog
-find_package(Glog REQUIRED)
+find_package(glog REQUIRED)
 include_directories(${GLOG_INCLUDE_DIRS})
 
 # gtest
@@ -44,8 +44,8 @@ find_package(GFlags REQUIRED)
 include_directories(${GFLAGS_INCLUDE_DIRS})
 
 #csparse
-find_package(CSparse REQUIRED)
-include_directories(${CSPARSE_INCLUDE_DIRS})
+# find_package(CSparse REQUIRED)
+# include_directories(${CSPARSE_INCLUDE_DIRS})
 
 set(THIRD_PARTY_LIBS
     ${OpenCV_LIBS}
