@@ -23,7 +23,7 @@ inline bool triangulation(const std::vector<SE3> &poses, const std::vector<Vec3>
         A.block<1, 4>(2 * i + 1, 0) = points[i][1] * m.row(2) - m.row(1);
     }
 
-    auto svd = A.bdcSvd(Eigen::ComputeThinv | Eigen::ComputeThinv);
+    auto svd = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV);
     pt_world = (svd.matrixV().col(3) / svd.matrixV()(3, 3)).head<3>();
 
     if (svd.singularValues()[3] / svd.singularValues()[2] < 1e-2) {

@@ -29,11 +29,11 @@ Vec3 Camera::pixel2camera(const Vec2 &p_p, double depth) {
     );
 }
 
-Vec2 Camera::world2pixel(const Vec3 &p_p, const SE3 &T_c_w) {
+Vec2 Camera::world2pixel(const Vec3 &p_w, const SE3 &T_c_w) {
     return camera2pixel(world2camera(p_w, T_c_w));
 }
 
-Vec3 Camera::pixel2world(const Vec2 &p_p, const SE3 &T_c_w, doble depth) {
+Vec3 Camera::pixel2world(const Vec2 &p_p, const SE3 &T_c_w, double depth) {
     return camera2world(pixel2camera(p_p, depth), T_c_w);
 }
 

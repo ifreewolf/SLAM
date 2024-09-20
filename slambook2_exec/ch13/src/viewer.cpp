@@ -1,6 +1,3 @@
-//
-// Created by gaoxiang on 19-5-4.
-//
 #include "myslam/viewer.h"
 #include "myslam/feature.h"
 #include "myslam/frame.h"
@@ -8,7 +5,8 @@
 #include <pangolin/pangolin.h>
 #include <opencv2/opencv.hpp>
 
-namespace myslam {
+namespace myslam
+{
 
 Viewer::Viewer() {
     viewer_thread_ = std::thread(std::bind(&Viewer::ThreadLoop, this));
@@ -27,8 +25,8 @@ void Viewer::AddCurrentFrame(Frame::Ptr current_frame) {
 void Viewer::UpdateMap() {
     std::unique_lock<std::mutex> lck(viewer_data_mutex_);
     assert(map_ != nullptr);
-    active_keyframes_ = map_->GetActiveKeyFrames();
-    active_landmarks_ = map_->GetActiveMapPoints();
+    activate_keyframes_ = map_->GetActiveKeyFrames();
+    activate_landmarks_ = map_->GetActiveMapPoints();
     map_updated_ = true;
 }
 
@@ -41,13 +39,13 @@ void Viewer::ThreadLoop() {
     pangolin::OpenGlRenderState vis_camera(
         pangolin::ProjectionMatrix(1024, 768, 400, 400, 512, 384, 0.1, 1000),
         pangolin::ModelViewLookAt(0, -5, -10, 0, 0, 0, 0.0, -1.0, 0.0));
-
+    
     // Add named OpenGL viewport to window and provide 3D Handler
-    pangolin::View& vis_display =
+    pangolin::View& vis_display = 
         pangolin::CreateDisplay()
             .SetBounds(0.0, 1.0, 0.0, 1.0, -1024.0f / 768.0f)
             .SetHandler(new pangolin::Handler3D(vis_camera));
-
+    
     const float blue[3] = {0, 0, 1};
     const float green[3] = {0, 1, 0};
 
@@ -79,12 +77,11 @@ void Viewer::ThreadLoop() {
 
 cv::Mat Viewer::PlotFrameImage() {
     cv::Mat img_out;
-    cv::cvtColor(current_frame_->left_img_, img_out, CV_GRAY2BGR);
+    cv::cvtColor(current_frame_->left_img_, img_out, cv::COLOR_GRAY2BGR);
     for (size_t i = 0; i < current_frame_->features_left_.size(); ++i) {
         if (current_frame_->features_left_[i]->map_point_.lock()) {
             auto feat = current_frame_->features_left_[i];
-            cv::circle(img_out, feat->position_.pt, 2, cv::Scalar(0, 250, 0),
-                       2);
+            cv::circle(img_out, feat->position_.pt, 2, cv::Scalar(0, 250, 0), 2);
         }
     }
     return img_out;
@@ -109,13 +106,14 @@ void Viewer::DrawFrame(Frame::Ptr frame, const float* color) {
 
     glPushMatrix();
 
-    Sophus::Matrix4f m = Twc.matrix().templatecast<float>();
+    Sophus::Matrix4f m = Twc.matrix().template cast<float>();
     glMultMatrixf((GLfloat*)m.data());
 
     if (color == nullptr) {
         glColor3f(1, 0, 0);
-    } else
+    } else {
         glColor3f(color[0], color[1], color[2]);
+    }
 
     glLineWidth(line_width);
     glBegin(GL_LINES);
@@ -146,13 +144,13 @@ void Viewer::DrawFrame(Frame::Ptr frame, const float* color) {
 
 void Viewer::DrawMapPoints() {
     const float red[3] = {1.0, 0, 0};
-    for (auto& kf : active_keyframes_) {
+    for (auto& kf : activate_keyframes_) {
         DrawFrame(kf.second, red);
     }
 
     glPointSize(2);
     glBegin(GL_POINTS);
-    for (auto& landmark : active_landmarks_) {
+    for (auto& landmark : activate_landmarks_) {
         auto pos = landmark.second->Pos();
         glColor3f(red[0], red[1], red[2]);
         glVertex3d(pos[0], pos[1], pos[2]);
@@ -160,4 +158,4 @@ void Viewer::DrawMapPoints() {
     glEnd();
 }
 
-}  // namespace myslam
+} // namespace myslam

@@ -86,7 +86,7 @@ public:
             -fy * X * Zinv;
     }
 
-    virtual bool read(std::istream &int) override { return true; }
+    virtual bool read(std::istream &in) override { return true; }
 
     virtual bool write(std::ostream &out) const override { return true; }
 
@@ -127,10 +127,10 @@ public:
         double Z = pos_cam[2];
         double Zinv = 1.0 / (Z + 1e-18);
         double Zinv2 = Zinv * Zinv;
-        _jacobianOplusXi << _fx * Zinv, 0, fx * X * Zinv2, fx * X * Y * Zinv2,
+        _jacobianOplusXi << -fx * Zinv, 0, fx * X * Zinv2, fx * X * Y * Zinv2,
             -fx - fx * X * X * Zinv2, fx * Y * Zinv, 0, -fy * Zinv,
             fy * Y * Zinv2, fy + fy * Y * Y * Zinv2, -fy * X * Y * Zinv2, -fy * X * Zinv;
-        _jacobianOplusXj = _jacobianOplusXi.block<2, 3>(0, 0) * _cam_ext.rotationMatrix(0) * T.rotationMatrix();
+        _jacobianOplusXj = _jacobianOplusXi.block<2, 3>(0, 0) * _cam_ext.rotationMatrix() * T.rotationMatrix();
     }
 
     virtual bool read(std::istream &in) override { return true; }

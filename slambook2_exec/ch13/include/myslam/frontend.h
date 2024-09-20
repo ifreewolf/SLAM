@@ -3,6 +3,7 @@
 #define MYSLAM_FRONTEND_H
 
 #include <opencv2/features2d.hpp>
+#include <opencv2/imgproc/types_c.h>
 #include "myslam/common_include.h"
 #include "myslam/frame.h"
 #include "myslam/map.h"
@@ -130,7 +131,7 @@ private:
 
     SE3 relative_motion_;       // 当前帧与上一帧的相对运动，用于估计当前帧pose初值
 
-    int tracking_inliers = 0;   // inliers, used for testing new keyframes
+    int tracking_inliers_ = 0;   // inliers, used for testing new keyframes
 
     // params
     int num_features_ = 200;

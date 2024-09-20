@@ -193,7 +193,7 @@ Backend::Backend() {
 }
 
 void Backend::UpdateMap() {
-    std::unique_ptr<std::mutex> lock(data_mutex_); // 没有defer_lock的话，创建就会自动上锁了
+    std::unique_lock<std::mutex> lock(data_mutex_); // 没有defer_lock的话，创建就会自动上锁了
     map_update_.notify_one(); // 条件变量，随机唤醒一个wait的线程
     // std::unque_lock:
     /*
@@ -546,7 +546,7 @@ void Backend::Optimize(Map::KeyframesType &keyframes, Map::LandmarksType &landma
                 cnt_inlier++;
             }
         }
-        double inlier_ration = cnt_inlier / double(cnt_inlier + cnt_outlier);
+        double inlier_ratio = cnt_inlier / double(cnt_inlier + cnt_outlier);
         if (inlier_ratio > 0.5) {
             break;
         } else {
@@ -555,7 +555,7 @@ void Backend::Optimize(Map::KeyframesType &keyframes, Map::LandmarksType &landma
         }
     }
 
-    for (auto &ef : edges_and_feature) {
+    for (auto &ef : edges_and_features) {
         if (ef.first->chi2() > chi2_th) {
             ef.second->is_outlier_ = true;
             // remove the observation

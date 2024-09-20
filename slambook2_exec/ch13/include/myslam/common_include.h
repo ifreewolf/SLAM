@@ -12,7 +12,7 @@
 #include <mutex>
 #include <set>
 #include <string>
-#incldue <thread>
+#include <thread>
 #include <typeinfo>
 #include <unordered_map>
 #include <vector>
@@ -77,7 +77,7 @@ typedef Eigen::Matrix<float, 14, 14> Mat1414f;
 typedef Eigen::Matrix<double, 14, 1> Vec14;
 typedef Eigen::Matrix<double, 13, 1> Vec13;
 typedef Eigen::Matrix<double, 10, 1> Vec10;
-typedef Eigen::Matirx<double, 9, 1> Vec9;
+typedef Eigen::Matrix<double, 9, 1> Vec9;
 typedef Eigen::Matrix<double, 8, 1> Vec8;
 typedef Eigen::Matrix<double, 7, 1> Vec7;
 typedef Eigen::Matrix<double, 6, 1> Vec6;

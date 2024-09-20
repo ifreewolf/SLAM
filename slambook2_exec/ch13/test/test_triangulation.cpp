@@ -16,7 +16,7 @@ TEST(MyslamTest, Triangulation) {
         points.push_back(pc);
     }
 
-    EXPECT_TRUE(myslam::triangulation(poses, points, pt_world, pt_world_estimated));
+    EXPECT_TRUE(myslam::triangulation(poses, points, pt_world_estimated));
     EXPECT_NEAR(pt_world[0], pt_world_estimated[0], 0.01);
     EXPECT_NEAR(pt_world[1], pt_world_estimated[1], 0.01);
     EXPECT_NEAR(pt_world[2], pt_world_estimated[2], 0.01);

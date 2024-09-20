@@ -116,7 +116,7 @@ int Frontend::DetectFeatures() {
     cv::Mat mask(current_frame_->left_img_.size(), CV_8UC1, 255); // 掩膜，灰度图，同时可以看出，DetectFeatures是对左目图像的操作
     for (auto &feat : current_frame_->features_left_) {
         cv::rectangle(mask, feat->position_.pt - cv::Point2f(10, 10),
-                      feat->position_.pt + cv::Point2f(10, 10), 0, CV_FILLED); // 在已有的特征附近一个矩形区域内将掩膜值设为0
+                      feat->position_.pt + cv::Point2f(10, 10), 0, cv::FILLED); // 在已有的特征附近一个矩形区域内将掩膜值设为0
                     //   即在这个矩形区域中不提取特征了，保持均匀性，并避免重复。
     }
 
@@ -155,7 +155,7 @@ int Frontend::FindFeaturesInRight() {
     std::vector<uchar> status; // 光流跟踪成功与否的状态向量(无符号字符)，成功则为1，否则为0
     Mat error;
     cv::calcOpticalFlowPyrLK(current_frame_->left_img_, current_frame_->right_img_, kps_left, kps_right, status, error,
-                             cv::Size(11, 11), 3, cv::TermCriteria(cv::TermCriterial::COUNT + cv::TermCriteria::EPS, 30, 0.01),
+                             cv::Size(11, 11), 3, cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30, 0.01),
                              cv::OPTFLOW_USE_INITIAL_FLOW);
     // calcopticalFlowPyrLK(prevImg, nextImg, prevPts, nextPts, status=None, err=None, winsize=None, maxLevel=None)
     // 前一帧图像、当前帧图像、前一帧检测到的特征点、当前帧特征点，状态变量，错误参数，搜素窗口范围，金字塔最大层数默认为3，迭代搜索算法的终止条件，表示使用初始估计的点位置。
@@ -276,7 +276,7 @@ int Frontend::TrackLastFrame() {
         if (status[i]) { // status[i]=true，则说明跟踪成功有对应点，false则跟踪失败没有找到对应点
             cv::KeyPoint kp(kps_current[i], 7);
             Feature::Ptr feature(new Feature(current_frame_, kp));
-            feature->map_point_ = last_frame_->feature_left_[i]->map_point_;
+            feature->map_point_ = last_frame_->features_left_[i]->map_point_;
             // 这个时候这里的map_point有可能之前没有在右目中找到对应点，所以其对应的map_point_未曾被初始化或者赋值，也可以这么写吗？
             // 针对于这种情况，应该只是保证了feature->map_point_和last_frame_->features_left_[i]->map_point之间的相同性，
             // 但却并没有关注last_frame_->features_left_[i]->map_point_是否被初始化或者赋值
@@ -295,7 +295,7 @@ int Frontend::EstimateCurrentPose() {
     // setup g2o
     typedef g2o::BlockSolver_6_3 BlockSolverType;
     typedef g2o::LinearSolverDense<BlockSolverType::PoseMatrixType> LinearSolverType;
-    auto solver = new g2o::OptimizationAlgorithmLevenberg(g2o::make_unqiue<BlockSolverType>(g2o::make_unique<LinearSolverType>()));
+    auto solver = new g2o::OptimizationAlgorithmLevenberg(g2o::make_unique<BlockSolverType>(g2o::make_unique<LinearSolverType>()));
     g2o::SparseOptimizer optimizer;
     optimizer.setAlgorithm(solver);
 

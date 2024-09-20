@@ -2,6 +2,8 @@
 #ifndef MYSLAM_MAPPOINT_H
 #define MYSLAM_MAPPOINT_H
 
+#include "myslam/common_include.h"
+
 namespace myslam {
 
 // forward declare

@@ -19,4 +19,6 @@ Config::~Config() {
         file_.release();
     }
 }
+
+std::shared_ptr<Config> Config::config_ = nullptr;
 } // namespace myslam
