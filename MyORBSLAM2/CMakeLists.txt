@@ -35,9 +35,21 @@ include_directories(
     
 add_library(${PROJECT_NAME} SHARED
     src/System.cc
+    src/KeyFrameDatabase.cc
+    src/Map.cc
+    src/FrameDrawer.cc
+    src/MapDrawer.cc
+    src/Tracking.cc
+    src/LocalMapping.cc
+    src/LoopClosing.cc
+    src/Viewer.cc
+    src/Frame.cc
+    src/KeyFrame.cc
+    src/ORBextractor.cc
 )
 target_link_libraries(${PROJECT_NAME}
     ${OpenCV_LIBS}
+    ${PROJECT_SOURCE_DIR}/3rdparty/DBoW2/lib/libDBoW2.so
 )
     
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)

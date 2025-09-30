@@ -9,7 +9,11 @@
 #include <string>
 #include <thread>
 #include <unistd.h>
+#include <list>
+
+#include <mutex>
 
 #include <opencv2/core/core.hpp>
+#include <opencv2/opencv.hpp>
 
 #endif
