@@ -6,6 +6,7 @@
 #include "KeyFrame.h"
 #include "ORBVocabulary.h"
 #include "ORBextractor.h"
+#include "Converter.h"
 
 namespace ORB_SLAM2
 {
@@ -39,8 +40,39 @@ public:
     // Extract ORB on the image. 0 for left image and 1 for right image.
     void ExtractORB(int flag, const cv::Mat &im);
 
+    // Compute Bag of Words representation. 计算BoW代表
+    void ComputeBoW();
+
+    // Set the camera pose.
+    void SetPose(cv::Mat Tcw);
+
+    // Computes rotation, translation and camera center matrices from the camera pose.
+    void UpdatePoseMatrices();
+
+    // Returns the camera center.
+    inline cv::Mat GetCameraCenter() {
+        return mOw.clone();
+    }
+
+    // Returns inverse of rotation
+    inline cv::Mat GetRotationInverse() {
+        return mRwc.clone();
+    }
+
+    // Check if a MapPoint is in the frustum of the camera              检查一个MapPoint是否在视锥内 frustum：相机的视椎体
+    // and fill variables of the MapPoint to be used by the tracking    填充MapPoint的变量以供跟踪使用
+    bool isInFrustum(MapPoint* pMP, float viewingCosLimit);
+
     // Associate a "right" coordinate to a keypoint if there is valid depth in the depthmap.
     void ComputeStereoFromRGBD(const cv::Mat &imDepth);
+
+    // Compute the cell of a keypoint (return false if outside the grid)
+    bool PosInGrid(const cv::KeyPoint &kp, int &posX, int &posY);
+
+    std::vector<size_t> GetFeaturesInArea(const float &x, const float &y, const float &r, const int minLevel = -1, const int maxLevel = -1) const;
+
+    // Backprojects a keypoint (if stereo/depth info available) into 3D world coordinates.
+    cv::Mat UnprojectStereo(const int &i);
 
 
 public:
@@ -92,6 +124,10 @@ public:
     std::vector<float> mvuRight;    // 左目特征点在右目中匹配特征点的横坐标（左右目匹配特征点的纵坐标相同）
     std::vector<float> mvDepth;     // 特征点深度
     // 对于单目特征点（单目相机输入的特征点或没有找到右目匹配的左目图像特征点）其mvuRight和mvDepth均为-1
+
+    // Bag of words Vector structures.
+    DBoW2::BowVector mBowVec;       // 记录叶子节点的Id和该叶子节点的权重weights
+    DBoW2::FeatureVector mFeatVec;  // 记录叶子节点的所属节点Id和特征点在特征点列表中的序号
     
     // ORB descriptor, each row associated to a keypoint.
     cv::Mat mDescriptors;       // 左目图像特征点描述子
@@ -110,11 +146,14 @@ public:
     std::vector<std::size_t> mGrid[FRAME_GRID_COLS][FRAME_GRID_ROWS];
     
     // Camera pose.
-    cv::Mat mTcw;
+    cv::Mat mTcw;   // 相机位姿，世界坐标系到相机坐标系的变换矩阵
     
     // Current and Next Frame id.
     static long unsigned int nNextId;
     long unsigned int mnId;
+
+    // Reference KeyFrame
+    KeyFrame* mpReferenceKF;
 
     // Scale pyramid info.
     int                mnScaleLevels;       // 
@@ -145,10 +184,21 @@ private:
     void AssignFeaturesToGrid();
 
     // Rotation, translation and camera center
-    cv::Mat mRcw;
-    cv::Mat mtcw;
-    cv::Mat mRwc;
-    cv::Mat mOw;    // == mtwc
+    cv::Mat mRcw;   // 世界坐标系到相机坐标系的旋转矩阵
+    cv::Mat mtcw;   // 世界坐标系到相机坐标系的平移向量
+    cv::Mat mRwc;   // 相机坐标系到世界坐标系的旋转矩阵
+    cv::Mat mOw;    // 当前相机光心在世界坐标系下的坐标。相机光心如何计算？mOw = -mRcw*mtcw，物理意义：将相机原点(在相机坐标系中为[0,0,0]^T)通过逆变换映射到世界坐标系。
+    /**
+     * 相机光心 mOw，在世界坐标系下的坐标
+     * 变换矩阵 mTcw，表示从世界坐标系到相机坐标系的变换
+     *        [mRcw mtcw]
+     * mTcw = [  0    1 ]
+     *      [mOw]
+     * mTcw*[ 1 ] = [0,0,0,1]^T, 这里是将相机光心在世界坐标系下的坐标，通过mTcw变换到相机坐标系下，结果是原点
+     * 
+     * 展开齐次方程：mRcw·mOw + mtcw = 0, 解得：mOw = -mRcw^T·mtcw
+     * 
+     */
 };
 
 }

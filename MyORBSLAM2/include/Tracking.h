@@ -13,6 +13,9 @@
 #include "Viewer.h"
 #include "Initializer.h"
 #include "ORBextractor.h"
+#include "ORBmatcher.h"
+#include "Optimizer.h"
+#include "PnPsolver.h"
 
 namespace ORB_SLAM2
 {
@@ -63,6 +66,11 @@ public:
     Frame   mCurrentFrame; // 当前帧
     cv::Mat mImGray;
 
+    // Initialization Variables (Monocular)
+    std::vector<int> mvIniLastMatches;
+    std::vector<int> mvIniMatches;  // 单目初始化中参考帧与当前帧的匹配关系
+    Frame mInitialFrame;            // 单目初始化参考帧（实际上就是前一帧）
+
     // True if local mapping is deactivate and we are performing only localizaiton
     bool mbOnlyTracking;
 
@@ -76,6 +84,35 @@ protected:
 
     // Main tracking function. It is independent of the input sensor.
     void Track();
+
+    // Map initialization for stereo and RGBD
+    void StereoInitialization();
+
+    // Map initialization for monocular
+    void MonocularInitialization();     // 单目相机初始化
+    void CreateInitialMapMonocular();   // 单目初始化成功后建立初始局部地图
+
+    void CheckReplacedInLastFrame();
+    bool TrackReferenceKeyFrame();
+    void UpdateLastFrame();
+    bool TrackWithMotionModel();
+
+    bool Relocalization();
+
+    void UpdateLocalMap();
+    void UpdateLocalPoints();
+    void UpdateLocalKeyFrames();
+
+    bool TrackLocalMap();
+    void SearchLocalPoints();
+
+    bool NeedNewKeyFrame();
+    void CreateNewKeyFrame();
+
+    // In case of performing only localization, this flag is true when there are no matches to points in the map.   在执行仅定位操作时，若当前帧与地图特征点无匹配，则该标志为真。
+    // Still tracking continue if there are enough matches with temporal points.    此时系统会继续追踪（若存在足够多的临时特征点匹配）
+    // In that case we are doing visual odometry. The System wil try to do relocalization to recover "zero-drift" localization to the map.  此时系统将执行视觉里程计功能,系统会尝试通过重定位操作恢复"零漂移"的定位状态（即重新与地图对齐）。
+    bool mbVO;
 
     // Other Thread Pointers
     LocalMapping* mpLocalMapper;
@@ -92,6 +129,14 @@ protected:
 
     // Initialization (only for monocular)
     Initializer* mpInitializer; // 单目初始化器
+
+    // Local Map
+    KeyFrame* mpReferenceKF;                    // 参考关键帧，初始化成功的帧会被设为参考关键帧
+    std::vector<KeyFrame*> mvpLocalKeyFrames;   // 局部关键帧列表，初始化成功后向其中添加局部关键帧
+    std::vector<MapPoint*> mvpLocalMapPoints;   // 局部地图点列表，初始化成功后向其中添加局部地图点
+
+    // System
+    System* mpSystem;
 
     // Map
     Map* mpMap;
@@ -112,14 +157,28 @@ protected:
 
     // Drawers
     Viewer* mpViewer;
+    FrameDrawer* mpFrameDrawer;
+    MapDrawer* mpMapDrawer;
     
     // For RGBD inputs only. For some datasets (e.g. TUM) the depthmap values are scaled. scaled:按比例缩放、归一化
     float mDepthMapFactor; // 深度相机disparity转化为depth时的因子
 
+    // Current matches in frame
+    int mnMatchesInliers;
+
+    // Last Frame, KeyFrame and Relocalization Info
+    Frame mLastFrame;
+    KeyFrame* mpLastKeyFrame;
+    unsigned int mnLastKeyFrameId;
+    unsigned int mnLastRelocFrameId;
+
+    // Motion Model
+    cv::Mat mVelocity;
+
     // Color order (true RGB, false BGR, ignored if grayscale)
     bool mbRGB;
 
-
+    std::list<MapPoint*> mlpTemporalPoints;
 };
 
 }

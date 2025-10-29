@@ -31,6 +31,7 @@ public:
         STEREO=1,
         RGBD=2
     };
+
 public:
     System(const std::string &strVocFile, const std::string &strSettingsFile, const eSensor sensor, const bool bUseViewer = true);
 
@@ -39,6 +40,8 @@ public:
     // Returns the camera pose (empty if tracking fails).
     cv::Mat TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp);
 
+    // Reset the system (clear map)
+    void Reset();
 
     // All threads will be requested to finish.
     // It waits until all threads have finished.

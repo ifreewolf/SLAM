@@ -88,4 +88,45 @@ void LocalMapping::RequestReset()
     }
 }
 
+
+void LocalMapping::InsertKeyFrame(KeyFrame* pKF)
+{
+    std::unique_lock<std::mutex> lock(mMutexNewKFs);
+    mlNewKeyFrames.push_back(pKF);
+    mbAbortBA = true;   // 放弃 Bundle Adjustment
+}
+
+
+bool LocalMapping::stopRequested()
+{
+    std::unique_lock<std::mutex> lock(mMutexStop);
+    return mbStopRequested;
+}
+
+
+bool LocalMapping::AcceptKeyFrames()
+{
+    std::unique_lock<std::mutex> lock(mMutexAccept);
+    return mbAcceptKeyFrames;
+}
+
+
+bool LocalMapping::SetNotStop(bool flag)
+{
+    std::unique_lock<std::mutex> lock(mMutexStop);
+    if (flag && mbStopped) {
+        return false;
+    }
+
+    mbNotStop = flag;
+
+    return true;
+}
+
+
+void LocalMapping::InterruptBA()
+{
+    mbAbortBA = true;
+}
+
 }

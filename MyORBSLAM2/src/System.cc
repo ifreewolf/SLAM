@@ -4,7 +4,7 @@ namespace ORB_SLAM2
 {
 
 System::System(const std::string &strVocFile, const std::string &strSettingsFile, const eSensor sensor, const bool bUseViewer)
-    : mSensor(sensor), mbReset(false)
+    : mSensor(sensor), mbReset(false), mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false)
 {
     std::cout << "ORB-SLAM2 Copyright (C) 2014-2016 Raul Mur-Artal, University of Zaragoza." << std::endl <<
     "This program comes with ABSOLUTELY NO WARRANTY;" << std::endl <<
@@ -152,8 +152,23 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
 void System::Shutdown()
 {
+    mpLocalMapper->RequestFinish();
+    mpLoopCloser->RequestFinish();
+    if (mpViewer) {
+        mpViewer->RequestFinish();
+        while (!mpViewer->isFinished()) {
+            std::this_thread::sleep_for(std::chrono::macroseconds(5000));
+        }
+    }
     
-    std::cout << "System shutdown." << std::endl;
+    // Wait until all thread have effectively stopped
+    while (!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || mpLoopCloser->isRunningGBA()) {
+        std::this_thread::sleep_for(std::chrono::macroseconds(5000));
+    }
+
+    if (mpViewer) {
+        pangolin::BindToContext("ORB-SLAM2: Map Viewer");
+    }
 }
 
 
@@ -166,6 +181,36 @@ void System::SaveTrajectoryTUM(const std::string &filename)
         return;
     }
 
+    std::vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
+    std::sort(vpKFs.begin(), vpKFs.end(), KeyFrame::lId);   // 根据KeyFrame的mnId来排序，从小到大排序
+
+    // Transform all keyframes so that the first keyframe is at the origin.
+    // After a loop closure the first keyframe might not be at the origin.
+    cv::Mat Two = vpKFs[0]->GetPoseInverse();
+
+    std::ofstream f;
+    f.open(filename.c_str());
+    f << fixed;
+
+    std::list<KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin();
+    std::list<double>::iterator lT = mpTracker->mlFrameTimes.begin();
+    std::list<bool>::iterator lbL = mpTracker->mlbLost.begin();
+    for (std::list<cv::Mat>::iterator lit = mpTracker->mlRelativeFramePoses.begin(), lend = mpTracker->mlRelativeFramePoses.end();
+         lit != lend; lit++, lRit++, lT++, lbL++) {
+        if (*lbL) {
+            continue;
+        }
+
+        KeyFrame* pKF = *lRit;
+
+        cv::Mat Trw = cv::Mat::eye(4, 4, CV_32F);
+
+        // If the reference keyframe was culled, traverse the spanning tree to get a suitable keyframe,
+        while (pKF->isBad()) {
+            Trw = Trw * pKF->mTcp;
+            pKF = pKF->GetParent();
+        }
+    }
 
 }
 
@@ -176,4 +221,9 @@ void System::SaveKeyFrameTrajectoryTUM(const std::string &filename)
 }
 
 
+void System::Reset()
+{
+    std::unique_lock<std::mutex> lock(mMutexReset);
+    mbReset = true;
+}
 }

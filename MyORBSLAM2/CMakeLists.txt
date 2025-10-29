@@ -3,6 +3,10 @@ project(ORB_SLAM2)
 
 set(CMAKE_BUILD_TYPE Debug)
 
+add_definitions(-w)
+
+add_compile_options(-Wno-ignored-attributes -Wno-deprecated-declarations)
+
 # 全局定义_DEBUG宏
 add_definitions(-D_DEBUG)
 
@@ -31,6 +35,8 @@ endif()
 include_directories(
     ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/3rdparty/eigen/include/eigen3
+    ${PROJECT_SOURCE_DIR}/3rdparty/g2o/g2o
 )
     
 add_library(${PROJECT_NAME} SHARED
@@ -46,10 +52,16 @@ add_library(${PROJECT_NAME} SHARED
     src/Frame.cc
     src/KeyFrame.cc
     src/ORBextractor.cc
+    src/MapPoint.cc
+    src/ORBmatcher.cc
+    src/PnPsolver.cc
+    src/Converter.cc
+    src/Optimizer.cc
 )
 target_link_libraries(${PROJECT_NAME}
     ${OpenCV_LIBS}
     ${PROJECT_SOURCE_DIR}/3rdparty/DBoW2/lib/libDBoW2.so
+    ${PROJECT_SOURCE_DIR}/3rdparty/g2o/lib/libg2o.so
 )
     
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)

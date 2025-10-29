@@ -10,6 +10,7 @@
 #include <thread>
 #include <unistd.h>
 #include <list>
+#include <cassert>
 
 #include <mutex>
 

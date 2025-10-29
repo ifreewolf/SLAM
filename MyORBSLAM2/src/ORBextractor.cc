@@ -585,6 +585,8 @@ void ORBextractor::operator()(cv::InputArray _image, cv::InputArray _mask, std::
 
     // 判断图像的格式是否正确，要求是单通道灰度值
     assert(image.type() == CV_8UC1);
+    int nWidth  = image.cols;
+    int nHeight = image.rows;
 
     // Step2 构建图像金字塔
     ComputePyramid(image);
@@ -664,18 +666,60 @@ void ORBextractor::operator()(cv::InputArray _image, cv::InputArray _mask, std::
         // Step6 对非第0层图像中的特征点的坐标恢复到第0层图像（原图像）的坐标系下
         // 得到所有层特征点在第0层里的坐标放到_keypoints里面
         // 对于第0层的图像特征点，它们的坐标就不需要再进行恢复了
-        if (level != 0) {
-            // 获取当前图层上的缩放系数
-            float scale = mvScaleFactor[level]; //
-            // 遍历本层所有的特征点
-            for (std::vector<cv::KeyPoint>::iterator keypoint = keypoints.begin(), keypointEnd = keypoints.end(); keypoint != keypointEnd; ++keypoint) {
-                keypoint->pt *= scale;
+        
+        // 获取当前图层上的缩放系数
+        float scale = mvScaleFactor[level];
+        // 遍历本层所有的特征点
+        for (std::vector<cv::KeyPoint>::iterator keypoint = keypoints.begin(), keypointEnd = keypoints.end(); keypoint != keypointEnd; ++keypoint) {
+            if (cvRound(nWidth*mvInvScaleFactor[level]) < workingMat.cols || cvRound(nHeight*mvInvScaleFactor[level]) < workingMat.rows) {
+                keypoint->pt.x -= EDGE_THRESHOLD;   // 金字塔图形被padding后的坐标，要回到原始图像的坐标必然需要减去padding的边缘
+                keypoint->pt.y -= EDGE_THRESHOLD;   // 比如得在乘以scale之前，因为每层金字塔图像都是添加相同的padding边缘
             }
+            keypoint->pt *= scale;
         }
+
+        // if (level != 0) {
+        //     // 获取当前图层上的缩放系数
+        //     float scale = mvScaleFactor[level]; //
+        //     // 遍历本层所有的特征点
+        //     for (std::vector<cv::KeyPoint>::iterator keypoint = keypoints.begin(), keypointEnd = keypoints.end(); keypoint != keypointEnd; ++keypoint) {
+        //         if (nWidth*mvInvScaleFactor[level] < workingMat.cols || nHeight*mvInvScaleFactor[level] < workingMat.rows) {
+        //             keypoint->pt.x -= EDGE_THRESHOLD;   // 金字塔图形被padding后的坐标，要回到原始图像的坐标必然需要减去padding的边缘
+        //             keypoint->pt.y -= EDGE_THRESHOLD;   // 比如得在乘以scale之前，因为每层金字塔图像都是添加相同的padding边缘
+        //         }
+        //         keypoint->pt *= scale;
+        //     }
+        // } else {
+        //     // 遍历本层所有的特征点
+        //     for (std::vector<cv::KeyPoint>::iterator keypoint = keypoints.begin(), keypointEnd = keypoints.end(); keypoint != keypointEnd; ++keypoint) {
+        //         if (nWidth*mvInvScaleFactor[level] < workingMat.cols || nHeight*mvInvScaleFactor[level] < workingMat.rows) {
+        //             keypoint->pt.x -= EDGE_THRESHOLD;
+        //             keypoint->pt.y -= EDGE_THRESHOLD;
+        //         }
+        //     }
+        // }
+        
         // 将keypoints中内容插入到_keypoints的末尾
         // keypoint其实是对allkeypoints中每层图像中特征点的引用，这样allkeypoints中的所有特征点在这里被转存到输出的_keypoints'
         _keypoints.insert(_keypoints.end(), keypoints.begin(), keypoints.end());
     }
+#ifdef _DEBUG
+    // static int imgId = 0;
+    // cv::Mat temp = image.clone();
+    // cv::Mat temp2 = mvImagePyramid[0].clone();
+    // for (size_t i = 0, j = _keypoints.size(); i < j; i++) {
+    //     cv::circle(temp, _keypoints[i].pt, 2, cv::Scalar(0, 255, 0), -1);
+    //     cv::KeyPoint kp = _keypoints[i];
+    //     kp.pt.x += EDGE_THRESHOLD;
+    //     kp.pt.y += EDGE_THRESHOLD;
+    //     cv::circle(temp2, kp.pt, 2, cv::Scalar(0, 255, 0), -1);
+    // }
+    // std::string imagePath = "result_images/image_" + std::to_string(imgId) + ".png";
+    // std::string imagePath2 = "result_images/image_" + std::to_string(imgId) + "_p.png";
+    // cv::imwrite(imagePath, temp);
+    // cv::imwrite(imagePath2, temp2);
+    // imgId += 1;
+#endif
 }
 
 

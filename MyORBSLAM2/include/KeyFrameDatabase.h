@@ -25,16 +25,17 @@ public:
     void clear();
 
     // Loop Detection
-    // std::vector<KeyFrame *> DetectLoopCandidates(KeyFrame* pKF, float minScore);
+    std::vector<KeyFrame *> DetectLoopCandidates(KeyFrame* pKF, float minScore);
 
     // Relocalization
-    // std::vector<KeyFrame *> DetectRelocalizationCandidates(Frame* F);
+    std::vector<KeyFrame *> DetectRelocalizationCandidates(Frame* F);
 
 protected:
     // Associated vocabulary
     const ORBVocabulary* mpVoc; // 相关的字典
 
     // Inverted file
+    // 索引值是wordId, BoW Tree的叶子节点Id, 保存的是该叶子节点下的所有关键帧
     std::vector<std::list<KeyFrame*>> mvInvertedFile; // 反向的文件
 
     // Mutex

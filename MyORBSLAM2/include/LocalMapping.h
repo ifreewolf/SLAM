@@ -25,11 +25,23 @@ public:
     // Main function
     void Run();
 
+    void InsertKeyFrame(KeyFrame* pKF);
+
     // Thread Synch
     void RequestStop();     // 请求停止
     void RequestReset();    // 请求重置
     bool isStopped();       // 是否停止
     void Release();         // LocalMapping线程释放
+    bool stopRequested();
+    bool AcceptKeyFrames();
+    bool SetNotStop(bool flag);
+
+    void InterruptBA();
+
+    int KeyframesInQueue() {
+        std::unique_lock<std::mutex> lock(mMutexNewKFs);
+        return mlNewKeyFrames.size();
+    }
 
 protected:
     bool mbMonocular;
@@ -50,7 +62,10 @@ protected:
     bool mbStopRequested;   // 线程停止请求标志位
     bool mbAbortBA;         // BA优化停止标志位
     bool mbResetRequested;  // 线程重置请求标志位
+    bool mbNotStop;         // 线程不停止标志位
 
+    bool mbAcceptKeyFrames;
+    std::mutex mMutexAccept;
 };
 }
 

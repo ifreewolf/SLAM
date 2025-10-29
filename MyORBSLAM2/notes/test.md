@@ -12,3 +12,5 @@
  - TUM1.yaml 对应 freiburg1序列；TUM2.yaml 对应 freiburg2序列；TUM3.yaml 对应 freiburg3序列
  - freiburg1包含办公室/桌面场景数据；freiburg2包含大范围室内环境数据；freiburg3包含长距离家庭/办公室场景数据
  - Trajectory：轨迹
+
+https://zhuanlan.zhihu.com/p/618342022

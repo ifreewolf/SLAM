@@ -3,7 +3,6 @@
 #define MAPDRAWER_H
 
 #include "common.h"
-
 #include "Map.h"
 
 namespace ORB_SLAM2
@@ -16,6 +15,8 @@ public:
 
     Map* mpMap;
 
+    void SetCurrentCameraPose(const cv::Mat &Tcw);
+
 private:
     float mKeyFrameSize;
     float mKeyFrameLineWidth;
@@ -23,6 +24,10 @@ private:
     float mPointSize;
     float mCameraSize;
     float mCameraLineWidth;
+
+    cv::Mat mCameraPose;
+
+    std::mutex mMutexCamera;
 };
 
 }
