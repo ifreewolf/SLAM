@@ -3,7 +3,7 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
-#include <opencv2/imgcodecs/legacy/constants_c.h>
+// #include <opencv2/imgcodecs/legacy/constants_c.h>
 
 using namespace std;
 using namespace cv;
@@ -30,8 +30,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    Mat img_1 = imread(argv[1], CV_LOAD_IMAGE_COLOR);
-    Mat img_2 = imread(argv[2], CV_LOAD_IMAGE_COLOR);
+    Mat img_1 = imread(argv[1], IMREAD_COLOR);
+    Mat img_2 = imread(argv[2], IMREAD_COLOR);
     assert(img_1.data && img_2.data && "Can not load images!");
 
     vector<KeyPoint> keypoints_1, keypoints_2;

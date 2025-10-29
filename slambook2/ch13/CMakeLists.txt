@@ -27,11 +27,11 @@ find_package(Sophus REQUIRED)
 include_directories(${Sophus_INCLUDE_DIRS})
 
 # G2O
-find_package(G2O REQUIRED)
+find_package(g2o REQUIRED)
 include_directories(${G2O_INCLUDE_DIRS})
 
 # glog
-find_package(Glog REQUIRED)
+find_package(glog REQUIRED)
 include_directories(${GLOG_INCLUDE_DIRS})
 
 # gtest

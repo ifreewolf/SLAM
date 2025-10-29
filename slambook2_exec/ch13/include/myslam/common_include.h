@@ -21,7 +21,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-// typedefs for eigen
+// typdefs for eigen
 // double matricies
 typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> MatXX;
 typedef Eigen::Matrix<double, 10, 10> Mat1010;
@@ -71,7 +71,7 @@ typedef Eigen::Matrix<float, 4, 2> Mat42f;
 typedef Eigen::Matrix<float, 6, 2> Mat62f;
 typedef Eigen::Matrix<float, 1, 2> Mat12f;
 typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> MatXXf;
-typedef Eigen::Matrix<flaot, 14, 14> Mat1414f;
+typedef Eigen::Matrix<float, 14, 14> Mat1414f;
 
 // double vectors
 typedef Eigen::Matrix<double, 14, 1> Vec14;
@@ -103,7 +103,7 @@ typedef Eigen::Matrix<float, 14, 1> Vec14f;
 #include <sophus/so3.hpp>
 
 typedef Sophus::SE3d SE3;
-typedef Sophus::So3d SO3;
+typedef Sophus::SO3d SO3;
 
 // for cv
 #include <opencv2/core/core.hpp>

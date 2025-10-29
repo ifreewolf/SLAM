@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef MYSLAM_G2O_TYPES_H
 #define MYSLAM_G2O_TYPES_H
 
@@ -17,16 +15,14 @@
 #include <g2o/solvers/csparse/linear_solver_csparse.h>
 #include <g2o/solvers/dense/linear_solver_dense.h>
 
-namespace myslam
-{
+namespace myslam {
 // vertex and edges used in g2o ba
 // 位姿顶点
-class VertexPose : public g2o::BaseVertex<6, SE3>
-{
+class VertexPose : public g2o::BaseVertex<6, SE3> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
-    virtual void setToOriginImpl() override { _estimate = SE(); }
+    virtual void setToOriginImpl() override { _estimate = SE3(); }
 
     // left multiplication on SE3
     virtual void oplusImpl(const double *update) override {
@@ -37,12 +33,11 @@ public:
 
     virtual bool read(std::istream &in) override { return true; }
 
-    virtual bool write(std::ostream &out) const override { return true; } 
+    virtual bool write(std::ostream &out) const override { return true; }
 };
 
 // 路标顶点
-class VertexXYZ : public g2o::BaseVertex<3, Vec3>
-{
+class VertexXYZ : public g2o::BaseVertex<3, Vec3> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
     virtual void setToOriginImpl() override { _estimate = Vec3::Zero(); }
@@ -55,17 +50,16 @@ public:
 
     virtual bool read(std::istream &in) override { return true; }
 
-    virtual bool wreite(std::ostream &out) const override { return true; }
+    virtual bool write(std::ostream &out) const override { return true; }
 };
 
 // 仅估计位姿的一元边
-class EdgeProjectionPoseOnly : public g2o::BaseUnaryEdge<2, Vec2, VertexPose>
-{
+class EdgeProjectionPoseOnly : public g2o::BaseUnaryEdge<2, Vec2, VertexPose> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
     EdgeProjectionPoseOnly(const Vec3 &pos, const Mat33 &K)
-        : _pose3d(pos), _K(K) {}
+        : _pos3d(pos), _K(K) {}
     
     virtual void computeError() override {
         const VertexPose *v = static_cast<VertexPose *>(_vertices[0]);
@@ -87,8 +81,9 @@ public:
         double Zinv = 1.0 / (Z + 1e-18);
         double Zinv2 = Zinv * Zinv;
         _jacobianOplusXi << -fx * Zinv, 0, fx * X * Zinv2, fx * X * Y * Zinv2,
-                            -fx - fx * X * X * Zinv2, fx * Y * Zinv, 0, -fy * Zinv,
-                            fy * Y * Zinv2, fy + fy * Y * Y * Zinv2, -fy * X * Y * Zinv2, -fy * X * Zinv;
+            -fx - fx * X * X * Zinv2, fx * Y * Zinv, 0, -fy * Zinv,
+            fy * Y * Zinv2, fy + fy * Y * Y * Zinv2, -fy * X * Y * Zinv2,
+            -fy * X * Zinv;
     }
 
     virtual bool read(std::istream &in) override { return true; }
@@ -101,8 +96,7 @@ private:
 };
 
 // 带有地图和位姿的二元边
-class EdgeProjection : public g2o::BaseBinaryEdge<2, Vec2, VertexPose, VertexXYZ>
-{
+class EdgeProjection : public g2o::BaseBinaryEdge<2, Vec2, VertexPose, VertexXYZ> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
@@ -115,14 +109,14 @@ public:
         const VertexPose *v0 = static_cast<VertexPose *>(_vertices[0]);
         const VertexXYZ *v1 = static_cast<VertexXYZ *>(_vertices[1]);
         SE3 T = v0->estimate();
-        Vec3 pos_pixel = _LK * (_cam_ext * (T * v1->estimate()));
+        Vec3 pos_pixel = _K * (_cam_ext * (T * v1->estimate()));
         pos_pixel /= pos_pixel[2];
         _error = _measurement - pos_pixel.head<2>();
     }
 
     virtual void linearizeOplus() override {
-        const VertexPose * v0 = static_cast<VertexPose *>(_vertices[0]);
-        const VertexXYZ * v1 = static_cast<VertexXYZ *>(_vertices[1]);
+        const VertexPose *v0 = static_cast<VertexPose *>(_vertices[0]);
+        const VertexXYZ *v1 = static_cast<VertexXYZ *>(_vertices[1]);
         SE3 T = v0->estimate();
         Vec3 pw = v1->estimate();
         Vec3 pos_cam = _cam_ext * T * pw;
@@ -134,21 +128,20 @@ public:
         double Zinv = 1.0 / (Z + 1e-18);
         double Zinv2 = Zinv * Zinv;
         _jacobianOplusXi << -fx * Zinv, 0, fx * X * Zinv2, fx * X * Y * Zinv2,
-                            -fx - fx * X * X * Zinv2, fx * Y * Zinv, 0, -fy * Zinv,
-                            fy * Y * Zinv2, fy + fy * Y * Y * Zinv2, -fy * X * Y * Zinv2, -fy * X * Zinv;
-        
-        _jacobianOplusXj = _jacobianOplusXi.block<2, 3>(0, 0) *
-                           _cam_ext.rotationMatrix() * T.rotationMatrix();
+            -fx - fx * X * X * Zinv2, fx * Y * Zinv, 0, -fy * Zinv,
+            fy * Y * Zinv2, fy + fy * Y * Y * Zinv2, -fy * X * Y * Zinv2, -fy * X * Zinv;
+        _jacobianOplusXj = _jacobianOplusXi.block<2, 3>(0, 0) * _cam_ext.rotationMatrix() * T.rotationMatrix();
     }
 
     virtual bool read(std::istream &in) override { return true; }
 
-    virtual bool write(std::ostream &out) override { return true; }
+    virtual bool write(std::ostream &out) const override { return true; }
 
 private:
     Mat33 _K;
-    SE3   _cam_ext;
+    SE3 _cam_ext;
+};
+
 }
-}   // namespace myslam
 
 #endif

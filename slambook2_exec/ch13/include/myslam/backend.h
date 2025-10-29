@@ -1,4 +1,3 @@
-#pragma once
 #ifndef MYSLAM_BACKEND_H
 #define MYSLAM_BACKEND_H
 
@@ -6,27 +5,24 @@
 #include "myslam/frame.h"
 #include "myslam/map.h"
 
-namespace myslam
-{
-class Map;
+namespace myslam {
+class Map; // 前置声明
 
 /**
  * 后端
  * 有单独优化线程，在Map更新时启动优化
  * Map更新由前端触发
 */
-
-class Backend
-{
+class Backend {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
     typedef std::shared_ptr<Backend> Ptr;
 
-    // 构造函数中启动优化线程并挂起
+    // 在构造函数中启动优化线程并挂起
     Backend();
 
     // 设置左右目的相机，用于获得内外参
-    void SetCameras(Camera::Ptr left, Camera::Ptr right) {
+    void setCameras(Camera::Ptr left, Camera::Ptr right) {
         cam_left_ = left;
         cam_right_ = right;
     }
@@ -56,7 +52,6 @@ private:
 
     Camera::Ptr cam_left_ = nullptr, cam_right_ = nullptr;
 };
+}
 
-}   // namespace myslam
-
-#endif  // MYSLAM_BACKEND_H
+#endif

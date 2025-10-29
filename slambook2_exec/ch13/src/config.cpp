@@ -2,8 +2,7 @@
 
 namespace myslam
 {
-bool Config::SetParameterFile(const std::string &filename)
-{
+bool Config::SetParameterFile(const std::string &filename) {
     if (config_ == nullptr)
         config_ = std::shared_ptr<Config>(new Config);
     config_->file_ = cv::FileStorage(filename.c_str(), cv::FileStorage::READ);
@@ -15,10 +14,10 @@ bool Config::SetParameterFile(const std::string &filename)
     return true;
 }
 
-Config::~Config()
-{
-    if (file_.isOpened())
+Config::~Config() {
+    if (file_.isOpened()) {
         file_.release();
+    }
 }
 
 std::shared_ptr<Config> Config::config_ = nullptr;

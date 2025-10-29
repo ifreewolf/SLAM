@@ -10,12 +10,10 @@
 
 namespace myslam
 {
-
 /**
  * VO 对外接口
 */
-class VisualOdometry
-{
+class VisualOdometry {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
     typedef std::shared_ptr<VisualOdometry> Ptr;
@@ -39,9 +37,10 @@ public:
     */
     bool Step();
 
-    // 获取前端状态
+    /**
+     * 获取前端状态
+    */
     FrontendStatus GetFrontendStatus() const { return frontend_->GetStatus(); }
-
 private:
     bool inited_ = false;
     std::string config_file_path_;
@@ -54,5 +53,7 @@ private:
     // dataset
     Dataset::Ptr dataset_ = nullptr;
 };
-}   // namespace myslam
-#endif  // MYSLAM_VISUAL_ODOMETRY_H
+} // namespace myslam
+
+
+#endif
