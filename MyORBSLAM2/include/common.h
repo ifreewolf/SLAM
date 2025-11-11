@@ -11,10 +11,11 @@
 #include <unistd.h>
 #include <list>
 #include <cassert>
-
 #include <mutex>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/opencv.hpp>
+
+#include <pangolin/pangolin.h>
 
 #endif

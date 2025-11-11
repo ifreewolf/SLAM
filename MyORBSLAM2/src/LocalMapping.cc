@@ -129,4 +129,18 @@ void LocalMapping::InterruptBA()
     mbAbortBA = true;
 }
 
+
+void LocalMapping::RequestFinish()
+{
+    std::unique_lock<std::mutex> lock(mMutexFinish);
+    mbFinishRequested = true;
+}
+
+
+bool LocalMapping::isFinished()
+{
+    std::unique_lock<std::mutex> lock(mMutexFinish);
+    return mbFinished;
+}
+
 }

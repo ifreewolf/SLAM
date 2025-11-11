@@ -3,7 +3,15 @@
 namespace ORB_SLAM2
 {
 
-Viewer::Viewer(System* pSystem, FrameDrawer* pFrameDrawer, MapDrawer* pMapDrawer, Tracking* pTracking, const std::string& strSettingPath)
+Viewer::Viewer(System* pSystem, FrameDrawer* pFrameDrawer, MapDrawer* pMapDrawer, Tracking* pTracking, const std::string& strSettingPath):
+    mpSystem(pSystem),
+    mpFrameDrawer(pFrameDrawer),
+    mpMapDrawer(pMapDrawer),
+    mpTracker(pTracking),
+    mbFinishRequested(false),
+    mbFinished(true),
+    mbStopped(true),
+    mbStopRequested(false)
 {
     cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
 
@@ -38,9 +46,25 @@ void Viewer::Run()
 }
 
 
+void Viewer::RequestFinish()
+{
+    std::unique_lock<std::mutex> lock(mMutexFinish);
+    mbFinishRequested = true;
+}
+
+
 void Viewer::RequestStop()
 {
     std::unique_lock<std::mutex> lock(mMutexStop);
+    if (!mbStopped) {
+        mbStopRequested = true;
+    }
+}
+
+
+bool Viewer::isFinished()
+{
+    std::unique_lock<std::mutex> lock(mMutexFinish);
     if (!mbStopped) {
         mbStopRequested = true;
     }

@@ -60,6 +60,11 @@ public:
     // See format details at: http://vision.in.tum.de/data/datasets/rgbd-dataset
     void SaveKeyFrameTrajectoryTUM(const std::string &filename);
 
+    // Save camera trajectory in the KITTI dataset format.
+    // Only for stereo and RGBD. This method does not work for monocular.
+    // See format details at: http://www.cvlibs.net/datasets/kitti/eval_odometry.php
+    void SaveTrajectoryKITTI(const std::string &filename);
+
 private:
     // Input sensor
     eSensor mSensor; // 传感器类型，可选值 MONOCULAR / STERED / RGBD

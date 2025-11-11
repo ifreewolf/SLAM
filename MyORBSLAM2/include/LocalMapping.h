@@ -38,15 +38,24 @@ public:
 
     void InterruptBA();
 
+    void RequestFinish();
+    bool isFinished();
+
     int KeyframesInQueue() {
         std::unique_lock<std::mutex> lock(mMutexNewKFs);
         return mlNewKeyFrames.size();
     }
 
 protected:
+
+
+
     bool mbMonocular;
+
     Map* mpMap;
-    bool mbFinished;
+
+    bool mbFinishRequested; // 查询是否完成的标识
+    bool mbFinished;        // LoalMapping线程是否完成的标识
 
     LoopClosing* mpLoopCloser;
     Tracking*    mpTracker;

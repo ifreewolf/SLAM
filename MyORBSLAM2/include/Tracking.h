@@ -78,7 +78,7 @@ public:
     std::list<cv::Mat>   mlRelativeFramePoses;  // 存储的是相对位姿，在执行完程序之后，用于恢复相机的轨迹
     std::list<KeyFrame*> mlpReferences;         // 参考关键帧列表
     std::list<double>    mlFrameTimes;          // 帧时间列表
-    std::list<bool>      mlbLost;               // 丢失帧的列表
+    std::list<bool>      mlbLost;               // 帧是否丢失的列表
 
 protected:
 

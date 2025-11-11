@@ -83,4 +83,11 @@ long unsigned int Map::KeyFramesInMap()
     std::unique_lock<std::mutex> lock(mMutexMap);
     return mspKeyFrames.size();
 }
+
+
+std::vector<KeyFrame*> Map::GetAllKeyFrames()
+{
+    std::unique_lock<std::mutex> lock(mMutexMap);
+    return std::vector<KeyFrame*>(mspKeyFrames.begin(), mspKeyFrames.end());
+}
 }

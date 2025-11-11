@@ -24,22 +24,34 @@ public:
     // Main thread function. Draw points, keyframes, the current camera
     void Run();
 
+    void RequestFinish();
+
     void RequestStop();
+
+    bool isFinished();
 
     bool isStopped();
 
     void Release();
 
 private:
+    System* mpSystem;
+    FrameDrawer* mpFrameDrawer;
+    MapDrawer* mpMapDrawer;
+    Tracking* mpTracker;
+
     // 1/fps in ms
     double mT;
     float  mImageWidth, mImageHeight;
     float  mViewpointX, mViewpointY, mViewpointZ, mViewpointF;
 
+    bool mbFinishRequested;
     bool mbFinished;
+
+    std::mutex mMutexFinish;
+
     bool mbStopped;
     bool mbStopRequested;
-
     std::mutex mMutexStop;  // 修改 mbStopped、mbStopRequested 的临界锁
 };
 

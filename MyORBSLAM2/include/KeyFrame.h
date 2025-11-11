@@ -29,7 +29,7 @@ public:
     cv::Mat GetPoseInverse();
     cv::Mat GetCameraCenter();
     // cv::Mat GetStereoCenter();
-    // cv::Mat GetRotaion();
+    cv::Mat GetRotation();
     // cv::Mat GetTranslation();
 
     // Bag of Words Representation
@@ -54,6 +54,10 @@ public:
     KeyFrame* GetParent();              // mpParent的get方法
     bool hasChild(KeyFrame* pKF);       // 判断mspChildrens中是否存在关键帧pKF
 
+    // Loop Edges
+    void AddLoopEdge(KeyFrame* pKF);    // mspLoopEdges的set函数
+    std::set<KeyFrame*> GetLoopEdges(); // mspLoopEdges的get函数
+
     // MapPoint observation functions
     void AddMapPoint(MapPoint* pMP, const size_t &idx); // 添加一个地图点
     void EraseMapPointMatch(const size_t &idx);         // 根据数组位置删除地图点
@@ -68,6 +72,10 @@ public:
 
     // Image
     bool IsInImage(const float &x, const float &y) const;
+
+    // Enable/Disable bad flag changes
+    void SetNotErase(); // mbNotErase的set方法
+    void SetErase();    //
 
     // Set/Check bad flag
     void SetBadFlag();  // 执行实际物理删除操作

@@ -157,13 +157,13 @@ void System::Shutdown()
     if (mpViewer) {
         mpViewer->RequestFinish();
         while (!mpViewer->isFinished()) {
-            std::this_thread::sleep_for(std::chrono::macroseconds(5000));
+            std::this_thread::sleep_for(std::chrono::microseconds(5000));
         }
     }
     
     // Wait until all thread have effectively stopped
     while (!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || mpLoopCloser->isRunningGBA()) {
-        std::this_thread::sleep_for(std::chrono::macroseconds(5000));
+        std::this_thread::sleep_for(std::chrono::microseconds(5000));
     }
 
     if (mpViewer) {
@@ -172,6 +172,10 @@ void System::Shutdown()
 }
 
 
+/**
+ * @brief 保存关键帧到第一个关键帧之间的位姿
+ * 旋转矩阵使用四元数来表示
+ */
 void System::SaveTrajectoryTUM(const std::string &filename)
 {
     std::cout << std::endl << "Saving camera trajectory to " << filename << " ..." << std::endl;
@@ -182,42 +186,155 @@ void System::SaveTrajectoryTUM(const std::string &filename)
     }
 
     std::vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
-    std::sort(vpKFs.begin(), vpKFs.end(), KeyFrame::lId);   // 根据KeyFrame的mnId来排序，从小到大排序
+    std::sort(vpKFs.begin(), vpKFs.end(), KeyFrame::lId);   // 根据KeyFrame的mnId来排序，从小到大排序，目的是为了获取最早的关键帧
+                                                            // 题外话：排序的时间复杂度是O(nlogn)，如果选择直接遍历应该会更快一些？？？？？？？？？？？？？
 
     // Transform all keyframes so that the first keyframe is at the origin.
     // After a loop closure the first keyframe might not be at the origin.
-    cv::Mat Two = vpKFs[0]->GetPoseInverse();
+    cv::Mat Two = vpKFs[0]->GetPoseInverse();   // 第一帧相机原点在世界坐标系下的位姿，作为原点帧
 
     std::ofstream f;
     f.open(filename.c_str());
-    f << fixed;
+    f << std::fixed;
 
-    std::list<KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin();
-    std::list<double>::iterator lT = mpTracker->mlFrameTimes.begin();
-    std::list<bool>::iterator lbL = mpTracker->mlbLost.begin();
+    // Frame pose is stored relative to its reference keyframe (which is optimized by BA and pose graph). 帧位姿是相对于其参考关键帧(通过BA优化和位姿图优化)存储的。
+    // We need to get first the keyframe pose and then concatenate the relative transformation. 获取时需要先提取关键帧位姿，再叠加相对变换。
+    // Frames not localized (tracking failure) are not saved. 未完成定位（跟踪失败）的帧不会被保存
+
+    // For each frame we have a reference keyframe (lRit), the timestamp (lT) and a flag
+    // which is true when tracking failed (lbL).    对于每个帧，我们记录其参考关键帧索引（lRit）、时间戳（lT）和一个标记位（lbL），该标记为true时表示跟踪失败。
+    std::list<KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin(); // 参考关键帧列表
+    std::list<double>::iterator lT = mpTracker->mlFrameTimes.begin();       // 时间戳
+    std::list<bool>::iterator lbL = mpTracker->mlbLost.begin();             // mlpReferences对应的帧的跟踪状态是否处于Lost状态
+    // mlRelativeFramePoses保存的是参考帧到当前帧的相对位姿变换
     for (std::list<cv::Mat>::iterator lit = mpTracker->mlRelativeFramePoses.begin(), lend = mpTracker->mlRelativeFramePoses.end();
          lit != lend; lit++, lRit++, lT++, lbL++) {
-        if (*lbL) {
+        if (*lbL) { // 如果遍历的这个帧处于
             continue;
         }
 
-        KeyFrame* pKF = *lRit;
+        KeyFrame* pKF = *lRit;  // 遍历参考帧
 
-        cv::Mat Trw = cv::Mat::eye(4, 4, CV_32F);
+        cv::Mat Trw = cv::Mat::eye(4, 4, CV_32F);   // 将每个参考帧作为原点帧，目的是：当前参考帧有可能被剔除，就需要获取到一帧合适的关键帧，记录的是父关键帧到参考帧的位姿变换
 
-        // If the reference keyframe was culled, traverse the spanning tree to get a suitable keyframe,
+        // If the reference keyframe was culled, traverse the spanning tree to get a suitable keyframe.
+        // 如果参考关键帧被剔除，则遍历 spanning tree（生成树）以获取一个合适的关键帧。
+        while (pKF->isBad()) {
+            Trw = Trw * pKF->mTcp;  // mTcp表示父关键帧到pKF当前帧的位姿变换，都是在世界坐标系中的位姿。这里是计算最终选择的pKF(可能是pKF的夫关键帧)到最初遍历的关键帧pKF的位姿
+            pKF = pKF->GetParent(); // 如果pKF被剔除了，就寻找其父关键帧
+        }
+
+        Trw = Trw * pKF->GetPose() * Two;   // Two表示原点帧到世界坐标系中的位姿；pKF->GetPose表示选择的当前帧pKF在世界坐标系中的位姿，也就是Tcw；Trw表示pKF到参考帧的位姿，
+                                            // 所以，最终Trw就表示从原点帧到参考帧pKF的位姿
+
+        cv::Mat Tcw = (*lit) * Trw; // Trw是原点帧到参考帧pKF的位姿, *lit是参考帧到当前帧的位姿变换
+                                    // 所以结果就是原点帧到参考帧的当前帧之间的位姿变换
+        cv::Mat Rwc = Tcw.rowRange(0, 3).colRange(0, 3).t();
+        cv::Mat twc = -Rwc*Tcw.rowRange(0, 3).col(3);       // 这里计算的是当前帧到原点帧的位移
+
+        std::vector<float> q = Converter::toQuaternion(Rwc);
+
+        f << std::setprecision(6) << *lT << " " << std::setprecision(9) << twc.at<float>(0) << " " << twc.at<float>(1) << " " << twc.at<float>(2)
+          << " " << q[0] << " " << q[1] << " " << q[2] << " " << q[3] << std::endl;
+    }
+    f.close();
+    std::cout << std::endl << "trajectory saved!" << std::endl;
+}
+
+
+/**
+ * @brief 保存关键帧的轨迹
+ * 轨迹包含关键帧的旋转矩阵和平移向量
+ * 旋转矩阵以四元数的形式保存
+ */
+void System::SaveKeyFrameTrajectoryTUM(const std::string &filename)
+{
+    std::cout << std::endl << "Saving keyframe trajectory to " << filename << " ..." << std::endl;
+
+    std::vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
+    std::sort(vpKFs.begin(), vpKFs.end(), KeyFrame::lId);
+
+    // Transform all keyframes so that the first keyframe is at the origin.
+    // After a loop closure the first keyframe might not be at the origin.
+    // cv::Mat Two = vpKFs[0]->GetPoseInverse();
+
+    std::ofstream f;
+    f.open(filename.c_str());
+    f << std::fixed;    // 当使用f<<std::fixed时，它指示输出流f将其后输出的所有浮点数都以‌固定小数点表示法进行格式化，而不是使用科学计数法（例如 1.234e+02）
+                        // 这个操作符通常与 std::setprecision 结合使用，以精确控制输出浮点数的小数位数。例如，std::setprecision(2) 在 std::fixed 生效时，表示保留两位小数
+
+    for (size_t i = 0; i < vpKFs.size(); i++) {
+        KeyFrame* pKF = vpKFs[i];
+
+        if (pKF->isBad()) {
+            continue;
+        }
+
+        cv::Mat R = pKF->GetRotation().t();
+        std::vector<float> q = Converter::toQuaternion(R);
+        cv::Mat t = pKF->GetCameraCenter();
+        f << std::setprecision(6) << pKF->mTimeStamp << std::setprecision(7) << " " << t.at<float>(0) << " " << t.at<float>(1) << " " << t.at<float>(2)
+          << " " << q[0] << " " << q[1] << " " << q[2] << " " << q[3] << std::endl;
+    }
+    f.close();
+    std::cout << std::endl << "trajectory saved!" << std::endl;
+}
+
+
+/**
+ * @brief 保存KITTI数据集的轨迹
+ * 与SaveTrajectoryTUM的区别：
+ *  1. 不考虑遍历当前帧的跟踪状态 mpTracker->mlbLost
+ *  2. 保存的结果，直接保存旋转矩阵，而不是保存旋转矩阵的四元数表示
+ */
+void System::SaveTrajectoryKITTI(const std::string &filename)
+{
+    std::cout << std::endl << "Saving camera trajectory to " << filename << " ..." << std::endl;
+    if (mSensor == MONOCULAR) {
+        std::cerr << "ERROR: SaveTrajectoryKITTI cannot be used for monocular." << std::endl;
+        return;
+    }
+
+    std::vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
+    std::sort(vpKFs.begin(), vpKFs.end(), KeyFrame::lId);
+
+    cv::Mat Two = vpKFs[0]->GetPoseInverse();   // Twc
+
+    std::ofstream f;
+    f.open(filename.c_str());
+    f << std::fixed;
+
+    // 帧位姿是相对于其参考关键帧(通过BA优化和位姿图优化)存储的。 获取时需要先提取关键帧位姿，再叠加相对变换。
+    std::list<KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin(); // 参考帧
+    std::list<double>::iterator lT = mpTracker->mlFrameTimes.begin();       // 时间戳
+    for (std::list<cv::Mat>::iterator lit = mpTracker->mlRelativeFramePoses.begin(), lend = mpTracker->mlRelativeFramePoses.end();
+         lit != lend;
+         lit++, lRit++, lT++) {
+        
+        KeyFrame* pKF = *lRit;  // 获取参考帧
+
+        cv::Mat Trw = cv::Mat::eye(4, 4, CV_32F);   // 将每个参考帧作为原点帧，目的是：当前参考帧有可能被剔除，就需要获取到一帧合适的关键帧，记录的是父关键帧到参考帧的位姿变换
+        
+        // 如果参考关键帧被剔除，则遍历 spanning tree（生成树）以获取一个合适的关键帧。
         while (pKF->isBad()) {
             Trw = Trw * pKF->mTcp;
             pKF = pKF->GetParent();
         }
+
+        Trw = Trw * pKF->GetPose() * Two;   // Trw是参考帧的父关键帧到参考帧的位姿变换，pKF->GetPose是世界坐标系到参考帧的父关键帧之间的位姿变换，Two是选择的原点帧到世界坐标系的位姿变换
+                                            // 所以结果就是原点帧到参考帧之间的位姿变换
+
+        cv::Mat Tcw = (*lit) * Trw;
+        cv::Mat Rwc = Tcw.rowRange(0, 3).colRange(0, 3).t();
+        cv::Mat twc = -Rwc * Tcw.rowRange(0, 3).col(3);
+
+        f << setprecision(9) << Rwc.at<float>(0,0) << " " << Rwc.at<float>(0,1)  << " " << Rwc.at<float>(0,2) << " "  << twc.at<float>(0) << " " <<
+             Rwc.at<float>(1,0) << " " << Rwc.at<float>(1,1)  << " " << Rwc.at<float>(1,2) << " "  << twc.at<float>(1) << " " <<
+             Rwc.at<float>(2,0) << " " << Rwc.at<float>(2,1)  << " " << Rwc.at<float>(2,2) << " "  << twc.at<float>(2) << endl;
+
     }
-
-}
-
-
-void System::SaveKeyFrameTrajectoryTUM(const std::string &filename)
-{
-    std::cout << std::endl << "Saving keyframe trajectory to " << filename << " ..." << std::endl;
+    f.close();
+    std::cout << std::endl << "trajectory saved!" << std::endl;
 }
 
 
