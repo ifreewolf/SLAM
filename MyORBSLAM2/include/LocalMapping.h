@@ -30,10 +30,12 @@ public:
     // Thread Synch
     void RequestStop();     // 请求停止
     void RequestReset();    // 请求重置
+    bool Stop();
     bool isStopped();       // 是否停止
     void Release();         // LocalMapping线程释放
     bool stopRequested();
     bool AcceptKeyFrames();
+    void SetAcceptKeyFrames(bool flag);
     bool SetNotStop(bool flag);
 
     void InterruptBA();
@@ -48,7 +50,22 @@ public:
 
 protected:
 
+    bool CheckNewKeyFrames();
+    void ProcessNewKeyFrame();
+    void CreateNewMapPoints();
 
+    void MapPointCulling();
+    void SearchInNeighbors();
+
+    void KeyFrameCulling();
+
+    void ResetIfRequested();
+
+    bool CheckFinish();
+    void SetFinish();
+
+    cv::Mat ComputeF12(KeyFrame* &pKF1, KeyFrame* &pKF2);
+    cv::Mat SkewSymmetricMatrix(const cv::Mat &v);
 
     bool mbMonocular;
 
@@ -66,6 +83,10 @@ protected:
     std::mutex mMutexReset;     // LocalMapping线程重置独占锁
 
     std::list<KeyFrame*> mlNewKeyFrames; // 关键帧链表
+
+    KeyFrame* mpCurrentKeyFrame;
+
+    std::list<MapPoint*> mlpRecentAddedMapPoints;
 
     bool mbStopped;         // 线程停止标志位
     bool mbStopRequested;   // 线程停止请求标志位

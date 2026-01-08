@@ -37,6 +37,24 @@ private:
     void add_correspondence(const double X, const double Y, const double Z, const double u, const double v);
     double compute_pose(double R[3][3], double T[3]);
 
+    void choose_control_points();           // 获得EPnP算法中的四个控制点
+    void compute_barycentric_coordinates(); // 计算世界坐标系下每个3D点用4个控制点线性表达时的系数alphas
+    void fill_M(cv::Mat &M, const int row, const double* alphas, const double u, const double v);
+
+    void compute_rho(double* rho);
+    void compute_L_6x10(const double* ut, double* l_6x10);
+
+    double dot(const double* v1, const double* v2);
+    double dist2(const double* p1, const double* p2);
+
+    void find_betas_approx_1(const cv::Mat& L_6x10, const cv::Mat& Rho, double* betas);
+    void find_betas_approx_2(const cv::Mat& L_6x10, const cv::Mat& Rho, double* betas);
+    void find_betas_approx_3(const cv::Mat& L_6x10, const cv::Mat& Rho, double* betas);
+    void qr_solve(cv::Mat& A, cv::Mat& b, cv::Mat& X);
+
+    void gauss_newton(const cv::Mat& L_6x10, cv::Mat& Rho, double current_betas[4]);
+
+
 private:
     double uc;  // 像素偏移，横向，内参
     double vc;  // 像素偏移，纵向，内参
@@ -50,6 +68,10 @@ private:
 
     int maximum_number_of_correspondences;
     int number_of_correspondences;
+
+    double cws[4][3];   // 控制点在世界坐标系下的坐标
+    double ccs[4][3];
+    double cws_determinant;
 
     std::vector<MapPoint*> mvpMapPointMatches;
 

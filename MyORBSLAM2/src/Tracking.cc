@@ -577,7 +577,7 @@ void Tracking::StereoInitialization()
         // Create KeyFrame
         KeyFrame* pKFini = new KeyFrame(mCurrentFrame, mpMap, mpKeyFrameDB);
 
-        pKFini->ComputeBow();
+        pKFini->ComputeBoW();
 
         // Insert KeyFrame in the map
         mpMap->AddKeyFrame(pKFini);

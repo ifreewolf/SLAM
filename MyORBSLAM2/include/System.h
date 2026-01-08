@@ -16,8 +16,8 @@
 namespace ORB_SLAM2{
 
 class Viewer;
-class Map;
 class FrameDrawer;
+class Map;
 class Tracking;
 class LocalMapping;
 class LoopClosing;

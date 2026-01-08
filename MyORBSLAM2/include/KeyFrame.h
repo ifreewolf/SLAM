@@ -30,15 +30,15 @@ public:
     cv::Mat GetCameraCenter();
     // cv::Mat GetStereoCenter();
     cv::Mat GetRotation();
-    // cv::Mat GetTranslation();
+    cv::Mat GetTranslation();
 
     // Bag of Words Representation
-    void ComputeBow();
+    void ComputeBoW();
 
     // Covisibility graph function, 共视图函数
-    // void AddConnection(KeyFrame* pKF, const int &weight); // 添加共视关键帧
+    void AddConnection(KeyFrame* pKF, const int &weight); // 添加共视关键帧
     void EraseConnection(KeyFrame* pKF); // 删除共视关键帧
-    // void UpdateConnections(); // 基于当前关键帧对地图点的观测构造共视图
+    void UpdateConnections(); // 基于当前关键帧对地图点的观测构造共视图
     void UpdateBestCovisibles(); // 基于共视图信息修改对应变量
     std::set<KeyFrame *> GetConnectedKeyFrames();
     std::vector<KeyFrame *> GetVectorCovisibleKeyFrames();
@@ -65,10 +65,12 @@ public:
     void ReplaceMapPointMatch(const size_t &idx, MapPoint* pMP);    // 替换地图点
     std::set<MapPoint*> GetMapPoints();             // 获取当前帧的所有地图点，并以set结构保存，并不是每个特征点都能对应一个地图点(有些没有，有些被删除了)
     std::vector<MapPoint*> GetMapPointMatches();    // mvpMapPoints的get方法
-    int TrackedMapPoints(const int &minObs);
+    int TrackedMapPoints(const int &minObs);        // 地图点的观测数目大于minObs的地图点数量
+    MapPoint* GetMapPoint(const size_t &idx);       // 根据序号获取地图点
 
     // KeyPoint functions
     std::vector<size_t> GetFeaturesInArea(const float &x, const float &y, const float &r) const;
+    cv::Mat UnprojectStereo(int i);
 
     // Image
     bool IsInImage(const float &x, const float &y) const;
@@ -80,6 +82,9 @@ public:
     // Set/Check bad flag
     void SetBadFlag();  // 执行实际物理删除操作
     bool isBad();       // mbBad的get方法
+
+    // Compute Scene Depth (q=2 median). Used in monocular.
+    float ComputeSceneMedianDepth(const int q);
 
 
     static bool lId(KeyFrame* pKF1, KeyFrame* pKF2) {
@@ -102,6 +107,7 @@ public:
 
     // Variables used by the tracking
     long unsigned int mnTrackReferenceForFrame;
+    long unsigned int mnFuseTargetForKF;
 
     // Variables used by the keyframe database
     long unsigned int mnLoopQuery;  // 在闭环搜索候选帧时，标记该帧被哪个关键帧pKF搜索

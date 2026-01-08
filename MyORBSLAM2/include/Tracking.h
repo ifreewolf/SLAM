@@ -16,6 +16,7 @@
 #include "ORBmatcher.h"
 #include "Optimizer.h"
 #include "PnPsolver.h"
+#include "Optimizer.h"
 
 namespace ORB_SLAM2
 {

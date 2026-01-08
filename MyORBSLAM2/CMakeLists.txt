@@ -60,6 +60,7 @@ add_library(${PROJECT_NAME} SHARED
     src/PnPsolver.cc
     src/Converter.cc
     src/Optimizer.cc
+    src/Sim3Solver.cc
 )
 target_link_libraries(${PROJECT_NAME}
     ${OpenCV_LIBS}

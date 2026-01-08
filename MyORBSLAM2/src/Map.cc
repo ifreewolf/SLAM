@@ -90,4 +90,11 @@ std::vector<KeyFrame*> Map::GetAllKeyFrames()
     std::unique_lock<std::mutex> lock(mMutexMap);
     return std::vector<KeyFrame*>(mspKeyFrames.begin(), mspKeyFrames.end());
 }
+
+
+void Map::InformNewBigChange()
+{
+    std::unique_lock<std::mutex> lock(mMutexMap);
+    mnBigChangeIdx++;
+}
 }

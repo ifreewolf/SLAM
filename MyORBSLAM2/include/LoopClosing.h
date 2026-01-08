@@ -3,18 +3,27 @@
 #define LOOPCLOSING_H
 
 #include "common.h"
+
+
+#include "KeyFrame.h"
+#include "LocalMapping.h"
 #include "Map.h"
 #include "ORBVocabulary.h"
-#include "KeyFrameDatabase.h"
-#include "LocalMapping.h"
 #include "Tracking.h"
+
+#include "KeyFrameDatabase.h"
+
+#include "3rdparty/g2o/g2o/types/types_seven_dof_expmap.h"
+#include "Sim3Solver.h"
 
 namespace ORB_SLAM2
 {
 
-class Tracking;
+class KeyFrame;
 class LocalMapping;
+class Map;
 class KeyFrameDatabase;
+class Tracking;
 
 class LoopClosing
 {
