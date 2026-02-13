@@ -1174,19 +1174,19 @@ void PnPsolver::qr_solve(cv::Mat& A, cv::Mat& b, cv::Mat& X)
             A2[k] = -eta * sigma;   // A2存储σ=η*σ
 
             // 对于后面的每一列展开遍历
-            for (int j = k + 1; j < nc; j++) {
-                ppAik = ppAkk;  // 将ppAik重新指向对角线元素
+            for (int j = k + 1; j < nc; j++) {  // 遍历第k列之后的每一列
+                ppAik = ppAkk;  // 将ppAik重新指向对角线元素 A[k][k]
                 sum = 0;
                 // 遍历列的每一行
-                for (int i = k; i < nr; i++) {
-                    sum += *ppAik * ppAik[j -  k];
-                    ppAik += nc;
+                for (int i = k; i < nr; i++) { // 计算当前列与对角线列的内积
+                    sum += *ppAik * ppAik[j -  k];  // 计算当前列与对角线列的内积,计算当前列（索引j）与对角线列（索引k）的点积, *ppAik是A[i][k]，ppAik[j-k]是A[i][j]
+                    ppAik += nc;                    // 跳到下一行
                 }
-                double tau = sum / A1[k];
+                double tau = sum / A1[k];   // 计算豪斯霍尔德反射系数τ = σ/ρ
                 // 然后再一遍循环是为了修改
                 ppAik = ppAkk;
                 for (int i = k; i < nr; i++) {
-                    ppAik[j - k] -= tau * *ppAik;
+                    ppAik[j - k] -= tau * *ppAik;   // 应用反射变换：A[j][i] -= τ * A[k]
                     ppAik += nc;
                 }
             }
