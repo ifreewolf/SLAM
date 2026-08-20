@@ -35,7 +35,10 @@ private:
     void set_maximum_number_of_correspondences(const int n);
     void reset_correspondences(void);
     void add_correspondence(const double X, const double Y, const double Z, const double u, const double v);
+
     double compute_pose(double R[3][3], double T[3]);
+
+    double reprojection_error(const double R[3][3], const double t[3]);
 
     void choose_control_points();           // 获得EPnP算法中的四个控制点
     void compute_barycentric_coordinates(); // 计算世界坐标系下每个3D点用4个控制点线性表达时的系数alphas
@@ -52,7 +55,19 @@ private:
     void find_betas_approx_3(const cv::Mat& L_6x10, const cv::Mat& Rho, double* betas);
     void qr_solve(cv::Mat& A, cv::Mat& b, cv::Mat& X);
 
-    void gauss_newton(const cv::Mat& L_6x10, cv::Mat& Rho, double current_betas[4]);
+    void gauss_newton(const cv::Mat& L_6x10, const cv::Mat& Rho, double current_betas[4]);
+
+    void estimate_R_and_t(double R[3][3], double t[3]);
+    void compute_A_and_b_gauss_newton(const double* l_6x10, const double* rho, double cb[4], cv::Mat& A, cv::Mat& b);
+
+    void compute_pcs(void);
+    void solve_for_sign(void);
+
+    void compute_ccs(const double* betas, const double* ut);
+
+    double compute_R_and_t(const double* ut, const double* rho, double R[3][3], double t[3]);
+
+    void copy_R_and_t(const double R_dst[3][3], const double t_dst[3], double R_src[3][3], double t_src[3]);
 
 
 private:

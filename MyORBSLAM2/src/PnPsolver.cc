@@ -287,7 +287,7 @@ bool PnPsolver::Refine()
  * @param[out] T 求解位姿里得平移向量
  * @return double 使用这对旋转和平移位姿的时候，匹配点对的平均重投影误差
  */
-double PnPsolver::compute_pose(double R[3][3], double T[3])
+double PnPsolver::compute_pose(double R[3][3], double t[3])
 {
     // Step1 获得EPnP算法中的四个控制点 c_j^w
     choose_control_points();
@@ -311,7 +311,7 @@ double PnPsolver::compute_pose(double R[3][3], double T[3])
 
     double mtm[12*12];
     double d[12];
-    double utp[12*12];
+    double ut[12*12];
     cv::Mat MtM(12, 12, CV_64F, mtm);
     cv::Mat D(12, 1, CV_64F, d);        // 特征值
     cv::Mat Ut(12, 12, CV_64F, ut);     // 特征向量
@@ -322,7 +322,8 @@ double PnPsolver::compute_pose(double R[3][3], double T[3])
     // 该函数实际是特征值分解，得到特征值D，特征向量ut，对应EPnP论文中式(8)中的vi
     // 最小特征值对应的特征向量就是矩阵方程的最优解，其解就是相机坐标系下的控制点，对应于源码中的Ut
     // cv::SVD::MODIFY_A表示允许修改矩阵A
-    cv::SVD::compute(MtM, D, Ut, 0, cv::SVD::MODIFY_A | cv::SVD::U_T);
+    cv::SVD::compute(MtM, D, Ut, cv::noArray(), cv::SVD::MODIFY_A);
+    Ut = Ut.t();
     // cv::SVD svd(MtM, cv::SVD::MODIFY_A);
     // D = svd.w;
     // Ut = svd.u;
@@ -344,19 +345,19 @@ double PnPsolver::compute_pose(double R[3][3], double T[3])
     double ts[4][3];
 
     // 求解近似解：N=4的情况
-    find_betas_approx_1(&L_6x10, &Rho, Betas[1]);
+    find_betas_approx_1(L_6x10, Rho, Betas[1]);
     // 高斯牛顿法迭代优化得到 beta
-    gauss_newton(&L_6x10, &Rho, Betas[1]);
+    gauss_newton(L_6x10, Rho, Betas[1]);
     rep_errors[1] = compute_R_and_t(ut, Betas[1], Rs[1], ts[1]);
 
     // 求解近似解：N=2的情况
-    find_betas_approx_2(&L_6x10, &Rho, Betas[2]);
-    gauss_newton(&L_6x10, &Rho, Betas[1]);
+    find_betas_approx_2(L_6x10, Rho, Betas[2]);
+    gauss_newton(L_6x10, Rho, Betas[1]);
     rep_errors[2] = compute_R_and_t(ut, Betas[2], Rs[2], ts[2]);
 
     // 求近似解：N=3的情况
-    find_betas_approx_3(&L_6x10, &Rho, Betas[3]);
-    gauss_newton(&L_6x10, &Rho, Betas[3]);
+    find_betas_approx_3(L_6x10, Rho, Betas[3]);
+    gauss_newton(L_6x10, Rho, Betas[3]);
     rep_errors[3] = compute_R_and_t(ut, Betas[3], Rs[3], ts[3]);
 
     int N = 1;
@@ -371,6 +372,17 @@ double PnPsolver::compute_pose(double R[3][3], double T[3])
     copy_R_and_t(Rs[N], ts[N], R, t);
 
     return rep_errors[N];
+}
+
+
+void PnPsolver::copy_R_and_t(const double R_src[3][3], const double t_src[3], double R_dst[3][3], double t_dst[3])
+{
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            R_dst[i][j] = R_src[i][j];
+        }
+        t_dst[i] = t_src[i];
+    }
 }
 
 
@@ -418,7 +430,7 @@ void PnPsolver::compute_L_6x10(const double* ut, double* l_6x10)
             // 第6轮：a=2, b=3
             // 6-9, 7-10, 8-11
             dv[i][j][0] = v[i][3*a]     - v[i][3*b];
-            dv[i][j][1] = v[i][3*a + 1] - v[i][3*b + 1]
+            dv[i][j][1] = v[i][3*a + 1] - v[i][3*b + 1];
             dv[i][j][2] = v[i][3*a + 2] - v[i][3*b + 2];
 
             b++;
@@ -609,7 +621,8 @@ void PnPsolver::choose_control_points()
     // DC = svd.w;     // 特征值
     // UCt = svd.u;    // 特征向量
     // 使用下面的函数来替代上面svd分解
-    cv::SVD::compute(PW0tPW0, DC, UCt, 0, cv::SVD::MODIFY_A);
+    cv::SVD::compute(PW0tPW0, DC, UCt, cv::noArray(), cv::SVD::MODIFY_A);
+    UCt = UCt.t();
 
 
     // Step2.3 得到C1,C2,C3三个3D控制点，最后加上之前减掉的第一个控制点这个偏移量
@@ -778,9 +791,9 @@ void PnPsolver::find_betas_approx_2(const cv::Mat& L_6x10, const cv::Mat& Rho, d
  */
 void PnPsolver::find_betas_approx_3(const cv::Mat& L_6x10, const cv::Mat& Rho, double* betas)
 {
-    double l_6x6[6*5];
+    double l_6x5[6*5];
     double b5[5];
-    cv::Mat L_6x5(6, 5, CV_64F, l_6x5)；
+    cv::Mat L_6x5(6, 5, CV_64F, l_6x5);
     cv::Mat B5(5, 1, CV_64F, b5);
 
     // 获取并构造矩阵
@@ -838,10 +851,13 @@ void PnPsolver::gauss_newton(const cv::Mat& L_6x10, const cv::Mat& Rho, double b
     cv::Mat B(6, 1, CV_64F, b); // 非齐次项
     cv::Mat X(4, 1, CV_64F, x); // 增量，待求量
 
+    const double* l_6x10 = L_6x10.ptr<double>();
+    const double* rho    = Rho.ptr<double>();
+
     // 对于每次迭代过程
     for (int k = 0; k < iterations_number; k++) {
         // 计算增量方程的系数矩阵和非齐次项
-        compute_A_and_b_gauss_newton(L_6x10, Rho, betas, A, B);
+        compute_A_and_b_gauss_newton(l_6x10, rho, betas, A, B);
         // 使用QR分解求解增量方程，解得当前次迭代的增量X
         qr_solve(A, B, X);
 
@@ -975,7 +991,7 @@ void PnPsolver::estimate_R_and_t(double R[3][3], double t[3])
     cv::Mat ABt_V(3, 3, CV_64F, abt_v); // 奇异值分解得到的右特征矩阵
 
     // Step2 构造矩阵H=B^T*A，不过这里是隐含的构造
-    cv::setZero(&);
+    ABt = cv::Scalar(0);
     // 遍历每一个3D点
     for (int i = 0; i < number_of_correspondences; i++) {
         // 定位
@@ -996,7 +1012,7 @@ void PnPsolver::estimate_R_and_t(double R[3][3], double t[3])
     // Step4 R=U*V^T,并且进行合法性检查
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
-            R[i][j] = std::dot(abt_u + 3*i, abt_v + 3*j);
+            R[i][j] = dot(abt_u + 3*i, abt_v + 3*j);
         }
     }
 
@@ -1012,9 +1028,9 @@ void PnPsolver::estimate_R_and_t(double R[3][3], double t[3])
     }
 
     // Step5 根据R计算t
-    t[0] = pc0[0] - std::dot(R[0], pw0);
-    t[1] = pc0[1] - std::dot(R[1], pw0);
-    t[2] = pc0[2] - std::dot(R[2], pw0);
+    t[0] = pc0[0] - dot(R[0], pw0);
+    t[1] = pc0[1] - dot(R[1], pw0);
+    t[2] = pc0[2] - dot(R[2], pw0);
 }
 
 
@@ -1086,9 +1102,9 @@ double PnPsolver::reprojection_error(const double R[3][3], const double t[3])
 
     for (int i = 0; i < number_of_correspondences; i++) {
         double* pw = pws + 3*i;
-        double Xc = std::dot(R[0], pw) + t[0];
-        double Yc = std::dot(R[1], pw) + t[1];
-        double inv_Zc = 1.0 / (std::dot(R[2], pw) + t[2]);
+        double Xc = dot(R[0], pw) + t[0];
+        double Yc = dot(R[1], pw) + t[1];
+        double inv_Zc = 1.0 / (dot(R[2], pw) + t[2]);
         double ue = uc + fu * Xc * inv_Zc;
         double ve = vc + fv * Yc * inv_Zc;
         double u = us[2 * i];
@@ -1106,45 +1122,57 @@ double PnPsolver::reprojection_error(const double R[3][3], const double t[3])
  * @param[in]  A    系数矩阵
  * @param[in]  b    非齐次项
  * @param[out] X    增量
+ * AX = b，求X
  */
 void PnPsolver::qr_solve(cv::Mat& A, cv::Mat& b, cv::Mat& X)
 {
+    // 1. 静态变量：记录历史最大行数，避免重复分配内存
     static int max_nr = 0;
     static double *A1, *A2;
 
+    // 2. 获取矩阵A的行列数：nr=行数(m)，nc=列数(n)
     const int nr = A.rows;  // 系数矩阵A的行数
     const int nc = A.cols;  // 系数矩阵A的列数
 
     // 判断是否需要重新分配A1, A2的内存区域
+    // 3. 内存检查：如果当前行数超过历史最大值，释放旧内存
     if (max_nr != 0 && max_nr < nr) {
         // 如果max_nr != 0，说明之前已经创建了一个last_max_nr < nr的数组，不够我们现在使用了，需要重新分配内存；但是在重新分配之前我们需要先删除之前创建的内容
         delete [] A1;
         delete [] A2;
     }
 
+    // 4. 重新分配内存：A1/A2存储每列QR分解的中间参数(长度==行数)
     if (max_nr < nr) {
         max_nr = nr;
         A1 = new double[nr];
         A2 = new double[nr];
     }
 
+    // 核心目的：A1/A2是每列 Householder 变换的关键参数（σ、η 相关），用静态变量避免每次调用函数都分配 / 释放内存，提升效率；
+
+    // 5. 指针初始化：pA指向A的首地址（double型），ppAkk指向当前列的对角线元素
     double *pA = A.ptr<double>();   // 指向系数矩阵A的数据区
     double *ppAkk = pA;             // 一直都会指向对角线上的元素
 
     // 对系数矩阵的列展开遍历
+    // 6. 逐列处理（对第k列进行Householder变换，k从0到n-1）
     for (int k = 0; k < nc; k++) {
+        // 7. 辅助指针：ppAik指向第k列第k行(对角线),eta存储第k列对角线下方元素的最大绝对值（列主元）
         double* ppAik = ppAkk;              // 只是辅助下面的for循环中，遍历对角线元素下的当前列
-        double* eta = std::fabs(*ppAik);    // 存储当前列对角线元素下面的所有元素绝对值的最大值
+        double eta = std::fabs(*ppAik);    // 存储当前列对角线元素下面的所有元素绝对值的最大值
 
         // 遍历当前对角线约束下，当前列的所有元素，并且找到它们中的最大的绝对值
-        for (int i = k + 1; i < nr; i++) {  // 访问行，对角线下方的行
-            ppAik += nc;    // 指向下一行
+        // 8. 遍历第k列对角线下方的所有元素，找到绝对值最大值（列主元，提升数值稳定性）
+        for (int i = k; i < nr; i++) {  // 访问行，对角线下方的行
             double elt = std::abs(*ppAik);
-            if (eta < elt) {
+            if (eta < elt) {    // 更新列最大值
                 eta = elt;
             }
+            ppAik += nc;    // 指向下一行（A是按行存储，每行nc个元素，所以+nc到下一行同列）
         }   // 找到每列最大值
 
+        // 9. 奇异值检查：如果列最大值为0，矩阵奇异（无解），直接返回
         if (eta == 0) { // 表示对角线及下方的所有列都为0，那行列式必然为0，是一个奇异矩阵，无法求逆
             A1[k] = A2[k] = 0.0;
             // 奇异矩阵，无法求逆
@@ -1152,11 +1180,13 @@ void PnPsolver::qr_solve(cv::Mat& A, cv::Mat& b, cv::Mat& X)
             return;
         } else {
             // 开始进行QR分解
+            // 10. 充值指针：ppAik回到第k列第k行，sum存储归一化后的平方和，inv_eta=1/eta(归一化系数)
             ppAik = ppAkk;  // 重新让ppAik指向对角线元素
             double sum = 0.0;
             double inv_eta = 1. / eta;
 
             // 对当前列下面的每一行的元素展开遍历（包含对于矩阵主对角线上的元素）
+            // 11. 第k列归一化：将第k列从第k行开始的所有元素除以eta（避免数值溢出）
             for (int i = k; i < nr; i++) {
                 *ppAik *= inv_eta;      // 这个操作会改变系数矩阵的值，当前指向的元素都会被“归一化”
                 sum += *ppAik * *ppAik; // 平方和
@@ -1164,17 +1194,20 @@ void PnPsolver::qr_solve(cv::Mat& A, cv::Mat& b, cv::Mat& X)
             }
 
             // 计算sigma，同时根据对角线元素的符号保持其为正数
+            // 12. 计算Householder变换的核心参数σ：σ=√sum，符号与对角线元素相反（保证数值稳定）
             double sigma = std::sqrt(sum);
             if (*ppAkk < 0) {
                 sigma = -sigma;
             }
 
-            *ppAkk += sigma;
-            A1[k] = sigma * *ppAkk; // A1存储ρ=σ(σ+x1)
-            A2[k] = -eta * sigma;   // A2存储σ=η*σ
+            *ppAkk += sigma;        // ppAkk就是x1，修正对角线元素：Akk=akk + σ
+            A1[k] = sigma * *ppAkk; // A1存储 ρ=σ(σ+x1)，存储σ*(a_kk+σ)（Householder的τ参数分母）
+            A2[k] = -eta * sigma;   // A2存储 σ=η*σ，存储-η*σ（最终R矩阵的对角线元素）
 
             // 对于后面的每一列展开遍历
+            // 13. 对k列之后的所有列(j>k)，应用Householder变换，消去下三角元素
             for (int j = k + 1; j < nc; j++) {  // 遍历第k列之后的每一列
+                // 14. 计算tau：tau = (A_kj^T * v) / A1[k]，v是Householder向量
                 ppAik = ppAkk;  // 将ppAik重新指向对角线元素 A[k][k]
                 sum = 0;
                 // 遍历列的每一行
@@ -1183,7 +1216,9 @@ void PnPsolver::qr_solve(cv::Mat& A, cv::Mat& b, cv::Mat& X)
                     ppAik += nc;                    // 跳到下一行
                 }
                 double tau = sum / A1[k];   // 计算豪斯霍尔德反射系数τ = σ/ρ
+
                 // 然后再一遍循环是为了修改
+                // 15. 应用Householder变换：A_j = A_j - tau*v（消去j列下三角元素）
                 ppAik = ppAkk;
                 for (int i = k; i < nr; i++) {
                     ppAik[j - k] -= tau * *ppAik;   // 应用反射变换：A[j][i] -= τ * A[k]
@@ -1192,24 +1227,71 @@ void PnPsolver::qr_solve(cv::Mat& A, cv::Mat& b, cv::Mat& X)
             }
         }
         // 移动向下一个对角线元素
+        // 16. 移动ppAkk到下一列的对角线元素（行+1，列+1 → 指针+nc+1）
         ppAkk += nc + 1;
-
-        // b <- Qt b
-        double* ppAjj = pA;
-        double* pb = b.ptr<double>();
-        // 对每一列展开计算
-        for (int j = 0; j < nc; j++) {
-            // 这个部分在计算Q^T*b
-            double* ppAij = ppAjj;
-            double tau = 0;
-            for (int i = j; i < nr; i++) {
-                tau += *ppAij * pb[i];
-                ppAij += nc;
-            }
-            tau /= A1[j];
-            ppAij = ppAjj;
-        }
-
     }
+
+    // 核心数学对应：
+    //  列主元（eta）：避免小数值导致的数值不稳定；
+    //  Householder 变换：构造正交矩阵 Q，使得 Q^T*A 的下三角部分为 0，最终得到上三角矩阵 R；
+    //  A1/A2：存储每列变换的中间参数，避免重复计算。
+
+    // 阶段 3：计算 Q^T * b（正交变换，简化方程组）
+
+    // b <- Qt b
+    // 17. 指针初始化：ppAjj指向A的对角线元素，pb指向b的首地址
+    double* ppAjj = pA;
+    double* pb = b.ptr<double>();
+    // 对每一列展开计算
+    // 18. 逐列应用Q^T变换到b（对应每一列的Householder变换）
+    for (int j = 0; j < nc; j++) {
+        // 这个部分在计算Q^T*b
+        // 19. 计算tau：tau = (v^T * b) / A1[j]，v是第j列的Householder向量
+        double* ppAij = ppAjj;
+        double tau = 0;
+        for (int i = j; i < nr; i++) {  // 遍历b的每一行
+            tau += *ppAij * pb[i];  // 点积：v × b（从j行开始）
+            ppAij += nc;    // 遍历A矩阵的行元素
+        }
+        tau /= A1[j];
+
+        // 20. 应用Q^T变换：b = b - tau*v（得到Q^T*b）
+        ppAij = ppAjj;
+        for (int i = j; i < nr; i++) {
+            pb[i] -= tau * *ppAij;
+            ppAij += nc;
+        }
+        // 21. 移动到下一列的对角线元素
+        ppAjj += nc + 1;
+    }
+
+    // 核心目的：原方程组 Ax=b → QRx=b → Rx=Q^Tb，这一步计算出 Q^Tb，存入 b 的内存（原地修改）。
+
+    // 阶段 4：回代求解 Rx = Q^T*b（上三角矩阵回代）
+
+    // X = R^{-1}b
+    // backward method
+    // 22. 指针初始化：pX指向解向量X的首地址
+    double* pX = X.ptr<double>();
+
+    // 23. 最后一行（列）的解：x_{n-1} = (Q^T*b)_{n-1} / R_{n-1,n-1}（R的对角线存在A2中）
+    pX[nc - 1] = pb[nc - 1] / A2[nc - 1];
+
+    // 24. 反向回代：从n-2到0，逐行求解x_i
+    for (int i = nc - 2; i >= 0; i--) {
+        // 25. 指针定位：ppAij指向A的i行i+1列（上三角部分），sum存储求和项
+        double* ppAij = pA + i * nc + (i + 1);
+
+        // 26. 计算sum = Σ(R_ij * x_j)（j > i）
+        double sum = 0;
+        for (int j = i + 1; j < nc; j++) {
+            sum += *ppAij * pX[j];  // R的上三角元素 × 已求解的x_j
+            ppAij++;
+        }
+        // 27. 求解x_i：x_i = [(Q^T*b)_i - sum] / R_ii
+        pX[i] = (pb[i] - sum) / A2[i];
+    }
+
+    // 核心逻辑：上三角矩阵 R 的回代求解是 QR 分解的优势 —— 从最后一行开始，依次求解每一行的 x_i，无需求逆，效率高且稳定。
 }
 }
